@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat,
   withSequence, withSpring, Easing, runOnJS
@@ -25,14 +24,14 @@ function FloatingLetter({ char, index }: { char: string; index: number }) {
     // Up-down float — safe pattern proven on iOS/Android
     y.value = withDelay(delay, withRepeat(
       withSequence(
-        withTiming(-14, { duration: 1300, easing: Easing.out(Easing.quad) }),
-        withTiming(12, { duration: 1400, easing: Easing.in(Easing.quad) })
+        withTiming(-26, { duration: 1200, easing: Easing.out(Easing.quad) }),
+        withTiming(22, { duration: 1300, easing: Easing.in(Easing.quad) })
       ), -1, true
     ));
-    // Gentle tilt — also safe
-    rot.value = withDelay(delay + 150, withRepeat(
+    // Stronger visible tilt for mobile
+    rot.value = withDelay(delay + 120, withRepeat(
       withSequence(
-        withTiming(-3, { duration: 1350 }),
+        withTiming(-8, { duration: 1250 }),
         withTiming(3, { duration: 1450 })
       ), -1, true
     ));
@@ -86,9 +85,7 @@ export default function IntroScreen({ onFinish }: Props) {
       </TouchableOpacity>
 
       <View style={styles.center}>
-        <Animated.View style={[styles.iconWrap, iconStyle]}>
-          <Ionicons name="diamond" size={66} color="#8C5C2D" />
-        </Animated.View>
+        <Animated.Image source={{ uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/ChatGPT-Image-Apr-13-2026-04_01_08-PM.png' }} style={[styles.logoImg, iconStyle]} resizeMode="contain" />
 
         {/* Each letter floats — guaranteed on mobile */}
         <View style={styles.mainRow}>
@@ -108,16 +105,105 @@ export default function IntroScreen({ onFinish }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F3ED', alignItems: 'center', justifyContent: 'center' },
-  accentTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 6, backgroundColor: '#8C5C2D' },
-  accentBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 6, backgroundColor: '#8C5C2D' },
-  skip: { position: 'absolute', top: 48, right: 22, padding: 10 },
-  skipText: { color: '#7A4B6A', fontSize: 14, fontWeight: '700', letterSpacing: 1 },
-  center: { alignItems: 'center' },
-  iconWrap: { marginBottom: 16 },
-  mainRow: { flexDirection: 'row', alignItems: 'center' },
-  letter: { color: '#1F1414', fontSize: 32, fontWeight: '900', letterSpacing: 2, marginHorizontal: 1 },
-  sub: { color: '#7A4B6A', fontSize: 15, fontWeight: '700', letterSpacing: 3, marginTop: 16, textAlign: 'center' },
-  enter: { position: 'absolute', bottom: 66, backgroundColor: '#8C5C2D', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 28 },
-  enterText: { color: '#F8F3ED', fontSize: 13, fontWeight: '800', letterSpacing: 2 },
+  container: {
+    flex: 1,
+    backgroundColor: '#2A1B4D',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20
+  },
+
+  // subtle gold accents
+  accentTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#D4AF37'
+  },
+
+  accentBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#D4AF37'
+  },
+
+  skip: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    padding: 10
+  },
+
+  skipText: {
+    color: '#D4AF37',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1.5
+  },
+
+  center: {
+    alignItems: 'center'
+  },
+
+  logoImg: {
+    width: 92,
+    height: 92,
+    marginBottom: 20,
+  },
+  iconWrap: {
+    marginBottom: 24,
+    padding: 18,
+    borderRadius: 50,
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    borderWidth: 1,
+    borderColor: '#D4AF37'
+  },
+
+  mainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10
+  },
+
+  letter: {
+    color: '#FFFFFF',
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: 3,
+    marginHorizontal: 1
+  },
+
+  sub: {
+    color: '#D4AF37',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 3,
+    marginTop: 18,
+    textAlign: 'center'
+  },
+
+  enter: {
+    position: 'absolute',
+    bottom: 70,
+    backgroundColor: '#D4AF37',
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    shadowColor: '#D4AF37',
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6
+  },
+
+  enterText: {
+    color: '#1A1A1A',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 2
+  }
 });
