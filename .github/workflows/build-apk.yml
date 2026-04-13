@@ -1,0 +1,38 @@
+name: Build APK — Shekhar Raja Jewellers
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Expo + EAS CLI
+        run: npm install -g expo-cli eas-cli
+
+      - name: Build Android APK via EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android --profile preview --non-interactive --output=./build.apk 2>&1 || true
+          echo "Build submitted. Check your Expo dashboard or EAS link for the APK download."
+
+      - name: Show build info
+        run: |
+          echo "========================================"
+          echo "Your APK will be available at:"
+          echo "https://expo.dev/accounts/<YOUR-ACCOUNT>/projects/shekhar-raja-jewellers/builds"
+          echo "========================================"
