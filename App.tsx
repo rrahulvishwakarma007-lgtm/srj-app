@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { StatusBar, SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { StatusBar, View, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import HomeScreen from './screens/HomeScreen';
-import GoldRatesScreen from './screens/GoldRatesScreen';
-import CatalogueScreen from './screens/CatalogueScreen';
-import WishlistScreen from './screens/WishlistScreen';
-import ContactScreen from './screens/ContactScreen';
+import { Ionicons } from '@expo/vector-icons';
+import { Theme } from './lib/theme';
 import IntroScreen from './screens/IntroScreen';
+import HomeScreen from './screens/HomeScreen';
+import ExploreScreen from './screens/ExploreScreen';
+import ReelsScreen from './screens/ReelsScreen';
+import SavedDesignsScreen from './screens/SavedDesignsScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import ProductModal from './components/ProductModal';
 import { Product } from './lib/types';
 import { products } from './lib/data';
@@ -17,119 +18,52 @@ import { loadWishlist, saveWishlist, loadCart, saveCart } from './lib/storage';
 
 const Tab = createBottomTabNavigator();
 
-function TabBarIcon({ name, color, size }: { name: string; color: string; size: number }) {
-  return <Ionicons name={name as any} size={size} color={color} />;
-}
-
 export default function App() {
   const [fontsLoaded] = useFonts({ ...Ionicons.font });
   const [showIntro, setShowIntro] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [cart, setCart] = useState<any[]>([]);
 
-  React.useEffect(() => {
-    (async () => {
-      setWishlist(await loadWishlist());
-      setCart(await loadCart());
-    })();
-  }, []);
+  React.useEffect(() => { (async () => { setWishlist(await loadWishlist()); setCart(await loadCart()); })(); }, []);
+  React.useEffect(() => { saveWishlist(wishlist); }, [wishlist]);
+  React.useEffect(() => { saveCart(cart); }, [cart]);
 
-  const updateWishlist = async (newW: Product[]) => {
-    setWishlist(newW);
-    await saveWishlist(newW);
-  };
-
-  const updateCart = async (newC: any[]) => {
-    setCart(newC);
-    await saveCart(newC);
-  };
-
-  const openProduct = (p: Product) => {
-    setSelectedProduct(p);
-    setIsWishlisted(wishlist.some(w => w.id === p.id));
-  };
-
+  const openProduct = (p: Product) => setSelectedProduct(p);
   const closeProduct = () => setSelectedProduct(null);
-
-  const toggleWishlist = () => {
-    if (!selectedProduct) return;
-    const exists = wishlist.some(w => w.id === selectedProduct.id);
-    const newW = exists ? wishlist.filter(w => w.id !== selectedProduct.id) : [...wishlist, selectedProduct];
-    updateWishlist(newW);
-    setIsWishlisted(!exists);
-  };
-
-  const addToCart = () => {
-    if (!selectedProduct) return;
-    const existing = cart.findIndex(c => c.id === selectedProduct.id);
-    let newCart: any[];
-    if (existing >= 0) { newCart = [...cart]; newCart[existing].quantity += 1; }
-    else newCart = [...cart, { ...selectedProduct, quantity: 1 }];
-    updateCart(newCart);
-    closeProduct();
-  };
+  const toggleWishlist = () => { if (!selectedProduct) return; const exists = wishlist.some(w => w.id === selectedProduct.id); setWishlist(exists ? wishlist.filter(w => w.id !== selectedProduct.id) : [...wishlist, selectedProduct]); };
+  const addToCart = () => { if (!selectedProduct) return; const i = cart.findIndex(c => c.id === selectedProduct.id); let nc: any[]; if (i >= 0) { nc = [...cart]; nc[i].quantity += 1; } else nc = [...cart, { ...selectedProduct, quantity: 1 }]; setCart(nc); closeProduct(); };
 
   if (!fontsLoaded) return null;
 
   if (showIntro) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#2A1B4D' }}>
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '65%', backgroundColor: '#4B2E83' }} />
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '38%', backgroundColor: 'rgba(194,24,91,0.06)' }} />
-        <IntroScreen onFinish={() => setShowIntro(false)} />
-        <StatusBar style="dark" backgroundColor="#2A1B4D" />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: Theme.bgPrimary }}><IntroScreen onFinish={() => setShowIntro(false)} /><StatusBar barStyle="light-content" backgroundColor={Theme.bgPrimary} /></View>;
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#2A1B4D' }}>
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '65%', backgroundColor: '#4B2E83' }} />
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '38%', backgroundColor: 'rgba(194,24,91,0.06)' }} />
-      <SafeAreaView style={styles.root}>
-        <NavigationContainer>
+    <View style={{ flex: 1, backgroundColor: Theme.bgPrimary }}>
+      <NavigationContainer>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
-            tabBarActiveTintColor: '#D4AF37',
-            tabBarInactiveTintColor: '#CBB7E5',
-            tabBarStyle: { backgroundColor: '#2A1B4D', borderTopColor: '#3C2A5F', height: 64, paddingBottom: 6 },
+            tabBarActiveTintColor: Theme.gold,
+            tabBarInactiveTintColor: Theme.textOnDarkMuted,
+            tabBarStyle: { backgroundColor: Theme.bgSecondary, borderTopColor: '#3A2A5F', height: 64, paddingBottom: 6 },
             tabBarIcon: ({ color, size }) => {
-              let icon = 'home';
-              if (route.name === 'Home') icon = 'home';
-              if (route.name === 'Gold Rates') icon = 'trending-up';
-              if (route.name === 'Catalogue') icon = 'grid';
-              if (route.name === 'Wishlist') icon = 'heart';
-              if (route.name === 'Contact') icon = 'call';
-              return <TabBarIcon name={icon} color={color} size={size} />;
+              const map: any = { Home: 'home', Explore: 'grid', Reels: 'play-circle', Saved: 'bookmark', Profile: 'person' };
+              return <Ionicons name={map[route.name] || 'ellipse'} size={size} color={color} />;
             },
           })}
         >
-          <Tab.Screen name="Home">
-            {() => <HomeScreen onOpenProduct={openProduct} />}
-          </Tab.Screen>
-          <Tab.Screen name="Gold Rates" component={GoldRatesScreen} />
-          <Tab.Screen name="Catalogue" component={CatalogueScreen} />
-          <Tab.Screen name="Wishlist" component={WishlistScreen} />
-          <Tab.Screen name="Contact" component={ContactScreen} />
+          <Tab.Screen name="Home">{() => <HomeScreen onOpenProduct={openProduct} />}</Tab.Screen>
+          <Tab.Screen name="Explore">{() => <ExploreScreen onOpenProduct={openProduct} wishlist={wishlist} onToggleWishlist={(p) => { const exists = wishlist.some(w => w.id === p.id); setWishlist(exists ? wishlist.filter(w => w.id !== p.id) : [...wishlist, p]); }} />}</Tab.Screen>
+          <Tab.Screen name="Reels" component={ReelsScreen} />
+          <Tab.Screen name="Saved">{() => <SavedDesignsScreen wishlist={wishlist} onOpenProduct={openProduct} onToggleWishlist={(p) => { const exists = wishlist.some(w => w.id === p.id); setWishlist(exists ? wishlist.filter(w => w.id !== p.id) : [...wishlist, p]); }} />}</Tab.Screen>
+          <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>
       </NavigationContainer>
-      <ProductModal
-        visible={!!selectedProduct}
-        product={selectedProduct}
-        onClose={closeProduct}
-        onAddToWishlist={toggleWishlist}
-        onAddToCart={addToCart}
-        isWishlisted={isWishlisted}
-      />
-      <StatusBar style="dark" backgroundColor="#2A1B4D" />
-      </SafeAreaView>
+      <ProductModal visible={!!selectedProduct} product={selectedProduct} onClose={closeProduct} onAddToWishlist={toggleWishlist} onAddToCart={addToCart} isWishlisted={selectedProduct ? wishlist.some(w => w.id === selectedProduct.id) : false} />
+      <StatusBar barStyle="light-content" backgroundColor={Theme.bgSecondary} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#2A1B4D' },
-});

@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "Shekhar Raja Jewellers",
-    "slug": "shekhar-raja-jewellers",
+    "name": "Agon Preview",
+    "slug": "agon-preview",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/app-icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [],
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/app-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#F8F3ED"
     },
@@ -17,12 +18,28 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#F8F3ED",
-        "foregroundImage": "./assets/android-icon-foreground.png"
+        "foregroundImage": "./assets/images/app-icon.png"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/app-icon.png"
     },
-    "platforms": ["ios", "android", "web"]
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "552f0665-e30d-4f11-9ea9-97bc22a22809"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/552f0665-e30d-4f11-9ea9-97bc22a22809"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "owner": "arcadalabs"
   }
 }

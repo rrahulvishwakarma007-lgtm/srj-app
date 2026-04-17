@@ -1,9 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
-import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withDelay, withRepeat,
-  withSequence, withSpring, Easing, runOnJS
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -14,66 +11,65 @@ interface Props {
   onFinish: () => void;
 }
 
-// Simple, mobile-proven floating letter using safe easings
-function FloatingLetter({ char, index }: { char: string; index: number }) {
-  const y = useSharedValue(0);
-  const rot = useSharedValue(0);
-  const delay = index * 80;
+function FloatLetter({ char, delay }: { char: string; delay: number }) {
+  const y = useRef(new Animated.Value(0)).current;
+  const rot = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Up-down float — safe pattern proven on iOS/Android
-    y.value = withDelay(delay, withRepeat(
-      withSequence(
-        withTiming(-26, { duration: 1200, easing: Easing.out(Easing.quad) }),
-        withTiming(22, { duration: 1300, easing: Easing.in(Easing.quad) })
-      ), -1, true
-    ));
-    // Stronger visible tilt for mobile
-    rot.value = withDelay(delay + 120, withRepeat(
-      withSequence(
-        withTiming(-8, { duration: 1250 }),
-        withTiming(3, { duration: 1450 })
-      ), -1, true
-    ));
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(y, { toValue: -14, duration: 1400, easing: Easing.inOut(Easing.sin), delay, useNativeDriver: true }),
+        Animated.timing(y, { toValue: 12, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    const loopRot = Animated.loop(
+      Animated.sequence([
+        Animated.timing(rot, { toValue: -5, duration: 1500, delay: delay + 150, useNativeDriver: true }),
+        Animated.timing(rot, { toValue: 5, duration: 1700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    loopRot.start();
+    return () => { loop.stop(); loopRot.stop(); };
   }, []);
 
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: y.value }, { rotate: rot.value + 'deg' }],
-  }));
-
   return (
-    <Animated.Text style={[styles.letter, style]}>{char === ' ' ? '\u00A0' : char}</Animated.Text>
+    <Animated.Text style={[styles.letter, { transform: [{ translateY: y }, { rotate: rot.interpolate({ inputRange: [-10, 10], outputRange: ['-10deg', '10deg'] }) }] }]}>
+      {char === ' ' ? '\u00A0' : char}
+    </Animated.Text>
   );
 }
 
 export default function IntroScreen({ onFinish }: Props) {
-  const fade = useSharedValue(0);
-  const slide = useSharedValue(50);
-  const iconScale = useSharedValue(0.5);
-  const iconRot = useSharedValue(-25);
-
-  const subStyle = useAnimatedStyle(() => ({ opacity: fade.value, transform: [{ translateY: slide.value }] }));
-  const iconStyle = useAnimatedStyle(() => ({ transform: [{ scale: iconScale.value }, { rotate: iconRot.value + 'deg' }] }));
-
-  useEffect(() => {
-    // Icon entrance — safe springs work everywhere
-    iconScale.value = withDelay(180, withSpring(1, { damping: 11, stiffness: 100 }));
-    iconRot.value = withDelay(180, withSpring(0, { damping: 13, stiffness: 90 }));
-
-    // Subtitle fade + slide — safe timings
-    fade.value = withDelay(700, withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) }));
-    slide.value = withDelay(700, withTiming(0, { duration: 800, easing: Easing.out(Easing.quad) }));
-
-    // Auto finish after full reveal
-    const t = setTimeout(() => finish(), 4800);
-    return () => clearTimeout(t);
-  }, []);
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(50)).current;
+  const iconScale = useRef(new Animated.Value(0.5)).current;
+  const iconRot = useRef(new Animated.Value(-25)).current;
 
   const finish = () => {
-    fade.value = withTiming(0, { duration: 380 });
-    slide.value = withTiming(25, { duration: 380 });
-    setTimeout(() => runOnJS(onFinish)(), 420);
+    Animated.parallel([
+      Animated.timing(fade, { toValue: 0, duration: 350, useNativeDriver: true }),
+      Animated.timing(slide, { toValue: 30, duration: 350, useNativeDriver: true }),
+    ]).start(() => onFinish());
   };
+
+  useEffect(() => {
+    // Icon entrance
+    Animated.parallel([
+      Animated.spring(iconScale, { toValue: 1, friction: 6, tension: 60, useNativeDriver: true }),
+      Animated.spring(iconRot, { toValue: 0, friction: 7, tension: 50, useNativeDriver: true }),
+    ]).start();
+
+    // Subtitle fade + slide
+    Animated.parallel([
+      Animated.timing(fade, { toValue: 1, duration: 800, delay: 800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(slide, { toValue: 0, duration: 800, delay: 800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+    ]).start();
+
+    // Auto finish
+    const t = setTimeout(finish, 4800);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -85,16 +81,20 @@ export default function IntroScreen({ onFinish }: Props) {
       </TouchableOpacity>
 
       <View style={styles.center}>
-        <Animated.Image source={{ uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/ChatGPT-Image-Apr-13-2026-04_01_08-PM.png' }} style={[styles.logoImg, iconStyle]} resizeMode="contain" />
+        {/* Diamond icon with spring entrance */}
+        <Animated.View style={{ transform: [{ scale: iconScale }, { rotate: iconRot.interpolate({ inputRange: [-30, 30], outputRange: ['-30deg', '30deg'] }) }] }}>
+          <Ionicons name="diamond" size={68} color="#8C5C2D" />
+        </Animated.View>
 
-        {/* Each letter floats — guaranteed on mobile */}
+        {/* SRJ THE APP — each letter floats beautifully */}
         <View style={styles.mainRow}>
           {MAIN.split('').map((ch, i) => (
-            <FloatingLetter key={i} char={ch} index={i} />
+            <FloatLetter key={i} char={ch} delay={i * 70} />
           ))}
         </View>
 
-        <Animated.Text style={[styles.sub, subStyle]}>{SUB}</Animated.Text>
+        {/* Subtitle fades + slides up */}
+        <Animated.Text style={[styles.sub, { opacity: fade, transform: [{ translateY: slide }] }]}>{SUB}</Animated.Text>
       </View>
 
       <TouchableOpacity style={styles.enter} onPress={finish} activeOpacity={0.85}>
@@ -105,105 +105,15 @@ export default function IntroScreen({ onFinish }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#2A1B4D',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20
-  },
-
-  // subtle gold accents
-  accentTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#D4AF37'
-  },
-
-  accentBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#D4AF37'
-  },
-
-  skip: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    padding: 10
-  },
-
-  skipText: {
-    color: '#D4AF37',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 1.5
-  },
-
-  center: {
-    alignItems: 'center'
-  },
-
-  logoImg: {
-    width: 92,
-    height: 92,
-    marginBottom: 20,
-  },
-  iconWrap: {
-    marginBottom: 24,
-    padding: 18,
-    borderRadius: 50,
-    backgroundColor: 'rgba(212,175,55,0.1)',
-    borderWidth: 1,
-    borderColor: '#D4AF37'
-  },
-
-  mainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10
-  },
-
-  letter: {
-    color: '#FFFFFF',
-    fontSize: 34,
-    fontWeight: '800',
-    letterSpacing: 3,
-    marginHorizontal: 1
-  },
-
-  sub: {
-    color: '#D4AF37',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 3,
-    marginTop: 18,
-    textAlign: 'center'
-  },
-
-  enter: {
-    position: 'absolute',
-    bottom: 70,
-    backgroundColor: '#D4AF37',
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    shadowColor: '#D4AF37',
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6
-  },
-
-  enterText: {
-    color: '#1A1A1A',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 2
-  }
+  container: { flex: 1, backgroundColor: '#F8F3ED', alignItems: 'center', justifyContent: 'center' },
+  accentTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 6, backgroundColor: '#8C5C2D' },
+  accentBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 6, backgroundColor: '#8C5C2D' },
+  skip: { position: 'absolute', top: 50, right: 24, padding: 8 },
+  skipText: { color: '#7A4B6A', fontSize: 14, fontWeight: '700', letterSpacing: 1 },
+  center: { alignItems: 'center' },
+  mainRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 12 },
+  letter: { color: '#1F1414', fontSize: 34, fontWeight: '900', letterSpacing: 3, marginHorizontal: 1 },
+  sub: { color: '#7A4B6A', fontSize: 15, fontWeight: '700', letterSpacing: 3, marginTop: 18, textAlign: 'center' },
+  enter: { position: 'absolute', bottom: 70, backgroundColor: '#8C5C2D', paddingVertical: 14, paddingHorizontal: 34, borderRadius: 28 },
+  enterText: { color: '#F8F3ED', fontSize: 13, fontWeight: '800', letterSpacing: 2 },
 });

@@ -9,6 +9,7 @@ export interface Product {
   details: string;
   icon: string;
   color: string;
+  image?: string;
 }
 
 export interface CartItem extends Product {

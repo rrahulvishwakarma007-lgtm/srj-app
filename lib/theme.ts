@@ -1,40 +1,83 @@
-// Shekhar Raja Jewellers — Light Royal Luxury Theme
-// Inspired by GIVA: warm cream/ivory background + antique gold + royal blush + soft violet-pink
+// Shekhar Raja Jewellers — Premium Luxury Design System
+// Royal Violet + Deep Violet + Soft Cream + Gold Gradient
 
 export const Theme = {
-  // Light Royal Backgrounds
-  bg: '#F8F3ED',          // Warm ivory cream — elegant parchment
-  surface: '#FFF8F0',     // Soft warm cream cards
-  surfaceAlt: '#F5EDE3',  // Slightly deeper cream for inset/alt
+  // Backgrounds
+  bgPrimary: '#2A1B4D',      // Royal violet — main background
+  bgSecondary: '#1E1338',    // Deep violet — secondary / insets
+  bgCard: '#F8F3ED',         // Soft cream — cards, modals, surfaces
+  bgCardAlt: '#F5EDE3',      // Slightly warmer cream variant
 
-  // Royal Violet-Pink / Blush (GIVA-style feminine royal)
-  blush: '#C48B8E',       // Soft rose blush (buttons, hearts)
-  blushDark: '#B17C7F',   // Deeper rose-gold
-  blushLight: '#E8D8E8',  // Light lavender-rose surface accent
-  royalViolet: '#B48DA8', // Royal violet-pink (premium accent)
-  violetSoft: '#F0E4F4',  // Very soft violet-pink highlight
+  // Gold Gradient Accent (approximate with two tones)
+  gold: '#D4AF37',           // Classic gold
+  goldLight: '#F5D76E',      // Light highlight gold
+  goldDark: '#B8975E',       // Deep antique gold
 
-  // Timeless Jewellery Gold
-  gold: '#C5A26F',        // Antique soft gold (primary)
-  goldBright: '#D4AF37',  // Classic bright gold
-  goldDark: '#B8975E',    // Deep antique gold
+  // Text on dark violet bg
+  textOnDark: '#F8F3ED',     // Cream text on violet
+  textOnDarkMuted: '#C9B8A8',// Soft muted cream
 
-  // Elegant Dark Text on Light
-  text: '#3D2B2B',        // Deep warm brown — refined readability
-  textMuted: '#7A5C5C',   // Soft rose-brown muted
-  textGold: '#B8975E',    // Gold text on cream
+  // Text on cream card
+  textOnCream: '#1E1338',    // Deep violet text on cream
+  textOnCreamMuted: '#5C4734',// Warm muted brown
 
-  // Soft Warm Borders
-  border: '#D9C9B8',      // Warm beige border
-  borderLight: '#E8D9C8',
+  // Accents
+  violetAccent: '#7A4B6A',   // Deep rose-violet detail
+  creamAccent: '#E8D9C8',    // Soft warm border
+
+  // Buttons
+  btnPrimaryBg: '#D4AF37',   // Gold fill
+  btnPrimaryText: '#1E1338', // Deep violet on gold
+  btnOutline: '#D4AF37',     // Gold outline
+  btnOutlineText: '#F8F3ED', // Cream text on violet when outlined
+
+  // Shadows (for cards)
+  shadow: 'rgba(30,19,56,0.18)',
 
   // Functional
-  success: '#5C7A52',
+  whatsapp: '#25D366',
   danger: '#A14D4D',
-  info: '#B8975E',
+  success: '#4A7043',
+};
 
-  // Button text contrasts (light bg)
-  onGold: '#F8F3ED',      // Cream text on gold buttons
-  onBlush: '#F8F3ED',     // Cream text on blush buttons
-  onSurface: '#3D2B2B',   // Dark text on cream cards
+// Typography — elegant serif for headings, clean sans for body
+export const Type = {
+  serif: { fontFamily: 'serif', fontWeight: '700' as const },
+  serifHeavy: { fontFamily: 'serif', fontWeight: '900' as const },
+  sans: { fontFamily: undefined, fontWeight: '500' as const },
+  sansBold: { fontFamily: undefined, fontWeight: '700' as const },
+};
+
+// Card style base
+export const Card = {
+  borderRadius: 18,
+  backgroundColor: '#F8F3ED',
+  shadowColor: '#1E1338',
+  shadowOpacity: 0.12,
+  shadowRadius: 12,
+  elevation: 3,
+  borderWidth: 1,
+  borderColor: '#E8D9C8',
+};
+
+// Button styles
+export const Button = {
+  primary: {
+    backgroundColor: '#D4AF37',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 28,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    paddingVertical: 13,
+    paddingHorizontal: 26,
+    borderRadius: 28,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
 };
