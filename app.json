@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Agon Preview",
-    "slug": "agon-preview",
-    "version": "1.0.0",
+    "name": "Shekhar Raja Jewellers",
+    "slug": "srj-jewellers",
+    "version": "2.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "userInterfaceStyle": "light",
@@ -10,36 +10,30 @@
     "splash": {
       "image": "./assets/images/app-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F8F3ED"
+      "backgroundColor": "#6B21A8"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.shekharraja.jewellers"
     },
     "android": {
+      "package": "com.shekharraja.jewellers",
+      "versionCode": 3,
       "adaptiveIcon": {
-        "backgroundColor": "#F8F3ED",
+        "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
-      }
+      },
+      "softwareKeyboardLayoutMode": "pan"
     },
-    "web": {
-      "favicon": "./assets/images/app-icon.png"
-    },
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "web": { "favicon": "./assets/images/app-icon.png" },
+    "platforms": ["ios", "android", "web"],
     "extra": {
-      "eas": {
-        "projectId": "552f0665-e30d-4f11-9ea9-97bc22a22809"
-      }
+      "eas": { "projectId": "552f0665-e30d-4f11-9ea9-97bc22a22809" }
     },
     "updates": {
       "url": "https://u.expo.dev/552f0665-e30d-4f11-9ea9-97bc22a22809"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": { "policy": "appVersion" },
     "owner": "arcadalabs"
   }
 }
