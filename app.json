@@ -16,7 +16,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#6B21A8"
         }
-      ]
+      ],
+      "expo-barcode-scanner"
     ],
     "splash": {
       "image": "./assets/images/app-icon.png",
@@ -45,7 +46,19 @@
         "android.permission.RECORD_AUDIO"
       ]
     },
-    "web": { "favicon": "./assets/images/app-icon.png" },
-    "platforms": ["ios", "android", "web"]
+    "web": {
+      "favicon": "./assets/images/app-icon.png"
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e79f1753-a229-4e5e-84ff-7c559cb6219b"
+      }
+    },
+    "owner": "rahul95824832"
   }
 }
