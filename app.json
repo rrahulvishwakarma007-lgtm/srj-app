@@ -46,14 +46,6 @@
       ]
     },
     "web": { "favicon": "./assets/images/app-icon.png" },
-    "platforms": ["ios", "android", "web"],
-    "extra": {
-      "eas": { "projectId": "552f0665-e30d-4f11-9ea9-97bc22a22809" }
-    },
-    "updates": {
-      "url": "https://u.expo.dev/552f0665-e30d-4f11-9ea9-97bc22a22809"
-    },
-    "runtimeVersion": { "policy": "appVersion" },
-    "owner": "rrahulvishwakarma007-lgtm"
+    "platforms": ["ios", "android", "web"]
   }
 }
