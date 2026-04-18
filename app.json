@@ -16,8 +16,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#6B21A8"
         }
-      ],
-      "expo-barcode-scanner"
+      ]
     ],
     "splash": {
       "image": "./assets/images/app-icon.png",
