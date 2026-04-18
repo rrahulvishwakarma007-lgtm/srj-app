@@ -1,224 +1,468 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, FlatList, Animated, Linking, Alert, Dimensions, Platform,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, FlatList, Dimensions, Image, Animated, Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme, Radius } from '../lib/theme';
-import { products, initialGoldRates } from '../lib/data';
+import { products } from '../lib/data';
 import { Product } from '../lib/types';
 
-const { width } = Dimensions.get('window');
-const WHATSAPP = '918377911745';
-const WA_URL = (msg: string) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
+const { width: W } = Dimensions.get('window');
 
-const OCCASIONS = [
-  { label: 'Wedding',    icon: 'heart',    color: '#E91E8C' },
-  { label: 'Festive',   icon: 'sparkles', color: '#C9A84C' },
-  { label: 'Daily',     icon: 'sunny',    color: '#7C3AED' },
-  { label: 'Gifting',   icon: 'gift',     color: '#D04848' },
+const GOLD        = '#C9A84C';
+const GOLD_LIGHT  = '#F0D080';
+const PURPLE_DARK = '#2D1B5E';
+const PURPLE_MID  = '#4A2080';
+const PURPLE_HERO = '#3D1A6E';
+const BG          = '#F0EBFF';
+const BG_CARD     = '#FFFFFF';
+const BORDER      = '#DDD5F0';
+const TEXT_DARK   = '#1A0A3E';
+const TEXT_MID    = '#4A3570';
+const TEXT_LIGHT  = '#8B7BAF';
+const WHATSAPP    = '#25D366';
+
+const BANNERS = [
+  {
+    id: '1',
+    image: require('../assets/images/jewellery_banner_1920x1080 (1).png'),
+    title: 'Bridal\nCollection',
+    sub: 'Discover Your Perfect Look',
+    btn: 'Explore Collection',
+  },
+  {
+    id: '2',
+    image: require('../assets/images/ChatGPT-Image-Apr-5-2026-01_09-1.png'),
+    title: 'Fine\nJewellery',
+    sub: '22K & 24K Gold · Hallmarked',
+    btn: 'View Catalogue',
+  },
 ];
 
-interface Props { onOpenProduct: (p: Product) => void; wishlist: Product[]; }
+const CATEGORIES = [
+  { id: '1', image: require('../assets/images/IMG-20250924-WA0035-300x300.png'),                                          label: 'Gold'    },
+  { id: '2', image: require('../assets/images/IMG_20260121_163734-300x295.jpg'),                                          label: 'Silver'  },
+  { id: '3', image: require('../assets/images/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_-300x300.png'),        label: 'Bridal'  },
+  { id: '4', image: require('../assets/images/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_-300x300.png'),        label: 'Rings'   },
+  { id: '5', image: require('../assets/images/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_-300x300.png'),        label: 'Chains'  },
+  { id: '6', image: require('../assets/images/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_-300x300.png'),        label: 'Daily W' },
+  { id: '7', image: require('../assets/images/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_-300x300.png'),        label: 'Special' },
+];
 
-export default function HomeScreen({ onOpenProduct }: Props) {
-  const trending = products.slice(0, 6);
-  const featured = products.slice(4, 10);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => { Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start(); }, []);
+const TRUST = [
+  { icon: 'shield-checkmark', label: '100%\nHallmarked' },
+  { icon: 'ribbon',           label: 'Certified\nJewellery' },
+  { icon: 'swap-horizontal',  label: 'Easy\nExchange' },
+];
 
-  const handleWhatsApp = () => {
-    Linking.openURL(WA_URL('Hello Shekhar Raja Jewellers! I would like to know more about your collection.')).catch(() => Alert.alert('WhatsApp', `+${WHATSAPP}`));
-  };
+interface Props {
+  onOpenProduct?: (p: Product) => void;
+  wishlist?: Product[];
+}
+
+export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
+  const insets = useSafeAreaInsets();
+  const [search, setSearch]       = useState('');
+  const [bannerIdx, setBannerIdx] = useState(0);
+  const [goldRates, setGoldRates] = useState<{ k22: number; k24: number } | null>(null);
+  const bannerRef = useRef<FlatList>(null);
+  const scrollX   = useRef(new Animated.Value(0)).current;
+
+  // Auto-scroll banner every 4 s
+  useEffect(() => {
+    const t = setInterval(() => {
+      const next = (bannerIdx + 1) % BANNERS.length;
+      bannerRef.current?.scrollToIndex({ index: next, animated: true });
+      setBannerIdx(next);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [bannerIdx]);
+
+  // Live gold rates
+  useEffect(() => {
+    (async () => {
+      try {
+        const r    = await fetch('https://api.metals.live/v1/spot');
+        const data = await r.json();
+        const goldUSD = data.find((d: any) => d.gold)?.gold ?? 2350;
+        const fxR  = await fetch('https://api.frankfurter.app/latest?from=USD&to=INR');
+        const fx   = await fxR.json();
+        const inr  = fx.rates.INR ?? 83.5;
+        const base = (goldUSD * inr / 31.1035) * 10 * 1.15 * 1.03;
+        setGoldRates({ k24: Math.round(base), k22: Math.round(base * 0.9166) });
+      } catch {
+        setGoldRates({ k24: 7420, k22: 6800 });
+      }
+    })();
+  }, []);
+
+  const whatsapp  = () => Linking.openURL('https://wa.me/918377911745');
+  const bookVisit = () => Linking.openURL('https://wa.me/918377911745?text=I%20would%20like%20to%20book%20a%20store%20visit');
+
+  const featured = products.slice(0, 6);
+  const filtered = search
+    ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    : featured;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Animated.ScrollView style={{ opacity: fadeAnim }} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
 
-        {/* ── HERO ── */}
-        <View style={styles.hero}>
-          {/* Top bar with store name */}
-          <View style={styles.heroTopBar}>
-            <View style={styles.heroBrand}>
-              <Ionicons name="diamond" size={18} color={Theme.gold} />
-              <Text style={styles.heroBrandText}>Shekhar Raja Jewellers</Text>
-            </View>
-            <TouchableOpacity style={styles.heroWishIcon} onPress={handleWhatsApp}>
-              <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Hero Content */}
-          <View style={styles.heroBanner}>
-            <View style={styles.heroIconCircle}>
-              <Ionicons name="diamond" size={52} color={Theme.gold} />
-            </View>
-            <Text style={styles.heroEst}>EST. 1987  ◆  JABALPUR</Text>
-            <Text style={styles.heroTitle}>Fine Jewellery</Text>
-            <Text style={styles.heroClaim}>22K & 24K Gold · Hallmarked · Trusted since 1987</Text>
-
-            <TouchableOpacity style={styles.heroWaBtn} onPress={handleWhatsApp} activeOpacity={0.85}>
-              <Ionicons name="logo-whatsapp" size={17} color="#fff" />
-              <Text style={styles.heroWaText}>Chat on WhatsApp</Text>
-            </TouchableOpacity>
+      {/* ── HEADER ── */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Ionicons name="diamond" size={22} color={GOLD} />
+          <View style={{ marginLeft: 8 }}>
+            <Text style={styles.headerBrand}>Shekhar Raja</Text>
+            <Text style={styles.headerSub}>JEWELLERS</Text>
           </View>
         </View>
-
-        {/* ── SEARCH BAR (like Shaya) ── */}
-        <View style={styles.searchWrap}>
-          <TouchableOpacity style={styles.searchBar} activeOpacity={0.8}>
-            <Ionicons name="search" size={18} color={Theme.textMuted} />
-            <Text style={styles.searchPlaceholder}>Search rings, necklaces, earrings…</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerBtn}>
+            <Ionicons name="heart-outline" size={20} color={GOLD} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn}>
+            <Ionicons name="cart-outline" size={20} color={GOLD} />
           </TouchableOpacity>
         </View>
+      </View>
 
-        {/* ── QUICK CHIPS ── */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-          {['New Arrivals','Rings','Necklaces','Earrings','Bracelets','Pendants'].map((c, i) => (
-            <TouchableOpacity key={i} style={[styles.chip, i === 0 && styles.chipActive]}>
-              <Text style={[styles.chipText, i === 0 && styles.chipTextActive]}>{c}</Text>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 28 }}
+      >
+        {/* ── SEARCH ── */}
+        <View style={styles.searchWrap}>
+          <Ionicons name="search" size={16} color={TEXT_LIGHT} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search Jewellery..."
+            placeholderTextColor={TEXT_LIGHT}
+            value={search}
+            onChangeText={setSearch}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={18} color={TEXT_LIGHT} />
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+        </View>
 
-        {/* ── GOLD RATES CARD ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>Today's Gold Rates</Text>
-            <View style={styles.liveTag}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveTxt}>LIVE</Text>
+        {/* ── BANNER CAROUSEL ── */}
+        {!search && (
+          <View style={styles.bannerWrap}>
+            <Animated.FlatList
+              ref={bannerRef}
+              data={BANNERS}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={b => b.id}
+              onScroll={Animated.event(
+                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                { useNativeDriver: false }
+              )}
+              onMomentumScrollEnd={e =>
+                setBannerIdx(Math.round(e.nativeEvent.contentOffset.x / W))
+              }
+              renderItem={({ item }) => (
+                <View style={styles.bannerSlide}>
+                  <Image source={item.image} style={styles.bannerImage} resizeMode="cover" />
+                  <View style={styles.bannerOverlay} />
+                  <View style={styles.bannerContent}>
+                    <Text style={styles.bannerTitle}>{item.title}</Text>
+                    <Text style={styles.bannerSub}>{item.sub}</Text>
+                    <TouchableOpacity style={styles.bannerBtn}>
+                      <Text style={styles.bannerBtnText}>◆ {item.btn} ◆</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+            {/* Dot indicators */}
+            <View style={styles.dots}>
+              {BANNERS.map((_, i) => (
+                <View key={i} style={[styles.dot, i === bannerIdx && styles.dotActive]} />
+              ))}
             </View>
           </View>
-          <View style={styles.goldCard}>
-            {(initialGoldRates || [
-              { type: '24K Gold', price: 9850, unit: 'per 10g' },
-              { type: '22K Gold', price: 9020, unit: 'per 10g' },
-              { type: '18K Gold', price: 7380, unit: 'per 10g' },
-            ]).slice(0, 3).map((r: any, i: number) => (
-              <View key={i} style={[styles.goldRow, i < 2 && { borderBottomWidth: 1, borderBottomColor: Theme.borderLight }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={styles.goldDot} />
-                  <Text style={styles.goldType}>{r.type}</Text>
+        )}
+
+        {/* ── CATEGORIES ── */}
+        {!search && (
+          <View style={styles.section}>
+            <FlatList
+              data={CATEGORIES}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={c => c.id}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.catItem} activeOpacity={0.8}>
+                  <View style={styles.catCircle}>
+                    <Image source={item.image} style={styles.catImage} resizeMode="cover" />
+                  </View>
+                  <Text style={styles.catLabel}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* ── FEATURED / SEARCH RESULTS ── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>
+              {search ? `Results for "${search}"` : 'Featured Products'}
+            </Text>
+            {!search && <View style={styles.sectionLine} />}
+          </View>
+
+          {filtered.length === 0 ? (
+            <Text style={styles.noResult}>No products found</Text>
+          ) : (
+            <FlatList
+              data={filtered}
+              horizontal={!search}
+              numColumns={search ? 2 : undefined}
+              key={search ? 'grid' : 'list'}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={p => String(p.id)}
+              contentContainerStyle={
+                search ? styles.gridContent : { paddingHorizontal: 16, gap: 12 }
+              }
+              renderItem={({ item }) => {
+                const wishlisted = wishlist.some(w => w.id === item.id);
+                return (
+                  <TouchableOpacity
+                    style={search ? styles.productGridCard : styles.productCard}
+                    onPress={() => onOpenProduct?.(item)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.productImgWrap}>
+                      <View style={[styles.productIconBg, { backgroundColor: item.color + '22' }]}>
+                        <Ionicons name={item.icon as any} size={38} color={item.color} />
+                      </View>
+                      <View style={styles.heartBadge}>
+                        <Ionicons
+                          name={wishlisted ? 'heart' : 'heart-outline'}
+                          size={15}
+                          color={wishlisted ? '#E55' : '#AAA'}
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.productInfo}>
+                      <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+                      <View style={styles.productBottom}>
+                        <Text style={styles.productPrice}>
+                          ₹{item.price.toLocaleString('en-IN')}
+                        </Text>
+                        <View style={styles.heartBtnSmall}>
+                          <Ionicons name="heart" size={13} color={GOLD} />
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          )}
+        </View>
+
+        {/* ── GOLD RATES ── */}
+        {!search && (
+          <View style={styles.section}>
+            <View style={[styles.sectionHeader, { justifyContent: 'center' }]}>
+              <View style={styles.sectionLine} />
+              <Text style={[styles.sectionTitle, { marginHorizontal: 10 }]}>◆ Gold Rates ◆</Text>
+              <View style={styles.sectionLine} />
+            </View>
+            <View style={styles.goldCard}>
+              <View style={styles.goldRow}>
+                <View style={styles.goldItem}>
+                  <Text style={styles.goldKarat}>22K</Text>
+                  <Text style={styles.goldPrice}>
+                    ₹{goldRates ? goldRates.k22.toLocaleString('en-IN') : '---'}
+                  </Text>
+                  <Ionicons name="arrow-up" size={13} color="#22c55e" />
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.goldPrice}>₹{r.price.toLocaleString('en-IN')}</Text>
-                  <Text style={styles.goldUnit}>{r.unit}</Text>
+                <View style={styles.goldDivider} />
+                <View style={styles.goldItem}>
+                  <Text style={styles.goldKarat}>24K</Text>
+                  <Text style={styles.goldPrice}>
+                    ₹{goldRates ? goldRates.k24.toLocaleString('en-IN') : '---'}
+                  </Text>
+                  <Ionicons name="arrow-down" size={13} color="#ef4444" />
                 </View>
               </View>
-            ))}
-            <Text style={styles.goldNote}>◆  Open Gold tab for full live rates</Text>
-          </View>
-        </View>
-
-        {/* ── TRENDING ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>Trending Pieces</Text>
-            <Text style={styles.sectionSub}>Most enquired this week</Text>
-          </View>
-          <FlatList
-            horizontal
-            data={trending}
-            keyExtractor={i => String(i.id)}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 20 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.trendCard} activeOpacity={0.88} onPress={() => onOpenProduct(item)}>
-                <View style={styles.trendImg}>
-                  <Ionicons name={item.icon as any} size={36} color={Theme.gold} />
-                </View>
-                <Text style={styles.trendName} numberOfLines={2}>{item.name}</Text>
-                <Text style={styles.trendDesc} numberOfLines={1}>{item.description}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-                  <Text style={styles.trendCta}>Enquire</Text>
-                  <Ionicons name="arrow-forward" size={11} color={Theme.purple} />
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-
-        {/* ── SHOP BY OCCASION ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Shop by Occasion</Text>
-          <View style={styles.occasionGrid}>
-            {OCCASIONS.map((o, i) => (
-              <TouchableOpacity key={i} style={styles.occasionCard} activeOpacity={0.85}>
-                <View style={[styles.occasionIcon, { backgroundColor: o.color + '18' }]}>
-                  <Ionicons name={o.icon as any} size={22} color={o.color} />
-                </View>
-                <Text style={styles.occasionLabel}>{o.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* ── FEATURED ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Featured Collections</Text>
-          <FlatList
-            horizontal
-            data={featured}
-            keyExtractor={i => String(i.id)}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 20 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.featCard} onPress={() => onOpenProduct(item)} activeOpacity={0.88}>
-                <View style={styles.featImg}>
-                  <Ionicons name={item.icon as any} size={32} color={Theme.gold} />
-                </View>
-                <View style={{ padding: 12 }}>
-                  <Text style={styles.featName} numberOfLines={2}>{item.name}</Text>
-                  <Text style={styles.featDesc} numberOfLines={1}>{item.description}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-
-        {/* ── STORE STRIP ── */}
-        <TouchableOpacity style={styles.storeStrip} onPress={() => Linking.openURL('https://www.google.com/maps/place/Shekhar+Raja+Jewellers')} activeOpacity={0.88}>
-          <View style={styles.storeLeft}>
-            <View style={styles.storeIcon}><Ionicons name="location" size={20} color={Theme.gold} /></View>
-            <View>
-              <Text style={styles.storeTitle}>Visit Our Showroom</Text>
-              <Text style={styles.storeSub}>Sarafa · Napier Town · Jabalpur, MP</Text>
             </View>
           </View>
-          <View style={styles.storeBtn}>
-            <Ionicons name="navigate" size={14} color="#fff" />
-          </View>
-        </TouchableOpacity>
+        )}
 
-      </Animated.ScrollView>
-    </SafeAreaView>
+        {/* ── TRUST BADGES ── */}
+        {!search && (
+          <View style={styles.trustRow}>
+            {TRUST.map((t, i) => (
+              <View key={i} style={styles.trustItem}>
+                <Ionicons name={t.icon as any} size={26} color={GOLD} />
+                <Text style={styles.trustLabel}>{t.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* ── CTA BUTTONS ── */}
+        {!search && (
+          <View style={styles.ctaWrap}>
+            <TouchableOpacity style={styles.bookBtn} onPress={bookVisit} activeOpacity={0.85}>
+              <Text style={styles.bookBtnText}>Book Store Visit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.waBtn} onPress={whatsapp} activeOpacity={0.85}>
+              <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.waBtnText}>Chat on WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Theme.bgPrimary },
+  root:   { flex: 1, backgroundColor: PURPLE_DARK },
+  scroll: { flex: 1, backgroundColor: BG },
 
-  // Hero
-  hero: { backgroundColor: Theme.bgPurple },
-  heroTopBar: {
+  // Header
+  header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 18, paddingTop: 14, paddingBottom: 10,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: PURPLE_DARK, paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(201,168,76,0.3)',
   },
-  heroBrand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  heroBrandText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800', letterSpacing: 0.5 },
-  heroWishIcon: { padding: 4 },
-  heroBanner: {
-    alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 28, paddingBottom: 32,
+  headerLeft:  { flexDirection: 'row', alignItems: 'center' },
+  headerBrand: { color: GOLD, fontSize: 18, fontWeight: '800', letterSpacing: 0.5 },
+  headerSub:   { color: GOLD_LIGHT, fontSize: 9, letterSpacing: 4, marginTop: -2 },
+  headerRight: { flexDirection: 'row', gap: 8 },
+  headerBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(201,168,76,0.15)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  heroIconCircle: {
-    width: 90, height: 90, borderRadius: 45,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 2, borderColor: 'rgba(201,168,76,0.5)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+
+  // Search
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: BG_CARD, borderRadius: 24,
+    marginHorizontal: 16, marginTop: 14, marginBottom: 4,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1, borderColor: BORDER,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 3,
+  },
+  searchInput: { flex: 1, fontSize: 14, color: TEXT_DARK },
+
+  // Banner
+  bannerWrap:    { marginTop: 12 },
+  bannerSlide:   { width: W, height: 220, position: 'relative' },
+  bannerImage:   { width: '100%', height: '100%' },
+  bannerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(40,10,80,0.42)' },
+  bannerContent: { position: 'absolute', left: 20, bottom: 28, right: W * 0.42 },
+  bannerTitle: {
+    color: '#fff', fontSize: 28, fontWeight: '900', fontStyle: 'italic',
+    lineHeight: 32, letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4,
+  },
+  bannerSub: { color: 'rgba(255,255,255,0.88)', fontSize: 12, marginTop: 4, marginBottom: 10 },
+  bannerBtn: {
+    backgroundColor: 'rgba(201,168,76,0.9)', paddingVertical: 8, paddingHorizontal: 14,
+    borderRadius: 20, alignSelf: 'flex-start',
+  },
+  bannerBtnText: { color: PURPLE_DARK, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  dots:          { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 8 },
+  dot:           { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C8B8E8' },
+  dotActive:     { width: 18, backgroundColor: GOLD },
+
+  // Section
+  section: { marginTop: 18 },
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, marginBottom: 12,
+  },
+  sectionTitle: { color: TEXT_DARK, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  sectionLine:  { flex: 1, height: 1, backgroundColor: BORDER, marginLeft: 8 },
+  noResult:     { color: TEXT_MID, textAlign: 'center', marginTop: 20, fontSize: 14 },
+
+  // Categories — image circles
+  catItem:   { alignItems: 'center', width: 68 },
+  catCircle: {
+    width: 58, height: 58, borderRadius: 29, overflow: 'hidden',
+    borderWidth: 2, borderColor: GOLD,
+    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 3,
+  },
+  catImage:  { width: '100%', height: '100%' },
+  catLabel:  { color: TEXT_MID, fontSize: 11, fontWeight: '600', marginTop: 5, textAlign: 'center' },
+
+  // Products
+  productCard: {
+    width: 148, backgroundColor: BG_CARD, borderRadius: 14,
+    borderWidth: 1, borderColor: BORDER, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
+  },
+  productGridCard: {
+    flex: 1, margin: 6, backgroundColor: BG_CARD, borderRadius: 14,
+    borderWidth: 1, borderColor: BORDER, overflow: 'hidden',
+  },
+  gridContent:    { paddingHorizontal: 10 },
+  productImgWrap: { position: 'relative' },
+  productIconBg:  { height: 110, alignItems: 'center', justifyContent: 'center' },
+  heartBadge: {
+    position: 'absolute', top: 8, right: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12,
+    width: 26, height: 26, alignItems: 'center', justifyContent: 'center',
+  },
+  productInfo:   { padding: 10 },
+  productName:   { color: TEXT_DARK, fontSize: 12, fontWeight: '700' },
+  productBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  productPrice:  { color: PURPLE_MID, fontSize: 13, fontWeight: '800' },
+  heartBtnSmall: {
+    backgroundColor: 'rgba(201,168,76,0.12)', borderRadius: 10,
+    width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
+  },
+
+  // Gold rates
+  goldCard: {
+    marginHorizontal: 16, backgroundColor: PURPLE_HERO,
+    borderRadius: 16, borderWidth: 1.5, borderColor: GOLD, padding: 16,
+  },
+  goldRow:    { flexDirection: 'row', alignItems: 'center' },
+  goldItem:   { flex: 1, alignItems: 'center', gap: 4 },
+  goldKarat:  { color: GOLD_LIGHT, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  goldPrice:  { color: '#fff', fontSize: 22, fontWeight: '900' },
+  goldDivider:{ width: 1, height: 50, backgroundColor: 'rgba(201,168,76,0.4)' },
+
+  // Trust
+  trustRow: {
+    flexDirection: 'row', justifyContent: 'space-around',
+    marginHorizontal: 16, marginTop: 18,
+    backgroundColor: BG_CARD, borderRadius: 14,
+    borderWidth: 1, borderColor: BORDER, paddingVertical: 14,
+  },
+  trustItem:  { alignItems: 'center', gap: 6 },
+  trustLabel: { color: TEXT_MID, fontSize: 11, fontWeight: '600', textAlign: 'center', lineHeight: 15 },
+
+  // CTA
+  ctaWrap: { paddingHorizontal: 16, marginTop: 18, gap: 10 },
+  bookBtn: {
+    backgroundColor: GOLD, borderRadius: 28, paddingVertical: 15, alignItems: 'center',
+    shadowColor: GOLD, shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
+  },
+  bookBtnText: { color: PURPLE_DARK, fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
+  waBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: WHATSAPP, borderRadius: 28, paddingVertical: 14,
+  },
+  waBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+});
+tems: 'center', justifyContent: 'center', marginBottom: 16,
   },
   heroEst: { color: Theme.gold, fontSize: 11, fontWeight: '700', letterSpacing: 3, marginBottom: 8 },
   heroTitle: { color: '#FFFFFF', fontSize: 32, fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
