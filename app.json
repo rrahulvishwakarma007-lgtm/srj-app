@@ -6,7 +6,18 @@
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "userInterfaceStyle": "light",
-    "plugins": [],
+    "plugins": [
+      "expo-camera",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/app-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#6B21A8"
+        }
+      ]
+    ],
     "splash": {
       "image": "./assets/images/app-icon.png",
       "resizeMode": "contain",
@@ -14,7 +25,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.shekharraja.jewellers"
+      "bundleIdentifier": "com.shekharraja.jewellers",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Shekhar Raja Jewellers uses the camera to scan jewellery pieces and QR tags.",
+        "NSMicrophoneUsageDescription": "Microphone access is required by the camera."
+      }
     },
     "android": {
       "package": "com.shekharraja.jewellers",
@@ -23,7 +38,12 @@
         "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
       },
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": { "favicon": "./assets/images/app-icon.png" },
     "platforms": ["ios", "android", "web"],
