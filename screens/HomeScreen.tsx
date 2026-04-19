@@ -41,13 +41,13 @@ const BANNERS = [
 ];
 
 const CATEGORIES = [
-  { id: '1', image: require('../assets/images/IMG-20250924-WA0035-300x300.png'),                                          label: 'Gold'    },
-  { id: '2', image: require('../assets/images/IMG_20260121_163734-300x295.jpg'),                                          label: 'Silver'  },
-  { id: '3', image: require('../assets/images/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_-300x300.png'),        label: 'Bridal'  },
-  { id: '4', image: require('../assets/images/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_-300x300.png'),        label: 'Rings'   },
-  { id: '5', image: require('../assets/images/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_-300x300.png'),        label: 'Chains'  },
-  { id: '6', image: require('../assets/images/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_-300x300.png'),        label: 'Daily W' },
-  { id: '7', image: require('../assets/images/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_-300x300.png'),        label: 'Special' },
+  { id: '1', image: require('../assets/images/IMG-20250924-WA0035-300x300.png'),                                   label: 'Gold'    },
+  { id: '2', image: require('../assets/images/IMG_20260121_163734-300x295.jpg'),                                   label: 'Silver'  },
+  { id: '3', image: require('../assets/images/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_-300x300.png'), label: 'Bridal'  },
+  { id: '4', image: require('../assets/images/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_-300x300.png'), label: 'Rings'   },
+  { id: '5', image: require('../assets/images/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_-300x300.png'), label: 'Chains'  },
+  { id: '6', image: require('../assets/images/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_-300x300.png'), label: 'Daily W' },
+  { id: '7', image: require('../assets/images/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_-300x300.png'), label: 'Special' },
 ];
 
 const TRUST = [
@@ -69,7 +69,6 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   const bannerRef = useRef<FlatList>(null);
   const scrollX   = useRef(new Animated.Value(0)).current;
 
-  // Auto-scroll banner every 4 s
   useEffect(() => {
     const t = setInterval(() => {
       const next = (bannerIdx + 1) % BANNERS.length;
@@ -79,17 +78,16 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
     return () => clearInterval(t);
   }, [bannerIdx]);
 
-  // Live gold rates
   useEffect(() => {
     (async () => {
       try {
-        const r    = await fetch('https://api.metals.live/v1/spot');
-        const data = await r.json();
+        const r       = await fetch('https://api.metals.live/v1/spot');
+        const data    = await r.json();
         const goldUSD = data.find((d: any) => d.gold)?.gold ?? 2350;
-        const fxR  = await fetch('https://api.frankfurter.app/latest?from=USD&to=INR');
-        const fx   = await fxR.json();
-        const inr  = fx.rates.INR ?? 83.5;
-        const base = (goldUSD * inr / 31.1035) * 10 * 1.15 * 1.03;
+        const fxR     = await fetch('https://api.frankfurter.app/latest?from=USD&to=INR');
+        const fx      = await fxR.json();
+        const inr     = fx.rates.INR ?? 83.5;
+        const base    = (goldUSD * inr / 31.1035) * 10 * 1.15 * 1.03;
         setGoldRates({ k24: Math.round(base), k22: Math.round(base * 0.9166) });
       } catch {
         setGoldRates({ k24: 7420, k22: 6800 });
@@ -108,7 +106,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Ionicons name="diamond" size={22} color={GOLD} />
@@ -132,7 +130,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 28 }}
       >
-        {/* ── SEARCH ── */}
+        {/* SEARCH */}
         <View style={styles.searchWrap}>
           <Ionicons name="search" size={16} color={TEXT_LIGHT} style={{ marginRight: 8 }} />
           <TextInput
@@ -149,7 +147,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           )}
         </View>
 
-        {/* ── BANNER CAROUSEL ── */}
+        {/* BANNER CAROUSEL */}
         {!search && (
           <View style={styles.bannerWrap}>
             <Animated.FlatList
@@ -180,7 +178,6 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                 </View>
               )}
             />
-            {/* Dot indicators */}
             <View style={styles.dots}>
               {BANNERS.map((_, i) => (
                 <View key={i} style={[styles.dot, i === bannerIdx && styles.dotActive]} />
@@ -189,7 +186,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* ── CATEGORIES ── */}
+        {/* CATEGORIES */}
         {!search && (
           <View style={styles.section}>
             <FlatList
@@ -210,7 +207,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* ── FEATURED / SEARCH RESULTS ── */}
+        {/* FEATURED PRODUCTS */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
@@ -218,7 +215,6 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
             </Text>
             {!search && <View style={styles.sectionLine} />}
           </View>
-
           {filtered.length === 0 ? (
             <Text style={styles.noResult}>No products found</Text>
           ) : (
@@ -270,7 +266,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           )}
         </View>
 
-        {/* ── GOLD RATES ── */}
+        {/* GOLD RATES */}
         {!search && (
           <View style={styles.section}>
             <View style={[styles.sectionHeader, { justifyContent: 'center' }]}>
@@ -300,7 +296,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* ── TRUST BADGES ── */}
+        {/* TRUST BADGES */}
         {!search && (
           <View style={styles.trustRow}>
             {TRUST.map((t, i) => (
@@ -312,7 +308,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* ── CTA BUTTONS ── */}
+        {/* CTA BUTTONS */}
         {!search && (
           <View style={styles.ctaWrap}>
             <TouchableOpacity style={styles.bookBtn} onPress={bookVisit} activeOpacity={0.85}>
@@ -333,7 +329,6 @@ const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: PURPLE_DARK },
   scroll: { flex: 1, backgroundColor: BG },
 
-  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: PURPLE_DARK, paddingHorizontal: 16, paddingVertical: 12,
@@ -349,7 +344,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  // Search
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: BG_CARD, borderRadius: 24,
@@ -360,7 +354,6 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 14, color: TEXT_DARK },
 
-  // Banner
   bannerWrap:    { marginTop: 12 },
   bannerSlide:   { width: W, height: 220, position: 'relative' },
   bannerImage:   { width: '100%', height: '100%' },
@@ -371,7 +364,7 @@ const styles = StyleSheet.create({
     lineHeight: 32, letterSpacing: 0.5,
     textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4,
   },
-  bannerSub: { color: 'rgba(255,255,255,0.88)', fontSize: 12, marginTop: 4, marginBottom: 10 },
+  bannerSub:     { color: 'rgba(255,255,255,0.88)', fontSize: 12, marginTop: 4, marginBottom: 10 },
   bannerBtn: {
     backgroundColor: 'rgba(201,168,76,0.9)', paddingVertical: 8, paddingHorizontal: 14,
     borderRadius: 20, alignSelf: 'flex-start',
@@ -381,7 +374,6 @@ const styles = StyleSheet.create({
   dot:           { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C8B8E8' },
   dotActive:     { width: 18, backgroundColor: GOLD },
 
-  // Section
   section: { marginTop: 18 },
   sectionHeader: {
     flexDirection: 'row', alignItems: 'center',
@@ -391,7 +383,6 @@ const styles = StyleSheet.create({
   sectionLine:  { flex: 1, height: 1, backgroundColor: BORDER, marginLeft: 8 },
   noResult:     { color: TEXT_MID, textAlign: 'center', marginTop: 20, fontSize: 14 },
 
-  // Categories — image circles
   catItem:   { alignItems: 'center', width: 68 },
   catCircle: {
     width: 58, height: 58, borderRadius: 29, overflow: 'hidden',
@@ -401,7 +392,6 @@ const styles = StyleSheet.create({
   catImage:  { width: '100%', height: '100%' },
   catLabel:  { color: TEXT_MID, fontSize: 11, fontWeight: '600', marginTop: 5, textAlign: 'center' },
 
-  // Products
   productCard: {
     width: 148, backgroundColor: BG_CARD, borderRadius: 14,
     borderWidth: 1, borderColor: BORDER, overflow: 'hidden',
@@ -428,18 +418,16 @@ const styles = StyleSheet.create({
     width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
   },
 
-  // Gold rates
   goldCard: {
     marginHorizontal: 16, backgroundColor: PURPLE_HERO,
     borderRadius: 16, borderWidth: 1.5, borderColor: GOLD, padding: 16,
   },
-  goldRow:    { flexDirection: 'row', alignItems: 'center' },
-  goldItem:   { flex: 1, alignItems: 'center', gap: 4 },
-  goldKarat:  { color: GOLD_LIGHT, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
-  goldPrice:  { color: '#fff', fontSize: 22, fontWeight: '900' },
-  goldDivider:{ width: 1, height: 50, backgroundColor: 'rgba(201,168,76,0.4)' },
+  goldRow:     { flexDirection: 'row', alignItems: 'center' },
+  goldItem:    { flex: 1, alignItems: 'center', gap: 4 },
+  goldKarat:   { color: GOLD_LIGHT, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
+  goldPrice:   { color: '#fff', fontSize: 22, fontWeight: '900' },
+  goldDivider: { width: 1, height: 50, backgroundColor: 'rgba(201,168,76,0.4)' },
 
-  // Trust
   trustRow: {
     flexDirection: 'row', justifyContent: 'space-around',
     marginHorizontal: 16, marginTop: 18,
@@ -449,7 +437,6 @@ const styles = StyleSheet.create({
   trustItem:  { alignItems: 'center', gap: 6 },
   trustLabel: { color: TEXT_MID, fontSize: 11, fontWeight: '600', textAlign: 'center', lineHeight: 15 },
 
-  // CTA
   ctaWrap: { paddingHorizontal: 16, marginTop: 18, gap: 10 },
   bookBtn: {
     backgroundColor: GOLD, borderRadius: 28, paddingVertical: 15, alignItems: 'center',
@@ -461,116 +448,4 @@ const styles = StyleSheet.create({
     backgroundColor: WHATSAPP, borderRadius: 28, paddingVertical: 14,
   },
   waBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-});
-tems: 'center', justifyContent: 'center', marginBottom: 16,
-  },
-  heroEst: { color: Theme.gold, fontSize: 11, fontWeight: '700', letterSpacing: 3, marginBottom: 8 },
-  heroTitle: { color: '#FFFFFF', fontSize: 32, fontWeight: '900', letterSpacing: 2, textAlign: 'center' },
-  heroClaim: { color: Theme.textLightMuted, fontSize: 12, marginTop: 8, textAlign: 'center', letterSpacing: 0.3 },
-  heroWaBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#25D366',
-    paddingVertical: 12, paddingHorizontal: 22, borderRadius: Radius.full, marginTop: 18,
-  },
-  heroWaText: { color: '#fff', fontSize: 13, fontWeight: '800' },
-
-  // Search
-  searchWrap: { backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: Theme.border },
-  searchBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: Theme.bgPrimary,
-    borderRadius: Radius.full, paddingHorizontal: 16, paddingVertical: 11,
-    borderWidth: 1, borderColor: Theme.border,
-  },
-  searchPlaceholder: { color: Theme.textMuted, fontSize: 14 },
-
-  // Chips
-  chipRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
-  chip: {
-    paddingHorizontal: 16, paddingVertical: 8,
-    backgroundColor: '#FFFFFF', borderRadius: Radius.full,
-    borderWidth: 1, borderColor: Theme.border,
-  },
-  chipActive: { backgroundColor: Theme.bgPurple, borderColor: Theme.bgPurple },
-  chipText: { color: Theme.textMuted, fontSize: 12, fontWeight: '700' },
-  chipTextActive: { color: '#FFFFFF' },
-
-  // Section
-  section: { marginTop: 20, paddingHorizontal: 16 },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  sectionTitle: { color: Theme.textDark, fontSize: 18, fontWeight: '800', letterSpacing: 0.3 },
-  sectionSub: { color: Theme.textMuted, fontSize: 11, fontWeight: '600' },
-
-  // Live tag
-  liveTag: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: Radius.full },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: Theme.success },
-  liveTxt: { color: Theme.success, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
-
-  // Gold card
-  goldCard: {
-    backgroundColor: '#FFFFFF', borderRadius: Radius.lg, borderWidth: 1,
-    borderColor: Theme.border, paddingHorizontal: 18, paddingTop: 4, paddingBottom: 12,
-    elevation: 2, shadowColor: Theme.shadow, shadowOpacity: 0.08, shadowRadius: 8,
-  },
-  goldRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
-  goldDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Theme.gold },
-  goldType: { color: Theme.textDark, fontSize: 15, fontWeight: '700' },
-  goldPrice: { color: Theme.purple, fontSize: 17, fontWeight: '900' },
-  goldUnit: { color: Theme.textMuted, fontSize: 10, marginTop: 2 },
-  goldNote: { color: Theme.textMuted, fontSize: 10, fontWeight: '600', textAlign: 'center', marginTop: 6 },
-
-  // Trending
-  trendCard: {
-    width: 148, marginRight: 12, backgroundColor: '#FFFFFF',
-    borderRadius: Radius.lg, padding: 14,
-    borderWidth: 1, borderColor: Theme.border,
-    elevation: 2, shadowColor: Theme.shadow, shadowOpacity: 0.06, shadowRadius: 6,
-  },
-  trendImg: {
-    height: 90, backgroundColor: Theme.bgCardPurple,
-    borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-  },
-  trendName: { color: Theme.textDark, fontSize: 13, fontWeight: '800', lineHeight: 17 },
-  trendDesc: { color: Theme.textMuted, fontSize: 11, marginTop: 3 },
-  trendCta: { color: Theme.purple, fontSize: 11, fontWeight: '700' },
-
-  // Occasion
-  occasionGrid: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  occasionCard: {
-    flex: 1, alignItems: 'center', backgroundColor: '#FFFFFF',
-    borderRadius: Radius.md, paddingVertical: 16,
-    borderWidth: 1, borderColor: Theme.border,
-    elevation: 1, shadowColor: Theme.shadow, shadowOpacity: 0.05, shadowRadius: 4,
-  },
-  occasionIcon: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  occasionLabel: { color: Theme.textDark, fontSize: 11, fontWeight: '700', textAlign: 'center' },
-
-  // Featured
-  featCard: {
-    width: 160, marginRight: 12, backgroundColor: '#FFFFFF',
-    borderRadius: Radius.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: Theme.border,
-    elevation: 2, shadowColor: Theme.shadow, shadowOpacity: 0.06, shadowRadius: 6,
-  },
-  featImg: { height: 96, backgroundColor: Theme.bgCardPurple, alignItems: 'center', justifyContent: 'center' },
-  featName: { color: Theme.textDark, fontSize: 13, fontWeight: '800', lineHeight: 17 },
-  featDesc: { color: Theme.textMuted, fontSize: 11, marginTop: 3 },
-
-  // Store strip
-  storeStrip: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: Theme.bgPurple,
-    marginHorizontal: 16, marginTop: 24, borderRadius: Radius.lg, padding: 16,
-  },
-  storeLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  storeIcon: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(201,168,76,0.18)', alignItems: 'center', justifyContent: 'center',
-  },
-  storeTitle: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
-  storeSub: { color: Theme.textLightMuted, fontSize: 11, marginTop: 2 },
-  storeBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: Theme.gold, alignItems: 'center', justifyContent: 'center',
-  },
 });
