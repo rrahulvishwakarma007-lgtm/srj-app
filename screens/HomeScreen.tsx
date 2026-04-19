@@ -26,7 +26,7 @@ const WHATSAPP    = '#25D366';
 const BANNERS = [
   {
     id: '1',
-    image: require('../assets/images/jewellery_banner_1920x1080.png'),
+    image: require('../assets/jewellery_banner_1920x1080.png'),
     title: 'Bridal\nCollection',
     sub: 'Discover Your Perfect Look',
     btn: 'Explore Collection',
@@ -41,13 +41,13 @@ const BANNERS = [
 ];
 
 const CATEGORIES = [
-  { id: '1', image: require('../assets/images/IMG-20250924-WA0035-300x300.png'),                                   label: 'Gold'    },
-  { id: '2', image: require('../assets/images/IMG_20260121_163734-300x295.jpg'),                                   label: 'Silver'  },
-  { id: '3', image: require('../assets/images/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_-300x300.png'), label: 'Bridal'  },
-  { id: '4', image: require('../assets/images/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_-300x300.png'), label: 'Rings'   },
-  { id: '5', image: require('../assets/images/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_-300x300.png'), label: 'Chains'  },
-  { id: '6', image: require('../assets/images/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_-300x300.png'), label: 'Daily W' },
-  { id: '7', image: require('../assets/images/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_-300x300.png'), label: 'Special' },
+  { id: '1', image: require('../assets/IMG-20250924-WA0035-300x300.png'),                                   label: 'Gold'    },
+  { id: '2', image: require('../assets/IMG_20260121_163734-300x295.jpg'),                                   label: 'Silver'  },
+  { id: '3', image: require('../assets/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_-300x300.png'), label: 'Bridal'  },
+  { id: '4', image: require('../assets/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_-300x300.png'), label: 'Rings'   },
+  { id: '5', image: require('../assets/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_-300x300.png'), label: 'Chains'  },
+  { id: '6', image: require('../assets/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_-300x300.png'), label: 'Daily W' },
+  { id: '7', image: require('../assets/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_-300x300.png'), label: 'Special' },
 ];
 
 const TRUST = [
