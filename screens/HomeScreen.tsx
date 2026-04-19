@@ -26,7 +26,7 @@ const WHATSAPP    = '#25D366';
 const BANNERS = [
   {
     id: '1',
-    image: require('../assets/images/jewellery_banner_1920x1080 (1).png'),
+    image: require('../assets/images/jewellery_banner_1920x1080.png'),
     title: 'Bridal\nCollection',
     sub: 'Discover Your Perfect Look',
     btn: 'Explore Collection',
