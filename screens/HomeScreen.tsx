@@ -26,14 +26,14 @@ const WHATSAPP    = '#25D366';
 const BANNERS = [
   {
     id: '1',
-    image: require('../assets/jewellery_banner_1920x1080.png'),
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/jewellery_banner_1920x1080.png' },
     title: 'Bridal\nCollection',
     sub: 'Discover Your Perfect Look',
     btn: 'Explore Collection',
   },
   {
     id: '2',
-    image: require('../assets/images/ChatGPT-Image-Apr-5-2026-01_09-1.png'),
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/ChatGPT-Image-Apr-5-2026-01_09-1.png' },
     title: 'Fine\nJewellery',
     sub: '22K & 24K Gold · Hallmarked',
     btn: 'View Catalogue',
@@ -41,13 +41,41 @@ const BANNERS = [
 ];
 
 const CATEGORIES = [
-  { id: '1', image: require('../assets/IMG-20250924-WA0035-300x300.png'),                                   label: 'Gold'    },
-  { id: '2', image: require('../assets/IMG_20260121_163734-300x295.jpg'),                                   label: 'Silver'  },
-  { id: '3', image: require('../assets/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_-300x300.png'), label: 'Bridal'  },
-  { id: '4', image: require('../assets/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_-300x300.png'), label: 'Rings'   },
-  { id: '5', image: require('../assets/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_-300x300.png'), label: 'Chains'  },
-  { id: '6', image: require('../assets/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_-300x300.png'), label: 'Daily W' },
-  { id: '7', image: require('../assets/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_-300x300.png'), label: 'Special' },
+  {
+    id: '1',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-43-01-295_com.facebook.lite_.png' },
+    label: 'Gold',
+  },
+  {
+    id: '2',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-36-37-183_com.facebook.lite_.png' },
+    label: 'Silver',
+  },
+  {
+    id: '3',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png' },
+    label: 'Bridal',
+  },
+  {
+    id: '4',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png' },
+    label: 'Rings',
+  },
+  {
+    id: '5',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/file_00000000d1a071fab06fbf048655557e.png' },
+    label: 'Chains',
+  },
+  {
+    id: '6',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/file_0000000016a4720bb922e408d0fb4532.png' },
+    label: 'Daily W',
+  },
+  {
+    id: '7',
+    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png' },
+    label: 'Special',
+  },
 ];
 
 const TRUST = [
