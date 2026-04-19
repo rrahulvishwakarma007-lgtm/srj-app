@@ -9,6 +9,7 @@
     "plugins": [
       "expo-camera",
       "expo-font",
+      "expo-image-picker",
       [
         "expo-splash-screen",
         {
@@ -27,13 +28,15 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.shekharraja.jewellers",
       "infoPlist": {
-        "NSCameraUsageDescription": "Shekhar Raja Jewellers uses the camera to scan jewellery pieces and QR tags.",
-        "NSMicrophoneUsageDescription": "Microphone access is required by the camera."
+        "NSCameraUsageDescription": "Shekhar Raja Jewellers uses the camera to scan jewellery and try pieces virtually.",
+        "NSMicrophoneUsageDescription": "Microphone access is required by the camera.",
+        "NSPhotoLibraryUsageDescription": "Shekhar Raja Jewellers needs access to your photos to scan jewellery images.",
+        "NSPhotoLibraryAddUsageDescription": "Shekhar Raja Jewellers needs access to save jewellery photos."
       }
     },
     "android": {
       "package": "com.shekharraja.jewellers",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
@@ -42,7 +45,11 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.VIBRATE",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
       ]
     },
     "web": {
