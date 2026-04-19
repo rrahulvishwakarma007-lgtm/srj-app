@@ -194,15 +194,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
               }
               renderItem={({ item }) => (
                 <View style={styles.bannerSlide}>
-                  <Image source={item.image} style={styles.bannerImage} resizeMode="cover" />
-                  <View style={styles.bannerOverlay} />
-                  <View style={styles.bannerContent}>
-                    <Text style={styles.bannerTitle}>{item.title}</Text>
-                    <Text style={styles.bannerSub}>{item.sub}</Text>
-                    <TouchableOpacity style={styles.bannerBtn}>
-                      <Text style={styles.bannerBtnText}>◆ {item.btn} ◆</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <Image source={item.image} style={styles.bannerImage} resizeMode="cover" />                 
                 </View>
               )}
             />
