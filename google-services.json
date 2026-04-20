@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "895107611382",
+    "project_id": "srj-app-f2ab4",
+    "storage_bucket": "srj-app-f2ab4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:895107611382:android:c56bf472cb4102a96e0ad7",
+        "android_client_info": {
+          "package_name": "com.shekharraja.jewellers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC02FM7pfgR9f9R3fRI3YOpwx0UTlhheaE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
