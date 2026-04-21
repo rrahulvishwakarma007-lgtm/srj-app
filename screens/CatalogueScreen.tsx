@@ -80,8 +80,17 @@ useEffect(() => {
 
   const filtered = useMemo(() => {
     let list = [...products];
-    if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()));
-    if (activeCat !== 'All') list = list.filter(p => p.category === activeCat);
+
+if (search) {
+  list = list.filter(p =>
+    (p.name?.toLowerCase().includes(search.toLowerCase()) ||
+     p.description?.toLowerCase().includes(search.toLowerCase()))
+  );
+}
+
+if (activeCat !== 'All') {
+  list = list.filter(p => p.category === activeCat);
+}
     return list;
   }, [search, activeCat, products]);
   const isWish = (id: string) => wishlist.includes(id);
