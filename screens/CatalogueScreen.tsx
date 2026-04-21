@@ -59,6 +59,25 @@ export default function CatalogueScreen() {
   const [products, setProducts] = useState<Product[]>([]);
 const [wishlist, setWishlist]   = useState<number[]>([]);
 
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'products'));
+
+      const list = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+
+      setProducts(list);
+    } catch (error) {
+      console.log('Error fetching products:', error);
+    }
+  };
+
+  fetchProducts();
+}, []);
+
   const filtered = useMemo(() => {
     let list = [...products];
     if (search) list = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()));
