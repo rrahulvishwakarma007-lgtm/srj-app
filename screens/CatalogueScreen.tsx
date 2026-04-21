@@ -85,8 +85,13 @@ useEffect(() => {
     return list;
   }, [search, activeCat]);
 
-  const isWish = (id: number) => wishlist.includes(id);
-  const toggleWish = (id: number) => setWishlist(isWish(id) ? wishlist.filter(x => x !== id) : [...wishlist, id]);
+  const isWish = (id: string) => wishlist.includes(id);
+
+const toggleWish = (id: string) =>
+  setWishlist(isWish(id)
+    ? wishlist.filter(x => x !== id)
+    : [...wishlist, id]
+  );
   const enquireCard = (p: Product) => {
     const msg = `Hello Shekhar Raja Jewellers,\n\nI am interested in *${p.name}* (${p.description}). Please share details.`;
     Linking.openURL(WA_URL(msg)).catch(() => Alert.alert('WhatsApp', `+${WHATSAPP}`));
