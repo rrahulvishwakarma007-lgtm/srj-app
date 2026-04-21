@@ -63,22 +63,25 @@ const [loading, setLoading] = useState(true);
 useEffect(() => {
   const fetchProducts = async () => {
     try {
+      setLoading(true); // 👈 ADD HERE
+
       const querySnapshot = await getDocs(collection(db, 'products'));
 
       const list = querySnapshot.docs.map(doc => ({
-  id: String(doc.id),
-  ...doc.data()
-})) as Product[];
+        id: String(doc.id),
+        ...doc.data()
+      })) as Product[];
 
       setProducts(list);
+      setLoading(false); // 👈 ADD HERE
     } catch (error) {
       console.log('Error fetching products:', error);
+      setLoading(false); // 👈 ADD HERE (important)
     }
   };
 
   fetchProducts();
 }, []);
-
   const filtered = useMemo(() => {
   let list = [...products];
 
