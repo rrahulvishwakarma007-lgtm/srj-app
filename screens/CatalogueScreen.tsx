@@ -56,7 +56,8 @@ export default function CatalogueScreen() {
   const [search, setSearch]       = useState('');
   const [activeCat, setActiveCat] = useState('All');
   const [selected, setSelected]   = useState<Product | null>(null);
-  const [wishlist, setWishlist]   = useState<number[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+const [wishlist, setWishlist]   = useState<number[]>([]);
 
   const filtered = useMemo(() => {
     let list = [...products];
