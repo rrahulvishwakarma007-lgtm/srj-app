@@ -83,7 +83,7 @@ useEffect(() => {
 
 if (search) {
   list = list.filter(p =>
-    (p.name?.toLowerCase().includes(search.toLowerCase()) ||
+    p.name?.toLowerCase?.().includes(search.toLowerCase()) ||
      p.description?.toLowerCase().includes(search.toLowerCase()))
   );
 }
