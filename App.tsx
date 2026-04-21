@@ -29,6 +29,7 @@ const ICONS: Record<string, { active: any; inactive: any }> = {
   Gold:      { active: 'trending-up',      inactive: 'trending-up-outline'   },
   Contact:   { active: 'call',             inactive: 'call-outline'          },
   Profile:   { active: 'person',           inactive: 'person-outline'        },
+Reels: { active: 'play-circle', inactive: 'play-circle-outline' },
 };
 
 function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedProduct, closeProduct, toggleWishlist, addToCart }: any) {
