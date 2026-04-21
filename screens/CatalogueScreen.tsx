@@ -57,7 +57,7 @@ export default function CatalogueScreen() {
   const [activeCat, setActiveCat] = useState('All');
   const [selected, setSelected]   = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-const [wishlist, setWishlist]   = useState<number[]>([]);
+const [wishlist, setWishlist] = useState<string[]>([]);
 
 useEffect(() => {
   const fetchProducts = async () => {
