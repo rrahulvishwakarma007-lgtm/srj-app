@@ -89,7 +89,7 @@ if (search) {
 }
 
 if (activeCat !== 'All') {
-  list = list.filter(p => p.category === activeCat);
+  list = list.filter(p => p.category?.trim() === activeCat
 }
     return list;
   }, [search, activeCat, products]);
