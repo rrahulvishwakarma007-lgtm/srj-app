@@ -65,9 +65,9 @@ useEffect(() => {
       const querySnapshot = await getDocs(collection(db, 'products'));
 
       const list = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Product[];
+  id: String(doc.id),
+  ...doc.data()
+})) as Product[];
 
       setProducts(list);
     } catch (error) {
