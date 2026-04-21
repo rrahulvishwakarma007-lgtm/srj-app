@@ -4,7 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme, Radius } from '../lib/theme';
 import { Product } from '../lib/types';
-import { products } from '../lib/data';
+import { useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - 52) / 2;
