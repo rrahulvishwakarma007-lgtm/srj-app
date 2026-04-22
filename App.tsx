@@ -13,7 +13,6 @@ import GoldRatesScreen from './screens/GoldRatesScreen';
 import ContactScreen from './screens/ContactScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import ScanScreen from './screens/ScanScreen';
-import TryBeforeBuyScreen from './screens/TryBeforeBuyScreen';
 import ProductModal from './components/ProductModal';
 import { Product } from './lib/types';
 import { loadWishlist, saveWishlist, loadCart, saveCart } from './lib/storage';
@@ -64,57 +63,82 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
               marginTop: 1,
             },
             tabBarIcon: ({ color, focused }) => {
-              const ic = ICONS[route.name] || { active: 'ellipse', inactive: 'ellipse-outline' };
-              // Scan tab gets a special highlighted icon
-              if (route.name === 'Scan') {
-                return (
-                  <View style={{
-                    width: 38, height: 38, borderRadius: 19,
-                    backgroundColor: focused ? Theme.gold : '#EDE8F5',
-                    alignItems: 'center', justifyContent: 'center',
-                    marginTop: -6,
-                    shadowColor: Theme.gold,
-                    shadowOpacity: focused ? 0.5 : 0,
-                    shadowRadius: 6,
-                    elevation: focused ? 4 : 0,
-                  }}>
-                    <Ionicons
-                      name={focused ? ic.active : ic.inactive}
-                      size={22}
-                      color={focused ? '#2D1B5E' : '#9B6ED4'}
-                    />
-                  </View>
-                );
-              }
-              // TryOn tab gets a special icon too
-              if (route.name === 'TryOn') {
-                return (
-                  <View style={{
-                    width: 38, height: 38, borderRadius: 19,
-                    backgroundColor: focused ? '#9B6ED4' : '#EDE8F5',
-                    alignItems: 'center', justifyContent: 'center',
-                    marginTop: -6,
-                    shadowColor: '#9B6ED4',
-                    shadowOpacity: focused ? 0.5 : 0,
-                    shadowRadius: 6,
-                    elevation: focused ? 4 : 0,
-                  }}>
-                    <Ionicons
-                      name={focused ? ic.active : ic.inactive}
-                      size={20}
-                      color={focused ? '#fff' : '#9B6ED4'}
-                    />
-                  </View>
-                );
-              }
-              return (
-                <Ionicons
-                  name={focused ? ic.active : ic.inactive}
-                  size={21}
-                  color={color}
-                />
-              );
-            },
+  const ic = ICONS[route.name] || { active: 'ellipse', inactive: 'ellipse-outline' };
+
+  // 🎬 Reels tab highlight
+  if (route.name === 'Reels') {
+    return (
+      <View style={{
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: focused ? '#FF0050' : '#EDE8F5',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: -6,
+      }}>
+        <Ionicons
+          name={focused ? ic.active : ic.inactive}
+          size={22}
+          color={focused ? '#fff' : '#9B6ED4'}
+        />
+      </View>
+    );
+  }
+
+  // Scan tab
+  if (route.name === 'Scan') {
+    return (
+      <View style={{
+        width: 38, height: 38, borderRadius: 19,
+        backgroundColor: focused ? Theme.gold : '#EDE8F5',
+        alignItems: 'center', justifyContent: 'center',
+        marginTop: -6,
+        shadowColor: Theme.gold,
+        shadowOpacity: focused ? 0.5 : 0,
+        shadowRadius: 6,
+        elevation: focused ? 4 : 0,
+      }}>
+        <Ionicons
+          name={focused ? ic.active : ic.inactive}
+          size={22}
+          color={focused ? '#2D1B5E' : '#9B6ED4'}
+        />
+      </View>
+    );
+  }
+
+  // TryOn tab (if you keep it)
+  if (route.name === 'TryOn') {
+    return (
+      <View style={{
+        width: 38, height: 38, borderRadius: 19,
+        backgroundColor: focused ? '#9B6ED4' : '#EDE8F5',
+        alignItems: 'center', justifyContent: 'center',
+        marginTop: -6,
+        shadowColor: '#9B6ED4',
+        shadowOpacity: focused ? 0.5 : 0,
+        shadowRadius: 6,
+        elevation: focused ? 4 : 0,
+      }}>
+        <Ionicons
+          name={focused ? ic.active : ic.inactive}
+          size={20}
+          color={focused ? '#fff' : '#9B6ED4'}
+        />
+      </View>
+    );
+  }
+
+  // Default icons
+  return (
+    <Ionicons
+      name={focused ? ic.active : ic.inactive}
+      size={21}
+      color={color}
+    />
+  );
+},
           })}
         >
           <Tab.Screen name="Home">
