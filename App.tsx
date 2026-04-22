@@ -126,11 +126,7 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
             component={ScanScreen}
             options={{ tabBarLabel: 'Scan' }}
           />
-          <Tab.Screen
-            name="TryOn"
-            component={TryBeforeBuyScreen}
-            options={{ tabBarLabel: 'Try On' }}
-          />
+        <Tab.Screen name="Reels" component={ReelsScreen} />
           <Tab.Screen name="Gold" component={GoldRatesScreen} />
           <Tab.Screen name="Contact" component={ContactScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
