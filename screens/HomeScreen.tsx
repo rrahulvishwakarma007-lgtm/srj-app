@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, FlatList, Dimensions, Image, Animated, Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { products } from '../lib/data';
+import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { Product } from '../lib/types';
 
 const { width: W } = Dimensions.get('window');
@@ -23,59 +25,24 @@ const TEXT_MID    = '#4A3570';
 const TEXT_LIGHT  = '#8B7BAF';
 const WHATSAPP    = '#25D366';
 
-const BANNERS = [
-  {
-    id: '1',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/jewellery_banner_1920x1080.png' },
-    title: 'Bridal\nCollection',
-    sub: 'Discover Your Perfect Look',
-    btn: 'Explore Collection',
-  },
-  {
-    id: '2',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/ChatGPT-Image-Apr-5-2026-01_09-1.png' },
-    title: 'Fine\nJewellery',
-    sub: '22K & 24K Gold · Hallmarked',
-    btn: 'View Catalogue',
-  },
+// ── Types ──────────────────────────────────────
+interface FireBanner  { id: string; image: string; title?: string; sub?: string; btn?: string; order?: number; }
+interface FireProduct { id: string; Name: string; Category: string; Discripion?: string; Image: string; price?: number; purity?: string; weight?: number; color?: string; icon?: string; }
+
+// ── Fallback data (shown while Firebase loads) ──
+const FALLBACK_BANNERS: FireBanner[] = [
+  { id: '1', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/jewellery_banner_1920x1080.png', title: 'Bridal\nCollection', sub: 'Discover Your Perfect Look', btn: 'Explore Collection' },
+  { id: '2', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/ChatGPT-Image-Apr-5-2026-01_09-1.png', title: 'Fine\nJewellery', sub: '22K & 24K Gold · Hallmarked', btn: 'View Catalogue' },
 ];
 
 const CATEGORIES = [
-  {
-    id: '1',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-43-01-295_com.facebook.lite_.png' },
-    label: 'Gold',
-  },
-  {
-    id: '2',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-36-37-183_com.facebook.lite_.png' },
-    label: 'Silver',
-  },
-  {
-    id: '3',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png' },
-    label: 'Bridal',
-  },
-  {
-    id: '4',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png' },
-    label: 'Rings',
-  },
-  {
-    id: '5',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/file_00000000d1a071fab06fbf048655557e.png' },
-    label: 'Chains',
-  },
-  {
-    id: '6',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/file_0000000016a4720bb922e408d0fb4532.png' },
-    label: 'Daily W',
-  },
-  {
-    id: '7',
-    image: { uri: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png' },
-    label: 'Special',
-  },
+  { id: '1', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-43-01-295_com.facebook.lite_.png', label: 'Gold' },
+  { id: '2', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-36-37-183_com.facebook.lite_.png', label: 'Silver' },
+  { id: '3', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png', label: 'Bridal' },
+  { id: '4', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png', label: 'Rings' },
+  { id: '5', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/file_00000000d1a071fab06fbf048655557e.png', label: 'Chains' },
+  { id: '6', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/file_0000000016a4720bb922e408d0fb4532.png', label: 'Daily W' },
+  { id: '7', image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/03/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png', label: 'Special' },
 ];
 
 const TRUST = [
@@ -91,21 +58,73 @@ interface Props {
 
 export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   const insets = useSafeAreaInsets();
-  const [search, setSearch]       = useState('');
-  const [bannerIdx, setBannerIdx] = useState(0);
-  const [goldRates, setGoldRates] = useState<{ k22: number; k24: number } | null>(null);
+
+  const [search, setSearch]         = useState('');
+  const [bannerIdx, setBannerIdx]   = useState(0);
+  const [goldRates, setGoldRates]   = useState<{ k22: number; k24: number } | null>(null);
+  const [banners, setBanners]       = useState<FireBanner[]>(FALLBACK_BANNERS);
+  const [products, setProducts]     = useState<FireProduct[]>([]);
+  const [prodLoading, setProdLoad]  = useState(true);
+  const [bannerLoading, setBanLoad] = useState(true);
+
   const bannerRef = useRef<FlatList>(null);
   const scrollX   = useRef(new Animated.Value(0)).current;
 
+  // ── Fetch banners from Firebase homepage collection ──
   useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'homepage'), snap => {
+      const urls: FireBanner[] = snap.docs.map(d => {
+        const data = d.data();
+        return {
+          id:    d.id,
+          image: data.image || data.Image || data.imageUrl || '',
+          title: data.title || data.Title || '',
+          sub:   data.sub   || data.Sub   || '',
+          btn:   data.btn   || data.Btn   || 'Explore Collection',
+          order: data.order || 0,
+        };
+      }).filter(b => b.image);
+
+      if (urls.length > 0) {
+        urls.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setBanners(urls);
+      }
+      setBanLoad(false);
+    }, err => {
+      console.warn('banners fetch error:', err);
+      setBanLoad(false);
+    });
+    return () => unsub();
+  }, []);
+
+  // ── Fetch products from Firebase products collection ──
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'products'), snap => {
+      const items: FireProduct[] = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+      } as FireProduct));
+      setProducts(items);
+      setProdLoad(false);
+    }, err => {
+      console.warn('products fetch error:', err);
+      setProdLoad(false);
+    });
+    return () => unsub();
+  }, []);
+
+  // ── Auto-scroll banner ──
+  useEffect(() => {
+    if (banners.length < 2) return;
     const t = setInterval(() => {
-      const next = (bannerIdx + 1) % BANNERS.length;
+      const next = (bannerIdx + 1) % banners.length;
       bannerRef.current?.scrollToIndex({ index: next, animated: true });
       setBannerIdx(next);
     }, 4000);
     return () => clearInterval(t);
-  }, [bannerIdx]);
+  }, [bannerIdx, banners.length]);
 
+  // ── Live gold rates ──
   useEffect(() => {
     (async () => {
       try {
@@ -126,15 +145,28 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   const whatsapp  = () => Linking.openURL('https://wa.me/918377911745');
   const bookVisit = () => Linking.openURL('https://wa.me/918377911745?text=I%20would%20like%20to%20book%20a%20store%20visit');
 
-  const featured = products.slice(0, 6);
-  const filtered = search
-    ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
-    : featured;
+  // Filter products by search
+  const filteredProducts = search
+    ? products.filter(p =>
+        p.Name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.Category?.toLowerCase().includes(search.toLowerCase())
+      )
+    : products.slice(0, 8);
+
+  // Get category icon color based on category name
+  const getCatColor = (cat: string) => {
+    const map: Record<string, string> = {
+      Rings: '#9B6ED4', Necklaces: '#C9A84C', Chains: '#C9A84C',
+      Earrings: '#D4608A', Bracelets: '#7B8ED4', Bangles: '#E8A838',
+      Gold: '#C9A84C', Silver: '#A0A0B8', Bridal: '#D4608A',
+    };
+    return map[cat] || '#C9A84C';
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Ionicons name="diamond" size={22} color={GOLD} />
@@ -158,7 +190,8 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 28 }}
       >
-        {/* SEARCH */}
+
+        {/* ── SEARCH ── */}
         <View style={styles.searchWrap}>
           <Ionicons name="search" size={16} color={TEXT_LIGHT} style={{ marginRight: 8 }} />
           <TextInput
@@ -175,38 +208,65 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           )}
         </View>
 
-        {/* BANNER CAROUSEL */}
+        {/* ── BANNER CAROUSEL (from Firebase) ── */}
         {!search && (
           <View style={styles.bannerWrap}>
-            <Animated.FlatList
-              ref={bannerRef}
-              data={BANNERS}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={b => b.id}
-              onScroll={Animated.event(
-                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-                { useNativeDriver: false }
-              )}
-              onMomentumScrollEnd={e =>
-                setBannerIdx(Math.round(e.nativeEvent.contentOffset.x / W))
-              }
-              renderItem={({ item }) => (
-                <View style={styles.bannerSlide}>
-                  <Image source={item.image} style={styles.bannerImage} resizeMode="cover" />                 
+            {bannerLoading ? (
+              <View style={styles.bannerPlaceholder}>
+                <ActivityIndicator color={GOLD} size="large" />
+              </View>
+            ) : (
+              <>
+                <Animated.FlatList
+                  ref={bannerRef}
+                  data={banners}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={b => b.id}
+                  onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                    { useNativeDriver: false }
+                  )}
+                  onMomentumScrollEnd={e =>
+                    setBannerIdx(Math.round(e.nativeEvent.contentOffset.x / W))
+                  }
+                  renderItem={({ item }) => (
+                    <View style={styles.bannerSlide}>
+                      <Image
+                        source={{ uri: item.image }}
+                        style={styles.bannerImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.bannerOverlay} />
+                      {item.title ? (
+                        <View style={styles.bannerContent}>
+                          <Text style={styles.bannerTitle}>{item.title}</Text>
+                          {item.sub ? <Text style={styles.bannerSub}>{item.sub}</Text> : null}
+                          <TouchableOpacity style={styles.bannerBtn}>
+                            <Text style={styles.bannerBtnText}>◆ {item.btn} ◆</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : null}
+                      {/* Firebase live badge */}
+                      <View style={styles.liveBadge}>
+                        <Ionicons name="cloud-done" size={10} color={GOLD} />
+                        <Text style={styles.liveBadgeText}>Live</Text>
+                      </View>
+                    </View>
+                  )}
+                />
+                <View style={styles.dots}>
+                  {banners.map((_, i) => (
+                    <View key={i} style={[styles.dot, i === bannerIdx && styles.dotActive]} />
+                  ))}
                 </View>
-              )}
-            />
-            <View style={styles.dots}>
-              {BANNERS.map((_, i) => (
-                <View key={i} style={[styles.dot, i === bannerIdx && styles.dotActive]} />
-              ))}
-            </View>
+              </>
+            )}
           </View>
         )}
 
-        {/* CATEGORIES */}
+        {/* ── CATEGORIES ── */}
         {!search && (
           <View style={styles.section}>
             <FlatList
@@ -218,7 +278,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.catItem} activeOpacity={0.8}>
                   <View style={styles.catCircle}>
-                    <Image source={item.image} style={styles.catImage} resizeMode="cover" />
+                    <Image source={{ uri: item.image }} style={styles.catImage} resizeMode="cover" />
                   </View>
                   <Text style={styles.catLabel}>{item.label}</Text>
                 </TouchableOpacity>
@@ -227,52 +287,91 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* FEATURED PRODUCTS */}
+        {/* ── FEATURED PRODUCTS (from Firebase) ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
               {search ? `Results for "${search}"` : 'Featured Products'}
             </Text>
             {!search && <View style={styles.sectionLine} />}
+            {/* Firebase badge */}
+            {!search && (
+              <View style={styles.fireTagSmall}>
+                <Ionicons name="cloud-done" size={10} color={GOLD} />
+                <Text style={styles.fireTagText}>Live</Text>
+              </View>
+            )}
           </View>
-          {filtered.length === 0 ? (
+
+          {prodLoading ? (
+            <View style={styles.prodLoader}>
+              <ActivityIndicator color={GOLD} />
+              <Text style={styles.prodLoaderText}>Loading products...</Text>
+            </View>
+          ) : filteredProducts.length === 0 ? (
             <Text style={styles.noResult}>No products found</Text>
           ) : (
             <FlatList
-              data={filtered}
+              data={filteredProducts}
               horizontal={!search}
               numColumns={search ? 2 : undefined}
               key={search ? 'grid' : 'list'}
               showsHorizontalScrollIndicator={false}
-              keyExtractor={p => String(p.id)}
+              keyExtractor={p => p.id}
               contentContainerStyle={
                 search ? styles.gridContent : { paddingHorizontal: 16, gap: 12 }
               }
               renderItem={({ item }) => {
-                const wishlisted = wishlist.some(w => w.id === item.id);
+                const color = getCatColor(item.Category);
                 return (
                   <TouchableOpacity
                     style={search ? styles.productGridCard : styles.productCard}
-                    onPress={() => onOpenProduct?.(item)}
+                    onPress={() => {
+                      // Convert FireProduct to Product shape for modal
+                      onOpenProduct?.({
+                        id:          parseInt(item.id) || Math.random(),
+                        name:        item.Name,
+                        category:    item.Category,
+                        description: item.Discripion || '',
+                        price:       item.price || 0,
+                        purity:      item.purity || '22K',
+                        weight:      item.weight || 0,
+                        color:       item.color  || color,
+                        icon:        item.icon   || 'diamond-outline',
+                        imageUrl:    item.Image,
+                      } as any);
+                    }}
                     activeOpacity={0.85}
                   >
+                    {/* Product image from Firebase */}
                     <View style={styles.productImgWrap}>
-                      <View style={[styles.productIconBg, { backgroundColor: item.color + '22' }]}>
-                        <Ionicons name={item.icon as any} size={38} color={item.color} />
-                      </View>
-                      <View style={styles.heartBadge}>
-                        <Ionicons
-                          name={wishlisted ? 'heart' : 'heart-outline'}
-                          size={15}
-                          color={wishlisted ? '#E55' : '#AAA'}
+                      {item.Image ? (
+                        <Image
+                          source={{ uri: item.Image }}
+                          style={styles.productImg}
+                          resizeMode="cover"
                         />
+                      ) : (
+                        <View style={[styles.productIconBg, { backgroundColor: color + '22' }]}>
+                          <Ionicons name="diamond-outline" size={38} color={color} />
+                        </View>
+                      )}
+                      <View style={styles.heartBadge}>
+                        <Ionicons name="heart-outline" size={15} color="#AAA" />
+                      </View>
+                      {/* Category badge */}
+                      <View style={[styles.catBadge, { backgroundColor: color + 'DD' }]}>
+                        <Text style={styles.catBadgeText}>{item.Category}</Text>
                       </View>
                     </View>
                     <View style={styles.productInfo}>
-                      <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+                      <Text style={styles.productName} numberOfLines={1}>{item.Name}</Text>
+                      {item.Discripion ? (
+                        <Text style={styles.productDesc} numberOfLines={1}>{item.Discripion}</Text>
+                      ) : null}
                       <View style={styles.productBottom}>
                         <Text style={styles.productPrice}>
-                          ₹{item.price.toLocaleString('en-IN')}
+                          {item.price ? `₹${item.price.toLocaleString('en-IN')}` : 'Ask Price'}
                         </Text>
                         <View style={styles.heartBtnSmall}>
                           <Ionicons name="heart" size={13} color={GOLD} />
@@ -286,7 +385,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           )}
         </View>
 
-        {/* GOLD RATES */}
+        {/* ── GOLD RATES ── */}
         {!search && (
           <View style={styles.section}>
             <View style={[styles.sectionHeader, { justifyContent: 'center' }]}>
@@ -316,7 +415,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* TRUST BADGES */}
+        {/* ── TRUST BADGES ── */}
         {!search && (
           <View style={styles.trustRow}>
             {TRUST.map((t, i) => (
@@ -328,7 +427,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           </View>
         )}
 
-        {/* CTA BUTTONS */}
+        {/* ── CTA BUTTONS ── */}
         {!search && (
           <View style={styles.ctaWrap}>
             <TouchableOpacity style={styles.bookBtn} onPress={bookVisit} activeOpacity={0.85}>
@@ -374,22 +473,27 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 14, color: TEXT_DARK },
 
-  bannerWrap:    { marginTop: 12 },
-  bannerSlide:   { width: W, height: 220, position: 'relative' },
-  bannerImage:   { width: '100%', height: '100%' },
-  bannerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(40,10,80,0.42)' },
-  bannerContent: { position: 'absolute', left: 20, bottom: 28, right: W * 0.42 },
+  bannerWrap:        { marginTop: 12 },
+  bannerPlaceholder: { width: W, height: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: PURPLE_HERO },
+  bannerSlide:       { width: W, height: 220, position: 'relative' },
+  bannerImage:       { width: '100%', height: '100%' },
+  bannerOverlay:     { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(40,10,80,0.38)' },
+  bannerContent:     { position: 'absolute', left: 20, bottom: 28, right: W * 0.42 },
   bannerTitle: {
     color: '#fff', fontSize: 28, fontWeight: '900', fontStyle: 'italic',
     lineHeight: 32, letterSpacing: 0.5,
     textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4,
   },
   bannerSub:     { color: 'rgba(255,255,255,0.88)', fontSize: 12, marginTop: 4, marginBottom: 10 },
-  bannerBtn: {
-    backgroundColor: 'rgba(201,168,76,0.9)', paddingVertical: 8, paddingHorizontal: 14,
-    borderRadius: 20, alignSelf: 'flex-start',
-  },
+  bannerBtn:     { backgroundColor: 'rgba(201,168,76,0.9)', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, alignSelf: 'flex-start' },
   bannerBtnText: { color: PURPLE_DARK, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  liveBadge: {
+    position: 'absolute', top: 10, right: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: 'rgba(45,27,94,0.75)', borderRadius: 99,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  liveBadgeText: { color: GOLD, fontSize: 9, fontWeight: '700' },
   dots:          { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 8 },
   dot:           { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C8B8E8' },
   dotActive:     { width: 18, backgroundColor: GOLD },
@@ -397,11 +501,19 @@ const styles = StyleSheet.create({
   section: { marginTop: 18 },
   sectionHeader: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, marginBottom: 12,
+    paddingHorizontal: 16, marginBottom: 12, gap: 8,
   },
-  sectionTitle: { color: TEXT_DARK, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
-  sectionLine:  { flex: 1, height: 1, backgroundColor: BORDER, marginLeft: 8 },
-  noResult:     { color: TEXT_MID, textAlign: 'center', marginTop: 20, fontSize: 14 },
+  sectionTitle:  { color: TEXT_DARK, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  sectionLine:   { flex: 1, height: 1, backgroundColor: BORDER },
+  fireTagSmall: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#ede9fe', borderRadius: 99,
+    paddingHorizontal: 7, paddingVertical: 2,
+  },
+  fireTagText:   { color: '#5b21b6', fontSize: 9, fontWeight: '700' },
+  noResult:      { color: TEXT_MID, textAlign: 'center', marginTop: 20, fontSize: 14 },
+  prodLoader:    { alignItems: 'center', paddingVertical: 24, gap: 8 },
+  prodLoaderText:{ color: TEXT_LIGHT, fontSize: 12 },
 
   catItem:   { alignItems: 'center', width: 68 },
   catCircle: {
@@ -412,8 +524,9 @@ const styles = StyleSheet.create({
   catImage:  { width: '100%', height: '100%' },
   catLabel:  { color: TEXT_MID, fontSize: 11, fontWeight: '600', marginTop: 5, textAlign: 'center' },
 
+  // Products
   productCard: {
-    width: 148, backgroundColor: BG_CARD, borderRadius: 14,
+    width: 155, backgroundColor: BG_CARD, borderRadius: 14,
     borderWidth: 1, borderColor: BORDER, overflow: 'hidden',
     shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 3,
   },
@@ -423,15 +536,22 @@ const styles = StyleSheet.create({
   },
   gridContent:    { paddingHorizontal: 10 },
   productImgWrap: { position: 'relative' },
-  productIconBg:  { height: 110, alignItems: 'center', justifyContent: 'center' },
+  productImg:     { width: '100%', height: 130 },
+  productIconBg:  { height: 130, alignItems: 'center', justifyContent: 'center' },
   heartBadge: {
     position: 'absolute', top: 8, right: 8,
     backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12,
     width: 26, height: 26, alignItems: 'center', justifyContent: 'center',
   },
+  catBadge: {
+    position: 'absolute', bottom: 6, left: 6,
+    borderRadius: 99, paddingHorizontal: 7, paddingVertical: 2,
+  },
+  catBadgeText:  { color: '#fff', fontSize: 9, fontWeight: '700' },
   productInfo:   { padding: 10 },
   productName:   { color: TEXT_DARK, fontSize: 12, fontWeight: '700' },
-  productBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  productDesc:   { color: TEXT_LIGHT, fontSize: 10, marginTop: 2 },
+  productBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
   productPrice:  { color: PURPLE_MID, fontSize: 13, fontWeight: '800' },
   heartBtnSmall: {
     backgroundColor: 'rgba(201,168,76,0.12)', borderRadius: 10,
