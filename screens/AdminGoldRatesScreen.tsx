@@ -15,22 +15,16 @@ const ADMIN_PASSWORD = 'SRJ@1987';
 interface RateFields {
   gold24k: string;
   gold22k: string;
+  gold20k: string;
   gold18k: string;
-  gold14k: string;
-  silver: string;
-  platinum: string;
   note: string;
 }
-
 const RATE_CONFIG = [
-  { key: 'gold24k',   label: '24K Gold (999)',  placeholder: 'e.g. 9850',  metal: 'gold' },
-  { key: 'gold22k',   label: '22K Gold (916)',  placeholder: 'e.g. 9020',  metal: 'gold' },
-  { key: 'gold18k',   label: '18K Gold (750)',  placeholder: 'e.g. 7380',  metal: 'gold' },
-  { key: 'gold14k',   label: '14K Gold (585)',  placeholder: 'e.g. 5750',  metal: 'gold' },
-  { key: 'silver',    label: 'Silver (999)',    placeholder: 'e.g. 112',   metal: 'silver' },
-  { key: 'platinum',  label: 'Platinum (950)',  placeholder: 'e.g. 3480',  metal: 'platinum' },
+  { key: 'gold24k', label: '24K Gold (999)', placeholder: 'e.g. 9850', metal: 'gold' },
+  { key: 'gold22k', label: '22K Gold (916)', placeholder: 'e.g. 9020', metal: 'gold' },
+  { key: 'gold20k', label: '20K Gold (833)', placeholder: 'e.g. 8200', metal: 'gold' },
+  { key: 'gold18k', label: '18K Gold (750)', placeholder: 'e.g. 7380', metal: 'gold' },
 ] as const;
-
 export default function AdminGoldRatesScreen({ onClose }: { onClose: () => void }) {
   // Auth
   const [authed, setAuthed]       = useState(false);
@@ -38,10 +32,9 @@ export default function AdminGoldRatesScreen({ onClose }: { onClose: () => void 
   const [passError, setPassError] = useState('');
 
   // Form
-  const [fields, setFields] = useState<RateFields>({
-    gold24k: '', gold22k: '', gold18k: '', gold14k: '',
-    silver: '', platinum: '', note: '',
-  });
+ const [fields, setFields] = useState<RateFields>({
+  gold24k: '', gold22k: '', gold20k: '', gold18k: '', note: '',
+});
   const [saving, setSaving]       = useState(false);
   const [lastSaved, setLastSaved] = useState('');
   const [loading, setLoading]     = useState(true);
@@ -74,20 +67,20 @@ export default function AdminGoldRatesScreen({ onClose }: { onClose: () => void 
   }, [authed]);
 
   // Auto-calculate lower karats from 24K
-  const handleGold24kChange = (val: string) => {
-    const rate24k = parseFloat(val);
-    if (!isNaN(rate24k) && rate24k > 0) {
-      setFields(f => ({
-        ...f,
-        gold24k:  val,
-        gold22k:  Math.round(rate24k * 0.9166).toString(),
-        gold18k:  Math.round(rate24k * 0.7500).toString(),
-        gold14k:  Math.round(rate24k * 0.5833).toString(),
-      }));
-    } else {
-      setFields(f => ({ ...f, gold24k: val }));
-    }
-  };
+const handleGold24kChange = (val: string) => {
+  const rate24k = parseFloat(val);
+  if (!isNaN(rate24k) && rate24k > 0) {
+    setFields(f => ({
+      ...f,
+      gold24k: val,
+      gold22k: Math.round(rate24k * 0.9166).toString(),
+      gold20k: Math.round(rate24k * 0.8333).toString(),
+      gold18k: Math.round(rate24k * 0.7500).toString(),
+    }));
+  } else {
+    setFields(f => ({ ...f, gold24k: val }));
+  }
+};
 
   const login = () => {
     if (passInput === ADMIN_PASSWORD) {
@@ -246,24 +239,7 @@ export default function AdminGoldRatesScreen({ onClose }: { onClose: () => void 
               </View>
             ))}
 
-            {/* Silver & Platinum */}
-            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>SILVER & PLATINUM (₹ per 10 grams)</Text>
-            {RATE_CONFIG.filter(r => r.metal !== 'gold').map((r) => (
-              <View key={r.key} style={styles.fieldWrap}>
-                <Text style={styles.fieldLabel}>{r.label}</Text>
-                <View style={styles.fieldRow}>
-                  <Text style={styles.rupeeSymbol}>₹</Text>
-                  <TextInput
-                    style={styles.fieldInput}
-                    placeholder={r.placeholder}
-                    placeholderTextColor={Theme.textMuted}
-                    keyboardType="numeric"
-                    value={fields[r.key]}
-                    onChangeText={v => setFields(f => ({ ...f, [r.key]: v }))}
-                  />
-                </View>
-              </View>
-            ))}
+          
 
             {/* Note */}
             <Text style={[styles.sectionLabel, { marginTop: 20 }]}>NOTE FOR CUSTOMERS (optional)</Text>
