@@ -175,7 +175,7 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
 export default function App() {
   const [fontsLoaded] = useFonts({ ...Ionicons.font });
   const [showIntro, setShowIntro]           = useState(true);
-  const [user, setUser].                    = useState<any>(null);
+  const [user, setUser]                    = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [wishlist, setWishlist]             = useState<Product[]>([]);
   const [cart, setCart]                     = useState<any[]>([])
