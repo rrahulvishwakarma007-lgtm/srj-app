@@ -1,185 +1,115 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, RefreshControl, ActivityIndicator, Animated, Linking, Alert,
+  ScrollView, RefreshControl, ActivityIndicator,
+  Animated, Linking, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { Theme, Radius } from '../lib/theme';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-interface Rate {
-  type: string;
+// ── Types ─────────────────────────────────────────────────────────────────
+interface GoldRate {
+  label: string;
   purity: string;
-  price: number;       // INR per 10g (inclusive of duty + GST)
-  priceRaw: number;    // INR per 10g (spot only, no duty)
-  change: number;      // % change (simulated from spot movement)
-  unit: string;
+  price: number;
   metal: 'gold' | 'silver' | 'platinum';
 }
 
-interface SpotPrices {
-  gold: number;      // USD per troy oz
+interface FirestoreRates {
+  gold24k: number;
+  gold22k: number;
+  gold18k: number;
+  gold14k: number;
   silver: number;
   platinum: number;
-  usdInr: number;    // USD → INR exchange rate
-  source: 'live' | 'fallback';
+  updatedAt: any;   // Firestore Timestamp
+  updatedBy: string;
+  note: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// INDIAN RATE FORMULA
-// Import duty: 15%  |  GST: 3%  |  Total markup: ×1.1845
-// Silver: 0% import duty + 3% GST  |  ×1.03
-// ─────────────────────────────────────────────────────────────────────────────
-const OZ_TO_10G   = 10 / 31.1035;           // 1 troy oz = 31.1035 g
-const GOLD_MARKUP = 1.15 * 1.03;            // 15% duty + 3% GST = ×1.1845
-const SILV_MARKUP = 1.00 * 1.03;            // No import duty + 3% GST
-const PLAT_MARKUP = 1.15 * 1.03;            // Same as gold
-
-function toIndianPrice(usdPerOz: number, usdInr: number, markup: number): number {
-  return Math.round(usdPerOz * usdInr * OZ_TO_10G * markup);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FALLBACK — approximate current Indian market rates (updated April 2025)
-// Update these if you want accurate offline fallback
-// ─────────────────────────────────────────────────────────────────────────────
-const FALLBACK_SPOT: SpotPrices = {
-  gold: 2340,       // ~USD/oz
-  silver: 29.5,
-  platinum: 1020,
-  usdInr: 83.8,
-  source: 'fallback',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FETCH — Multiple API attempts with graceful fallback
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Exchange rate APIs (tried in order)
-const EXCHANGE_APIS = [
-  'https://api.frankfurter.app/latest?from=USD&to=INR',
-  'https://open.er-api.com/v6/latest/USD',
-];
-
-async function fetchUsdInr(): Promise<number> {
-  for (const url of EXCHANGE_APIS) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) continue;
-      const data = await res.json();
-      // frankfurter: data.rates.INR
-      // open.er-api: data.rates.INR
-      const inr = data?.rates?.INR;
-      if (inr && typeof inr === 'number' && inr > 70) return inr;
-    } catch { /* try next */ }
-  }
-  return FALLBACK_SPOT.usdInr;
-}
-
-async function fetchSpotPrices(): Promise<SpotPrices> {
-  try {
-    const [spotRes, usdInr] = await Promise.all([
-      fetch('https://api.metals.live/v1/spot', { signal: AbortSignal.timeout(6000) }),
-      fetchUsdInr(),
-    ]);
-
-    if (!spotRes.ok) throw new Error('spot API failed');
-    const spotData: { metal: string; price: number }[] = await spotRes.json();
-
-    const map: Record<string, number> = {};
-    spotData.forEach(d => { map[d.metal?.toLowerCase()] = d.price; });
-
-    const gold     = map['gold']     || map['xau'] || FALLBACK_SPOT.gold;
-    const silver   = map['silver']   || map['xag'] || FALLBACK_SPOT.silver;
-    const platinum = map['platinum'] || map['xpt'] || FALLBACK_SPOT.platinum;
-
-    // Basic sanity checks
-    if (gold < 1000 || gold > 5000) throw new Error('gold price out of range');
-
-    return { gold, silver, platinum, usdInr, source: 'live' };
-  } catch {
-    return { ...FALLBACK_SPOT, source: 'fallback' };
-  }
-}
-
-function buildRates(spot: SpotPrices): Rate[] {
-  const { gold, silver, platinum, usdInr } = spot;
-  const pct = () => parseFloat(((Math.random() - 0.48) * 0.8).toFixed(2));
-
+// ── Build display rates from Firestore doc ────────────────────────────────
+function buildRates(data: FirestoreRates): GoldRate[] {
   return [
-    {
-      type: '24K Gold', purity: '999', metal: 'gold',
-      price:    toIndianPrice(gold * 0.9999, usdInr, GOLD_MARKUP),
-      priceRaw: toIndianPrice(gold * 0.9999, usdInr, 1),
-      change: pct(), unit: 'per 10g',
-    },
-    {
-      type: '22K Gold', purity: '916', metal: 'gold',
-      price:    toIndianPrice(gold * 0.9166, usdInr, GOLD_MARKUP),
-      priceRaw: toIndianPrice(gold * 0.9166, usdInr, 1),
-      change: pct(), unit: 'per 10g',
-    },
-    {
-      type: '18K Gold', purity: '750', metal: 'gold',
-      price:    toIndianPrice(gold * 0.7500, usdInr, GOLD_MARKUP),
-      priceRaw: toIndianPrice(gold * 0.7500, usdInr, 1),
-      change: pct(), unit: 'per 10g',
-    },
-    {
-      type: '14K Gold', purity: '585', metal: 'gold',
-      price:    toIndianPrice(gold * 0.5850, usdInr, GOLD_MARKUP),
-      priceRaw: toIndianPrice(gold * 0.5850, usdInr, 1),
-      change: pct(), unit: 'per 10g',
-    },
-    {
-      type: 'Silver', purity: '999', metal: 'silver',
-      price:    toIndianPrice(silver, usdInr, SILV_MARKUP),
-      priceRaw: toIndianPrice(silver, usdInr, 1),
-      change: pct(), unit: 'per 10g',
-    },
-    {
-      type: 'Platinum', purity: '950', metal: 'platinum',
-      price:    toIndianPrice(platinum * 0.950, usdInr, PLAT_MARKUP),
-      priceRaw: toIndianPrice(platinum * 0.950, usdInr, 1),
-      change: pct(), unit: 'per 10g',
-    },
-  ];
+    { label: '24K Gold', purity: '999', price: data.gold24k || 0, metal: 'gold' },
+    { label: '22K Gold', purity: '916', price: data.gold22k || 0, metal: 'gold' },
+    { label: '18K Gold', purity: '750', price: data.gold18k || 0, metal: 'gold' },
+    { label: '14K Gold', purity: '585', price: data.gold14k || 0, metal: 'gold' },
+    { label: 'Silver',   purity: '999', price: data.silver   || 0, metal: 'silver' },
+    { label: 'Platinum', purity: '950', price: data.platinum || 0, metal: 'platinum' },
+  ].filter(r => r.price > 0); // Only show rates that have been set
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Format timestamp ──────────────────────────────────────────────────────
+function formatTime(ts: any): string {
+  if (!ts) return '';
+  try {
+    const date = ts.toDate ? ts.toDate() : new Date(ts);
+    return date.toLocaleString('en-IN', {
+      day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit',
+      hour12: true,
+    });
+  } catch { return ''; }
+}
+
+// ── Rate Card ─────────────────────────────────────────────────────────────
+function RateCard({ rate }: { rate: GoldRate }) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardLeft}>
+        <View style={styles.purityBadge}>
+          <Text style={styles.purityTxt}>{rate.purity}</Text>
+        </View>
+        <View>
+          <Text style={styles.rateLabel}>{rate.label}</Text>
+          <Text style={styles.rateUnit}>per 10 grams</Text>
+        </View>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={styles.ratePrice}>
+          ₹{rate.price.toLocaleString('en-IN')}
+        </Text>
+        <Text style={styles.rateNote}>incl. duty & GST</Text>
+      </View>
+    </View>
+  );
+}
+
+// ── Main Screen ───────────────────────────────────────────────────────────
 export default function GoldRatesScreen() {
-  const [rates, setRates]     = useState<Rate[]>([]);
-  const [spot, setSpot]       = useState<SpotPrices | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRef]  = useState(false);
-  const [updatedAt, setUpd]   = useState('');
+  const [rates, setRates]       = useState<GoldRate[]>([]);
+  const [firestoreData, setFSD] = useState<FirestoreRates | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState('');
   const fade = useRef(new Animated.Value(0)).current;
 
-  const load = async (isRefresh = false) => {
-    if (isRefresh) { setRef(true); fade.setValue(0); }
-    const spotData = await fetchSpotPrices();
-    const rateData = buildRates(spotData);
-    setSpot(spotData);
-    setRates(rateData);
-    setLoading(false);
-    setRef(false);
-    const n = new Date();
-    setUpd(`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`);
-    Animated.timing(fade, { toValue: 1, duration: 450, useNativeDriver: true }).start();
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const metalIcon = (m: string) => m === 'silver' ? 'ellipse' : m === 'platinum' ? 'diamond' : 'diamond';
-
-  const dateStr = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+  useEffect(() => {
+    // Real-time listener on goldRates/today document
+    const unsubscribe = onSnapshot(
+      doc(db, 'goldRates', 'today'),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as FirestoreRates;
+          setFSD(data);
+          setRates(buildRates(data));
+          setError('');
+        } else {
+          setError('Rates not updated yet. Please check back soon.');
+        }
+        setLoading(false);
+        Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+      },
+      (err) => {
+        console.error('Firestore error:', err);
+        setError('Could not fetch rates. Please check your connection.');
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
 
   const openWhatsApp = () => {
     const msg = 'Hello Shekhar Raja Jewellers! Could you share today\'s gold rate and making charges?';
@@ -188,6 +118,10 @@ export default function GoldRatesScreen() {
     );
   };
 
+  const dateStr = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
 
@@ -195,107 +129,101 @@ export default function GoldRatesScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.eyebrow}>SHEKHAR RAJA JEWELLERS</Text>
-          <Text style={styles.title}>Gold Rates</Text>
+          <Text style={styles.title}>Today's Gold Rates</Text>
           <Text style={styles.date}>{dateStr}</Text>
         </View>
-        <TouchableOpacity style={styles.refreshBtn} onPress={() => load(true)} disabled={refreshing}>
-          {refreshing
-            ? <ActivityIndicator size="small" color="#FFFFFF" />
-            : <><Ionicons name="refresh" size={14} color="#FFFFFF" /><Text style={styles.refreshTxt}>Refresh</Text></>
-          }
-        </TouchableOpacity>
+        <View style={styles.liveBadge}>
+          <View style={styles.liveDot} />
+          <Text style={styles.liveTxt}>LIVE</Text>
+        </View>
       </View>
       <View style={styles.goldLine} />
 
-      <ScrollView
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} colors={[Theme.purple]} tintColor={Theme.purple} />
-        }
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
         {loading ? (
-          <View style={styles.loadingWrap}>
+          <View style={styles.centerWrap}>
             <ActivityIndicator size="large" color={Theme.purple} />
-            <Text style={styles.loadingText}>Fetching live rates…</Text>
-            <Text style={styles.loadingNote}>Connecting to international commodity markets</Text>
+            <Text style={styles.loadingTxt}>Fetching today's rates…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centerWrap}>
+            <Ionicons name="time-outline" size={52} color={Theme.border} />
+            <Text style={styles.errorTxt}>{error}</Text>
+            <TouchableOpacity style={styles.waSmallBtn} onPress={openWhatsApp}>
+              <Ionicons name="logo-whatsapp" size={16} color="#FFFFFF" />
+              <Text style={styles.waSmallTxt}>Ask on WhatsApp</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <Animated.View style={{ opacity: fade }}>
 
-            {/* ── Live / Fallback indicator ── */}
-            <View style={styles.statusStrip}>
-              {spot?.source === 'live' ? (
-                <View style={styles.liveChip}>
-                  <View style={styles.liveDot} />
-                  <Text style={styles.liveTxt}>LIVE  ·  Updated {updatedAt}</Text>
-                </View>
-              ) : (
-                <View style={styles.fallbackChip}>
-                  <Ionicons name="time-outline" size={12} color="#B45309" />
-                  <Text style={styles.fallbackTxt}>Approximate rates · Pull down to try live</Text>
-                </View>
-              )}
-              {spot && (
-                <Text style={styles.spotRate}>
-                  USD/INR: ₹{spot.usdInr.toFixed(1)}
+            {/* Updated timestamp */}
+            {firestoreData?.updatedAt && (
+              <View style={styles.updatedStrip}>
+                <Ionicons name="checkmark-circle" size={15} color={Theme.success} />
+                <Text style={styles.updatedTxt}>
+                  Updated {formatTime(firestoreData.updatedAt)}
+                  {firestoreData.updatedBy ? `  ·  ${firestoreData.updatedBy}` : ''}
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
 
-            {/* ── Explanation banner ── */}
-            <View style={styles.infoBanner}>
-              <Ionicons name="information-circle-outline" size={16} color={Theme.purple} />
-              <Text style={styles.infoBannerText}>
-                Rates = International spot price × USD/INR exchange rate + 15% import duty + 3% GST.
-                Making charges are additional and vary by design.
-              </Text>
-            </View>
+            {/* Note from jeweller */}
+            {!!firestoreData?.note && (
+              <View style={styles.noteCard}>
+                <Ionicons name="information-circle-outline" size={16} color={Theme.purple} />
+                <Text style={styles.noteText}>{firestoreData.note}</Text>
+              </View>
+            )}
 
-            {/* ── Gold section ── */}
+            {/* Gold rates */}
             <Text style={styles.sectionLabel}>GOLD RATES</Text>
             {rates.filter(r => r.metal === 'gold').map((r, i) => (
               <RateCard key={i} rate={r} />
             ))}
 
-            {/* ── Silver & Platinum ── */}
-            <Text style={[styles.sectionLabel, { marginTop: 20 }]}>SILVER & PLATINUM</Text>
-            {rates.filter(r => r.metal !== 'gold').map((r, i) => (
-              <RateCard key={i} rate={r} />
-            ))}
+            {/* Silver & Platinum */}
+            {rates.filter(r => r.metal !== 'gold').length > 0 && (
+              <>
+                <Text style={[styles.sectionLabel, { marginTop: 20 }]}>SILVER & PLATINUM</Text>
+                {rates.filter(r => r.metal !== 'gold').map((r, i) => (
+                  <RateCard key={i} rate={r} />
+                ))}
+              </>
+            )}
 
-            {/* ── Breakdown info ── */}
-            <View style={styles.breakdown}>
-              <Text style={styles.breakdownTitle}>How Indian Rates Are Calculated</Text>
+            {/* Making charges info */}
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>About These Rates</Text>
               {[
-                { label: 'Spot Price (International)', icon: 'globe-outline' },
-                { label: '× USD/INR Exchange Rate', icon: 'swap-horizontal' },
-                { label: '+ 15% Import Duty (Gold/Platinum)', icon: 'add-circle-outline' },
-                { label: '+ 3% GST (All metals)', icon: 'add-circle-outline' },
-                { label: '+ Making Charges (varies by design)', icon: 'hammer-outline' },
-              ].map((step, i) => (
-                <View key={i} style={styles.breakdownRow}>
-                  <Ionicons name={step.icon as any} size={15} color={Theme.purple} />
-                  <Text style={styles.breakdownText}>{step.label}</Text>
+                'Rates shown are as per IBJA / local Jabalpur market rates',
+                'Making charges are additional and vary by design',
+                'Prices include 15% import duty + 3% GST',
+                'Rates updated every morning by our team',
+              ].map((line, i) => (
+                <View key={i} style={styles.infoRow}>
+                  <View style={styles.infoDot} />
+                  <Text style={styles.infoLine}>{line}</Text>
                 </View>
               ))}
             </View>
 
-            {/* ── WhatsApp for exact quote ── */}
+            {/* WhatsApp CTA */}
             <TouchableOpacity style={styles.waCard} onPress={openWhatsApp} activeOpacity={0.88}>
               <View style={styles.waLeft}>
-                <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+                <Ionicons name="logo-whatsapp" size={24} color="#FFFFFF" />
                 <View>
                   <Text style={styles.waTitle}>Get Exact Quote</Text>
-                  <Text style={styles.waSub}>WhatsApp us for today's rate + making charges</Text>
+                  <Text style={styles.waSub}>WhatsApp us for rate + making charges</Text>
                 </View>
               </View>
               <Ionicons name="arrow-forward" size={18} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
 
             <Text style={styles.disclaimer}>
-              Rates are indicative. Final price at showroom includes making charges, stone value, and applicable taxes.
-              IBJA / MCX rates may vary slightly. Pull down to refresh.
+              Rates are indicative and set by Shekhar Raja Jewellers each morning.
+              Final price may vary based on design and making charges.
             </Text>
           </Animated.View>
         )}
@@ -304,90 +232,39 @@ export default function GoldRatesScreen() {
   );
 }
 
-// ── Rate Card Component ────────────────────────────────────────────────────
-function RateCard({ rate }: { rate: Rate }) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardLeft}>
-        <View style={styles.purityBadge}>
-          <Text style={styles.purityTxt}>{rate.purity}</Text>
-        </View>
-        <View>
-          <Text style={styles.rateType}>{rate.type}</Text>
-          <Text style={styles.rateUnit}>{rate.unit}</Text>
-        </View>
-      </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={styles.ratePrice}>₹{rate.price.toLocaleString('en-IN')}</Text>
-        <View style={[styles.changeBadge, rate.change >= 0 ? styles.up : styles.down]}>
-          <Ionicons
-            name={rate.change >= 0 ? 'arrow-up' : 'arrow-down'}
-            size={11}
-            color={rate.change >= 0 ? Theme.success : Theme.danger}
-          />
-          <Text style={[styles.changeTxt, { color: rate.change >= 0 ? Theme.success : Theme.danger }]}>
-            {Math.abs(rate.change)}%
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Theme.bgPrimary },
 
   header: {
-    flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16,
     backgroundColor: Theme.bgPurple,
   },
-  eyebrow:    { color: Theme.gold, fontSize: 10, fontWeight: '800', letterSpacing: 2.5, marginBottom: 4 },
-  title:      { color: '#FFFFFF', fontSize: 28, fontWeight: '900' },
-  date:       { color: Theme.textLightMuted, fontSize: 11, marginTop: 3 },
-  refreshBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 14, paddingVertical: 9, borderRadius: Radius.full, minWidth: 88,
-    justifyContent: 'center',
-  },
-  refreshTxt: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  goldLine:   { height: 3, backgroundColor: Theme.gold },
+  eyebrow:  { color: Theme.gold, fontSize: 10, fontWeight: '800', letterSpacing: 2.5, marginBottom: 4 },
+  title:    { color: '#FFFFFF', fontSize: 26, fontWeight: '900' },
+  date:     { color: Theme.textLightMuted, fontSize: 11, marginTop: 3 },
+  liveBadge:{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(46,125,50,0.25)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full, borderWidth: 1, borderColor: 'rgba(46,125,50,0.5)' },
+  liveDot:  { width: 7, height: 7, borderRadius: 4, backgroundColor: Theme.success },
+  liveTxt:  { color: Theme.success, fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+  goldLine: { height: 3, backgroundColor: Theme.gold },
 
-  scroll: { padding: 16, paddingBottom: 40 },
+  scroll: { padding: 16, paddingBottom: 50 },
 
-  loadingWrap:  { alignItems: 'center', paddingVertical: 80 },
-  loadingText:  { color: Theme.textDark, marginTop: 16, fontSize: 15, fontWeight: '700' },
-  loadingNote:  { color: Theme.textMuted, marginTop: 6, fontSize: 12, textAlign: 'center' },
+  centerWrap:  { alignItems: 'center', paddingVertical: 80 },
+  loadingTxt:  { color: Theme.textMuted, marginTop: 16, fontSize: 14, fontWeight: '600' },
+  errorTxt:    { color: Theme.textMuted, marginTop: 16, fontSize: 14, textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
 
-  // Status strip
-  statusStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  liveChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#E8F5E9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full,
-  },
-  liveDot:    { width: 7, height: 7, borderRadius: 4, backgroundColor: Theme.success },
-  liveTxt:    { color: Theme.success, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
-  fallbackChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full,
-  },
-  fallbackTxt:  { color: '#B45309', fontSize: 11, fontWeight: '700' },
-  spotRate:     { color: Theme.textMuted, fontSize: 11, fontWeight: '600' },
+  updatedStrip: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 14 },
+  updatedTxt:   { color: Theme.success, fontSize: 12, fontWeight: '700' },
 
-  // Info banner
-  infoBanner: {
+  noteCard: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
     backgroundColor: Theme.bgCardPurple, borderRadius: Radius.md, padding: 14,
-    borderWidth: 1, borderColor: Theme.purpleBorder, marginBottom: 18,
+    borderWidth: 1, borderColor: Theme.purpleBorder, marginBottom: 16,
   },
-  infoBannerText: { flex: 1, color: Theme.textDark, fontSize: 12, lineHeight: 18 },
+  noteText: { flex: 1, color: Theme.textDark, fontSize: 13, lineHeight: 19 },
 
-  sectionLabel: {
-    color: Theme.purple, fontSize: 11, fontWeight: '800',
-    letterSpacing: 3, marginBottom: 10,
-  },
+  sectionLabel: { color: Theme.purple, fontSize: 11, fontWeight: '800', letterSpacing: 3, marginBottom: 10 },
 
   card: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -402,25 +279,21 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1.5, borderColor: Theme.purpleBorder,
   },
-  purityTxt:   { color: Theme.purple, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
-  rateType:    { color: Theme.textDark, fontSize: 17, fontWeight: '800' },
-  rateUnit:    { color: Theme.textMuted, fontSize: 11, marginTop: 2 },
-  ratePrice:   { color: Theme.purple, fontSize: 22, fontWeight: '900', letterSpacing: 0.3 },
-  changeBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, marginTop: 6 },
-  up:          { backgroundColor: '#E8F5E9' },
-  down:        { backgroundColor: '#FFEBEE' },
-  changeTxt:   { fontSize: 12, fontWeight: '700' },
+  purityTxt:  { color: Theme.purple, fontSize: 11, fontWeight: '900', letterSpacing: 0.5 },
+  rateLabel:  { color: Theme.textDark, fontSize: 17, fontWeight: '800' },
+  rateUnit:   { color: Theme.textMuted, fontSize: 11, marginTop: 2 },
+  ratePrice:  { color: Theme.purple, fontSize: 22, fontWeight: '900', letterSpacing: 0.3 },
+  rateNote:   { color: Theme.textMuted, fontSize: 10, marginTop: 3 },
 
-  // Breakdown card
-  breakdown: {
+  infoCard: {
     backgroundColor: '#FFFFFF', borderRadius: Radius.lg, padding: 18,
     borderWidth: 1, borderColor: Theme.border, marginTop: 20, marginBottom: 14,
   },
-  breakdownTitle: { color: Theme.textDark, fontSize: 14, fontWeight: '800', marginBottom: 14, letterSpacing: 0.3 },
-  breakdownRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  breakdownText:  { color: Theme.textMuted, fontSize: 13, fontWeight: '600', flex: 1 },
+  infoTitle: { color: Theme.textDark, fontSize: 14, fontWeight: '800', marginBottom: 12 },
+  infoRow:   { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 8 },
+  infoDot:   { width: 6, height: 6, borderRadius: 3, backgroundColor: Theme.gold, marginTop: 6 },
+  infoLine:  { flex: 1, color: Theme.textMuted, fontSize: 12, lineHeight: 18 },
 
-  // WhatsApp card
   waCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: '#25D366', borderRadius: Radius.lg, padding: 18, marginBottom: 16,
@@ -430,8 +303,12 @@ const styles = StyleSheet.create({
   waTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
   waSub:   { color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 2 },
 
-  disclaimer: {
-    color: Theme.textMuted, fontSize: 11, textAlign: 'center',
-    lineHeight: 17, letterSpacing: 0.2,
+  waSmallBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#25D366', paddingVertical: 12, paddingHorizontal: 20,
+    borderRadius: Radius.full, marginTop: 16,
   },
+  waSmallTxt: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+
+  disclaimer: { color: Theme.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 17 },
 });
