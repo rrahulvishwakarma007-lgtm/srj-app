@@ -30,16 +30,13 @@ interface FirestoreRates {
   note: string;
 }
 
-// ── Build display rates from Firestore doc ────────────────────────────────
 function buildRates(data: FirestoreRates): GoldRate[] {
   return [
     { label: '24K Gold', purity: '999', price: data.gold24k || 0, metal: 'gold' },
     { label: '22K Gold', purity: '916', price: data.gold22k || 0, metal: 'gold' },
+    { label: '20K Gold', purity: '833', price: data.gold20k || 0, metal: 'gold' },
     { label: '18K Gold', purity: '750', price: data.gold18k || 0, metal: 'gold' },
-    { label: '14K Gold', purity: '585', price: data.gold14k || 0, metal: 'gold' },
-    { label: 'Silver',   purity: '999', price: data.silver   || 0, metal: 'silver' },
-    { label: 'Platinum', purity: '950', price: data.platinum || 0, metal: 'platinum' },
-  ].filter(r => r.price > 0); // Only show rates that have been set
+  ].filter(r => r.price > 0);
 }
 
 // ── Format timestamp ──────────────────────────────────────────────────────
