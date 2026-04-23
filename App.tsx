@@ -175,10 +175,11 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
 export default function App() {
   const [fontsLoaded] = useFonts({ ...Ionicons.font });
   const [showIntro, setShowIntro]           = useState(true);
+  const [user, setUser].                    = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [wishlist, setWishlist]             = useState<Product[]>([]);
-  const [cart, setCart]                     = useState<any[]>([]);
-
+  const [cart, setCart]                     = useState<any[]>([])
+  
   React.useEffect(() => {
     (async () => {
       setWishlist(await loadWishlist());
@@ -187,6 +188,13 @@ export default function App() {
   }, []);
   React.useEffect(() => { saveWishlist(wishlist); }, [wishlist]);
   React.useEffect(() => { saveCart(cart); }, [cart]);
+  useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setUser(user);
+  });
+
+  return unsubscribe;
+}, []);
 
   const openProduct    = (p: Product) => setSelectedProduct(p);
   const closeProduct   = () => setSelectedProduct(null);
