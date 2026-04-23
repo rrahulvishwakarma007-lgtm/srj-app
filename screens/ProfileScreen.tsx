@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Linking, Alert, Switch,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Theme, Radius } from '../lib/theme';
+import { doc, getDoc } from "firebase/firestore";
+
+const fetchUser = async (uid) => {
+  const docRef = doc(db, "users", uid);
+  const snap = await getDoc(docRef);
+
+  if (snap.exists()) {
+    console.log(snap.data());
+  }
+};
 
 const WHATSAPP = '918377911745';
 const CALL_NO  = 'tel:+918377911745';
