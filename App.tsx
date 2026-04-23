@@ -17,6 +17,9 @@ import ProductModal from './components/ProductModal';
 import { Product } from './lib/types';
 import { loadWishlist, saveWishlist, loadCart, saveCart } from './lib/storage';
 import ReelsScreen from './screens/ReelsScreen';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { useEffect } from "react";
 
 const Tab = createBottomTabNavigator();
 
