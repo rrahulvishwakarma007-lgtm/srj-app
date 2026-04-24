@@ -4,6 +4,8 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import * as SplashScreen from 'expo-splash-screen';
+
 import { Theme } from './lib/theme';
 
 import HomeScreen from './screens/HomeScreen';
@@ -21,6 +23,9 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 
 const Tab = createBottomTabNavigator();
+
+// 🔥 Prevent splash from auto hiding
+SplashScreen.preventAutoHideAsync();
 
 const ICONS: Record<string, { active: any; inactive: any }> = {
   Home:      { active: 'home', inactive: 'home-outline' },
@@ -120,6 +125,20 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
     return unsubscribe;
+  }, []);
+
+  // 🔥 CRITICAL FIX — HIDE SPLASH
+  useEffect(() => {
+    const hideSplash = async () => {
+      try {
+        await SplashScreen.hideAsync();
+        console.log("Splash hidden");
+      } catch (e) {
+        console.log("Splash error", e);
+      }
+    };
+
+    hideSplash();
   }, []);
 
   return (
