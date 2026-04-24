@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../firebase';
 import { Theme, Radius } from '../lib/theme';
 
 // ── CHANGE THIS PASSWORD ──────────────────────────────────────────────────
@@ -46,14 +46,12 @@ export default function AdminGoldRatesScreen({ onClose }: { onClose: () => void 
       if (snap.exists()) {
         const d = snap.data();
         setFields({
-          gold24k:  String(d.gold24k  || ''),
-          gold22k:  String(d.gold22k  || ''),
-          gold18k:  String(d.gold18k  || ''),
-          gold14k:  String(d.gold14k  || ''),
-          silver:   String(d.silver   || ''),
-          platinum: String(d.platinum || ''),
-          note:     d.note || '',
-        });
+  gold24k: String(d.gold24k || ''),
+  gold22k: String(d.gold22k || ''),
+  gold20k: String(d.gold20k || ''),
+  gold18k: String(d.gold18k || ''),
+  note: d.note || '',
+});
         if (d.updatedAt) {
           try {
             const date = d.updatedAt.toDate();
@@ -111,12 +109,10 @@ const handleGold24kChange = (val: string) => {
     try {
       setSaving(true);
       await setDoc(doc(db, 'goldRates', 'today'), {
-        gold24k:   parseNum(fields.gold24k),
-        gold22k:   parseNum(fields.gold22k),
-        gold18k:   parseNum(fields.gold18k),
-        gold14k:   parseNum(fields.gold14k),
-        silver:    parseNum(fields.silver),
-        platinum:  parseNum(fields.platinum),
+  gold24k: parseNum(fields.gold24k),
+  gold22k: parseNum(fields.gold22k),
+  gold20k: parseNum(fields.gold20k),
+  gold18k: parseNum(fields.gold18k),
         note:      fields.note.trim(),
         updatedAt: serverTimestamp(),
         updatedBy: 'Shekhar Raja Team',
