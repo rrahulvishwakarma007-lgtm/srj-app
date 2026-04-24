@@ -7,7 +7,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../firebase'
 import { saveEnquiry, saveAppointment } from '../lib/firestore';
 
 const { width: W } = Dimensions.get('window');
