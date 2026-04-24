@@ -7,7 +7,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../firebase';
 import { Product } from '../lib/types';
 
 const { width: W } = Dimensions.get('window');
@@ -238,15 +238,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                         style={styles.bannerImage}
                         resizeMode="cover"
                       />
-                      <View style={styles.bannerOverlay} />
-                      {item.title ? (
-                        <View style={styles.bannerContent}>
-                          <Text style={styles.bannerTitle}>{item.title}</Text>
-                          {item.sub ? <Text style={styles.bannerSub}>{item.sub}</Text> : null}
-                          <TouchableOpacity style={styles.bannerBtn}>
-                            <Text style={styles.bannerBtnText}>◆ {item.btn} ◆</Text>
-                          </TouchableOpacity>
-                        </View>
+                     
                       ) : null}
                       {/* Firebase live badge */}
                       <View style={styles.liveBadge}>
