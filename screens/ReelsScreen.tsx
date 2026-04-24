@@ -1,78 +1,536 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, Dimensions, StyleSheet } from 'react-native';
-import { Video } from 'expo-av';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Animated,
+  StatusBar,
+  Image,
+  Platform,
+} from 'react-native';
+import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const { height } = Dimensions.get('window');
+const { height, width } = Dimensions.get('window');
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Reel {
+  id: string;
+  video: string;
+  title: string;
+  description: string;
+  price?: string;
+  likes?: number;
+  sellerName?: string;
+  sellerAvatar?: string;
+  productTag?: string;
+}
+
+// ─── Heart burst animation ────────────────────────────────────────────────────
+const HeartBurst = ({ visible }: { visible: boolean }) => {
+  const scale = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      scale.setValue(0);
+      opacity.setValue(1);
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1.4, useNativeDriver: true, speed: 20 }),
+        Animated.sequence([
+          Animated.delay(300),
+          Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ]),
+      ]).start();
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+  return (
+    <Animated.View style={[styles.heartBurst, { transform: [{ scale }], opacity }]}>
+      <Text style={{ fontSize: 80 }}>♥</Text>
+    </Animated.View>
+  );
+};
+
+// ─── Single Reel Item ─────────────────────────────────────────────────────────
+const ReelItem = ({ item, isActive }: { item: Reel; isActive: boolean }) => {
+  const videoRef = useRef<Video>(null);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(item.likes ?? Math.floor(Math.random() * 9000) + 1000);
+  const [muted, setMuted] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [showPauseIcon, setShowPauseIcon] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const pauseIconOpacity = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(1)).current;
+  const sidebarAnim = useRef(new Animated.Value(0)).current;
+  const infoAnim = useRef(new Animated.Value(0)).current;
+
+  // Play/pause on active change
+  useEffect(() => {
+    if (isActive) {
+      videoRef.current?.playAsync();
+      Animated.parallel([
+        Animated.spring(sidebarAnim, { toValue: 1, useNativeDriver: true, delay: 200, speed: 12 }),
+        Animated.spring(infoAnim, { toValue: 1, useNativeDriver: true, delay: 400, speed: 12 }),
+      ]).start();
+    } else {
+      videoRef.current?.pauseAsync();
+      sidebarAnim.setValue(0);
+      infoAnim.setValue(0);
+      setPaused(false);
+    }
+  }, [isActive]);
+
+  const handleDoubleTap = useCallback(() => {
+    if (!liked) {
+      setLiked(true);
+      setLikeCount(c => c + 1);
+    }
+    setShowHeart(true);
+    setTimeout(() => setShowHeart(false), 900);
+  }, [liked]);
+
+  const lastTap = useRef<number>(0);
+  const handleTap = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      handleDoubleTap();
+    } else {
+      // Single tap = pause/play
+      setPaused(p => {
+        const next = !p;
+        if (next) videoRef.current?.pauseAsync();
+        else videoRef.current?.playAsync();
+        setShowPauseIcon(true);
+        Animated.sequence([
+          Animated.timing(pauseIconOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
+          Animated.delay(600),
+          Animated.timing(pauseIconOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ]).start(() => setShowPauseIcon(false));
+        return next;
+      });
+    }
+    lastTap.current = now;
+  };
+
+  const handleLike = () => {
+    setLiked(l => {
+      setLikeCount(c => l ? c - 1 : c + 1);
+      return !l;
+    });
+  };
+
+  const onPlaybackUpdate = (status: AVPlaybackStatus) => {
+    if (status.isLoaded && status.durationMillis) {
+      setProgress((status.positionMillis ?? 0) / status.durationMillis);
+    }
+  };
+
+  const formatCount = (n: number) =>
+    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
+
+  return (
+    <View style={styles.reelContainer}>
+      <StatusBar hidden />
+
+      {/* Full-screen video */}
+      <TouchableWithoutFeedback onPress={handleTap}>
+        <View style={StyleSheet.absoluteFill}>
+          <Video
+            ref={videoRef}
+            source={{ uri: item.video }}
+            style={StyleSheet.absoluteFill}
+            resizeMode={ResizeMode.COVER}
+            isLooping
+            isMuted={muted}
+            onPlaybackStatusUpdate={onPlaybackUpdate}
+          />
+
+          {/* Dark gradient overlay at bottom */}
+          <View style={styles.gradientOverlay} pointerEvents="none" />
+          <View style={styles.gradientOverlayTop} pointerEvents="none" />
+        </View>
+      </TouchableWithoutFeedback>
+
+      {/* Heart burst on double tap */}
+      <HeartBurst visible={showHeart} />
+
+      {/* Pause / Play icon */}
+      {showPauseIcon && (
+        <Animated.View style={[styles.pauseIcon, { opacity: pauseIconOpacity }]}>
+          <Text style={styles.pauseIconText}>{paused ? '▶' : '⏸'}</Text>
+        </Animated.View>
+      )}
+
+      {/* Progress bar */}
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+      </View>
+
+      {/* ── Bottom info ── */}
+      <Animated.View
+        style={[
+          styles.bottomInfo,
+          {
+            opacity: infoAnim,
+            transform: [{ translateY: infoAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }],
+          },
+        ]}
+        pointerEvents="none"
+      >
+        {/* Seller row */}
+        <View style={styles.sellerRow}>
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarInitial}>
+              {(item.sellerName ?? 'L')[0].toUpperCase()}
+            </Text>
+          </View>
+          <Text style={styles.sellerName}>{item.sellerName ?? 'Lumière Jewels'}</Text>
+          <View style={styles.followBadge}>
+            <Text style={styles.followText}>Follow</Text>
+          </View>
+        </View>
+
+        {/* Title & desc */}
+        <Text style={styles.reelTitle}>{item.title}</Text>
+        <Text style={styles.reelDesc} numberOfLines={2}>{item.description}</Text>
+
+        {/* Product tag */}
+        {item.productTag && (
+          <View style={styles.productTag}>
+            <Text style={styles.productTagIcon}>◈</Text>
+            <Text style={styles.productTagText}>{item.productTag}</Text>
+          </View>
+        )}
+      </Animated.View>
+
+      {/* ── Right sidebar actions ── */}
+      <Animated.View
+        style={[
+          styles.sidebar,
+          {
+            opacity: sidebarAnim,
+            transform: [{ translateX: sidebarAnim.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }],
+          },
+        ]}
+      >
+        {/* Like */}
+        <TouchableOpacity style={styles.sideAction} onPress={handleLike} activeOpacity={0.7}>
+          <Animated.Text style={[styles.sideIcon, liked && styles.sideIconLiked]}>
+            {liked ? '♥' : '♡'}
+          </Animated.Text>
+          <Text style={styles.sideLabel}>{formatCount(likeCount)}</Text>
+        </TouchableOpacity>
+
+        {/* Comment */}
+        <TouchableOpacity style={styles.sideAction} activeOpacity={0.7}>
+          <Text style={styles.sideIcon}>💬</Text>
+          <Text style={styles.sideLabel}>Comment</Text>
+        </TouchableOpacity>
+
+        {/* Share */}
+        <TouchableOpacity style={styles.sideAction} activeOpacity={0.7}>
+          <Text style={styles.sideIcon}>↗</Text>
+          <Text style={styles.sideLabel}>Share</Text>
+        </TouchableOpacity>
+
+        {/* Mute */}
+        <TouchableOpacity
+          style={styles.sideAction}
+          onPress={() => setMuted(m => !m)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.sideIcon}>{muted ? '🔇' : '🔊'}</Text>
+          <Text style={styles.sideLabel}>{muted ? 'Unmute' : 'Mute'}</Text>
+        </TouchableOpacity>
+
+        {/* Price tag */}
+        {item.price && (
+          <View style={styles.priceBubble}>
+            <Text style={styles.priceText}>{item.price}</Text>
+          </View>
+        )}
+      </Animated.View>
+    </View>
+  );
+};
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
-  const [reels, setReels] = useState<any[]>([]);
-  const viewableItems = useRef([]);
+  const [reels, setReels] = useState<Reel[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const fetchReels = async () => {
       const snapshot = await getDocs(collection(db, 'reels'));
-      const data = snapshot.docs.map(doc => ({
+      const data: Reel[] = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...(doc.data() as Omit<Reel, 'id'>),
       }));
       setReels(data);
     };
-
     fetchReels();
   }, []);
 
-  const renderItem = ({ item }: any) => (
-    <View style={styles.container}>
-      <Video
-        source={{ uri: item.video }}
-        style={styles.video}
-        resizeMode="cover"
-        shouldPlay
-        isLooping
-      />
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index ?? 0);
+    }
+  }).current;
 
-      <View style={styles.overlay}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.desc}>{item.description}</Text>
-      </View>
-    </View>
-  );
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
 
   return (
-    <FlatList
-      data={reels}
-      keyExtractor={item => item.id}
-      renderItem={renderItem}
-      pagingEnabled
-      showsVerticalScrollIndicator={false}
-    />
+    <View style={styles.screen}>
+      <FlatList
+        data={reels}
+        keyExtractor={item => item.id}
+        renderItem={({ item, index }) => (
+          <ReelItem item={item} isActive={index === activeIndex} />
+        )}
+        pagingEnabled
+        snapToInterval={height}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        getItemLayout={(_, index) => ({
+          length: height,
+          offset: height * index,
+          index,
+        })}
+        initialNumToRender={2}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        removeClippedSubviews
+      />
+    </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    height: height,
-    backgroundColor: 'black'
+  screen: {
+    flex: 1,
+    backgroundColor: '#000',
   },
-  video: {
-    width: '100%',
-    height: '100%'
+  reelContainer: {
+    height,
+    width,
+    backgroundColor: '#000',
   },
-  overlay: {
+
+  // Gradient overlays
+  gradientOverlay: {
     position: 'absolute',
-    bottom: 60,
-    left: 20
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.55,
+    background: 'transparent',
+    // React Native doesn't support CSS gradients; use a semi-transparent View
+    backgroundColor: 'rgba(0,0,0,0)',
+    // Emulate gradient with multiple views via shadow
   },
-  title: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold'
+  gradientOverlayTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
-  desc: {
-    color: 'white',
+
+  // Heart burst
+  heartBurst: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: height / 2 - 60,
+    zIndex: 99,
+  },
+
+  // Pause icon
+  pauseIcon: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: height / 2 - 40,
+    zIndex: 98,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 50,
+    width: 80,
+    height: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pauseIconText: {
+    fontSize: 32,
+    color: '#fff',
+  },
+
+  // Progress bar
+  progressBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    zIndex: 10,
+  },
+  progressFill: {
+    height: 2,
+    backgroundColor: '#D4AF37',
+  },
+
+  // Bottom info
+  bottomInfo: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 100 : 80,
+    left: 16,
+    right: 80,
+    zIndex: 10,
+  },
+  sellerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#D4AF37',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    marginRight: 8,
+  },
+  avatarInitial: {
+    color: '#1a1209',
+    fontWeight: '800',
     fontSize: 14,
-    marginTop: 4
-  }
+  },
+  sellerName: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.4,
+    flex: 1,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  followBadge: {
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+  },
+  followText: {
+    color: '#D4AF37',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  reelTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  reelDesc: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    lineHeight: 18,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+    marginBottom: 10,
+  },
+  productTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.5)',
+  },
+  productTagIcon: {
+    color: '#D4AF37',
+    fontSize: 12,
+    marginRight: 5,
+  },
+  productTagText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+
+  // Right sidebar
+  sidebar: {
+    position: 'absolute',
+    right: 12,
+    bottom: Platform.OS === 'ios' ? 100 : 80,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  sideAction: {
+    alignItems: 'center',
+    marginBottom: 22,
+  },
+  sideIcon: {
+    fontSize: 28,
+    color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  sideIconLiked: {
+    color: '#FF3B5C',
+  },
+  sideLabel: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 11,
+    marginTop: 3,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  priceBubble: {
+    backgroundColor: '#D4AF37',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 4,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  priceText: {
+    color: '#1a1209',
+    fontWeight: '900',
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
 });
