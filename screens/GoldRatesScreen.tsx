@@ -7,7 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../firebase';
 import { Theme, Radius } from '../lib/theme';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -22,6 +22,7 @@ interface FirestoreRates {
   gold24k: number;
   gold22k: number;
   gold18k: number;
+  gold20k: number;
   gold14k: number;
   silver: number;
   platinum: number;
