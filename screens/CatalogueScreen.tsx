@@ -162,38 +162,62 @@ const toggleWish = (id: string) =>
       />
 
       {/* Grid */}
-      <FlatList
-        data={filtered} numColumns={2} keyExtractor={p => String(p.id)}
-        contentContainerStyle={styles.grid} columnWrapperStyle={{ gap: 12 }}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={[styles.card, { width: CARD_W }]} activeOpacity={0.9} onPress={() => setSelected(item)}>
-            <View style={styles.imgWrap}>
-              {item.image
-                ? <Image source={{ uri: item.image }} style={styles.img} resizeMode="cover" />
-                : <View style={styles.imgPlaceholder}><Ionicons name={item.icon as any} size={44} color={Theme.gold} /></View>
-              }
-              <TouchableOpacity style={styles.heartBtn} onPress={() => toggleWish(item.id)}>
-                <Ionicons name={isWish(item.id) ? 'heart' : 'heart-outline'} size={17} color={isWish(item.id) ? '#E91E8C' : Theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
-              <Text style={styles.cardDesc} numberOfLines={1}>{item.description}</Text>
-            </View>
-            <TouchableOpacity style={styles.enquireBtn} onPress={() => enquireCard(item)}>
-              <Ionicons name="logo-whatsapp" size={14} color="#FFFFFF" />
-              <Text style={styles.enquireTxt}>Enquire</Text>
-            </TouchableOpacity>
+{loading ? (
+  <View style={{ alignItems: 'center', marginTop: 60 }}>
+    <Ionicons name="diamond-outline" size={40} color={Theme.gold} />
+    <Text style={{ marginTop: 10, color: Theme.textMuted, fontWeight: '600' }}>
+      Loading collection...
+    </Text>
+  </View>
+) : (
+  <FlatList
+    data={filtered}
+    numColumns={2}
+    keyExtractor={p => String(p.id)}
+    contentContainerStyle={styles.grid}
+    columnWrapperStyle={{ gap: 12 }}
+    showsVerticalScrollIndicator={false}
+    renderItem={({ item }) => (
+      <TouchableOpacity
+        style={[styles.card, { width: CARD_W }]}
+        activeOpacity={0.9}
+        onPress={() => setSelected(item)}
+      >
+        <View style={styles.imgWrap}>
+          {item.image
+            ? <Image source={{ uri: item.image }} style={styles.img} resizeMode="cover" />
+            : <View style={styles.imgPlaceholder}>
+                <Ionicons name={item.icon as any} size={44} color={Theme.gold} />
+              </View>
+          }
+          <TouchableOpacity style={styles.heartBtn} onPress={() => toggleWish(item.id)}>
+            <Ionicons
+              name={isWish(item.id) ? 'heart' : 'heart-outline'}
+              size={17}
+              color={isWish(item.id) ? '#E91E8C' : Theme.textMuted}
+            />
           </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Ionicons name="search" size={40} color={Theme.border} />
-            <Text style={styles.emptyText}>No pieces found</Text>
-          </View>
-        }
-      />
+        </View>
+
+        <View style={styles.cardBody}>
+          <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.cardDesc} numberOfLines={1}>{item.description}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.enquireBtn} onPress={() => enquireCard(item)}>
+          <Ionicons name="logo-whatsapp" size={14} color="#FFFFFF" />
+          <Text style={styles.enquireTxt}>Enquire</Text>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    )}
+    ListEmptyComponent={!loading ? (
+      <View style={styles.emptyWrap}>
+        <Ionicons name="search" size={40} color={Theme.border} />
+        <Text style={styles.emptyText}>No pieces found</Text>
+      </View>
+    ) : null}
+  />
+)}
 
       <ProductDetail product={selected} onClose={() => setSelected(null)} isWishlisted={selected ? isWish(selected.id) : false} onToggleWishlist={() => selected && toggleWish(selected.id)} />
     </SafeAreaView>
