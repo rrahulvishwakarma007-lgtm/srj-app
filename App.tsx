@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar, View, Platform } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -19,7 +19,6 @@ import { loadWishlist, saveWishlist, loadCart, saveCart } from './lib/storage';
 import ReelsScreen from './screens/ReelsScreen';
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
-import { useEffect } from "react";
 
 const Tab = createBottomTabNavigator();
 
@@ -27,10 +26,10 @@ const ICONS: Record<string, { active: any; inactive: any }> = {
   Home:      { active: 'home',             inactive: 'home-outline'          },
   Catalogue: { active: 'grid',             inactive: 'grid-outline'          },
   Scan:      { active: 'scan-circle',      inactive: 'scan-circle-outline'   },
-   Gold:      { active: 'trending-up',      inactive: 'trending-up-outline'   },
+  Gold:      { active: 'trending-up',      inactive: 'trending-up-outline'   },
   Contact:   { active: 'call',             inactive: 'call-outline'          },
   Profile:   { active: 'person',           inactive: 'person-outline'        },
-Reels: { active: 'play-circle', inactive: 'play-circle-outline' },
+  Reels:     { active: 'play-circle',      inactive: 'play-circle-outline'   },
 };
 
 function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedProduct, closeProduct, toggleWishlist, addToCart }: any) {
@@ -65,94 +64,44 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
               marginTop: 1,
             },
             tabBarIcon: ({ color, focused }) => {
-  const ic = ICONS[route.name] || { active: 'ellipse', inactive: 'ellipse-outline' };
+              const ic = ICONS[route.name] || { active: 'ellipse', inactive: 'ellipse-outline' };
 
-  // 🎬 Reels tab highlight
-  if (route.name === 'Reels') {
-    return (
-      <View style={{
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        backgroundColor: focused ? '#FF0050' : '#EDE8F5',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -6,
-      }}>
-        <Ionicons
-          name={focused ? ic.active : ic.inactive}
-          size={22}
-          color={focused ? '#fff' : '#9B6ED4'}
-        />
-      </View>
-    );
-  }
+              if (route.name === 'Reels') {
+                return (
+                  <View style={{
+                    width: 38, height: 38, borderRadius: 19,
+                    backgroundColor: focused ? '#FF0050' : '#EDE8F5',
+                    alignItems: 'center', justifyContent: 'center', marginTop: -6,
+                  }}>
+                    <Ionicons name={focused ? ic.active : ic.inactive} size={22} color={focused ? '#fff' : '#9B6ED4'} />
+                  </View>
+                );
+              }
 
-  // Scan tab
-  if (route.name === 'Scan') {
-    return (
-      <View style={{
-        width: 38, height: 38, borderRadius: 19,
-        backgroundColor: focused ? Theme.gold : '#EDE8F5',
-        alignItems: 'center', justifyContent: 'center',
-        marginTop: -6,
-        shadowColor: Theme.gold,
-        shadowOpacity: focused ? 0.5 : 0,
-        shadowRadius: 6,
-        elevation: focused ? 4 : 0,
-      }}>
-        <Ionicons
-          name={focused ? ic.active : ic.inactive}
-          size={22}
-          color={focused ? '#2D1B5E' : '#9B6ED4'}
-        />
-      </View>
-    );
-  }
+              if (route.name === 'Scan') {
+                return (
+                  <View style={{
+                    width: 38, height: 38, borderRadius: 19,
+                    backgroundColor: focused ? Theme.gold : '#EDE8F5',
+                    alignItems: 'center', justifyContent: 'center', marginTop: -6,
+                    shadowColor: Theme.gold, shadowOpacity: focused ? 0.5 : 0,
+                    shadowRadius: 6, elevation: focused ? 4 : 0,
+                  }}>
+                    <Ionicons name={focused ? ic.active : ic.inactive} size={22} color={focused ? '#2D1B5E' : '#9B6ED4'} />
+                  </View>
+                );
+              }
 
-  // TryOn tab (if you keep it)
-  if (route.name === 'TryOn') {
-    return (
-      <View style={{
-        width: 38, height: 38, borderRadius: 19,
-        backgroundColor: focused ? '#9B6ED4' : '#EDE8F5',
-        alignItems: 'center', justifyContent: 'center',
-        marginTop: -6,
-        shadowColor: '#9B6ED4',
-        shadowOpacity: focused ? 0.5 : 0,
-        shadowRadius: 6,
-        elevation: focused ? 4 : 0,
-      }}>
-        <Ionicons
-          name={focused ? ic.active : ic.inactive}
-          size={20}
-          color={focused ? '#fff' : '#9B6ED4'}
-        />
-      </View>
-    );
-  }
-
-  // Default icons
-  return (
-    <Ionicons
-      name={focused ? ic.active : ic.inactive}
-      size={21}
-      color={color}
-    />
-  );
-},
+              return <Ionicons name={focused ? ic.active : ic.inactive} size={21} color={color} />;
+            },
           })}
         >
           <Tab.Screen name="Home">
             {() => <HomeScreen onOpenProduct={openProduct} wishlist={wishlist} />}
           </Tab.Screen>
           <Tab.Screen name="Catalogue" component={CatalogueScreen} />
-          <Tab.Screen
-            name="Scan"
-            component={ScanScreen}
-            options={{ tabBarLabel: 'Scan' }}
-          />
-        <Tab.Screen name="Reels" component={ReelsScreen} />
+          <Tab.Screen name="Scan" component={ScanScreen} options={{ tabBarLabel: 'Scan' }} />
+          <Tab.Screen name="Reels" component={ReelsScreen} />
           <Tab.Screen name="Gold" component={GoldRatesScreen} />
           <Tab.Screen name="Contact" component={ContactScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
@@ -164,9 +113,7 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
         onClose={closeProduct}
         onAddToWishlist={toggleWishlist}
         onAddToCart={addToCart}
-        isWishlisted={
-          selectedProduct ? wishlist.some((w: Product) => w.id === selectedProduct.id) : false
-        }
+        isWishlisted={selectedProduct ? wishlist.some((w: Product) => w.id === selectedProduct.id) : false}
       />
     </View>
   );
@@ -174,50 +121,50 @@ function AppTabs({ openProduct, wishlist, cart, setWishlist, setCart, selectedPr
 
 export default function App() {
   const [fontsLoaded] = useFonts({ ...Ionicons.font });
-  const [showIntro, setShowIntro]           = useState(true);
-  const [user, setUser]                    = useState<any>(null);
+
+  // ── FIX 1: Don't block forever if fonts fail to load on device ──
+  // If fontsLoaded stays false after 4s (network issue, APK asset issue),
+  // we proceed anyway rather than staying stuck on splash forever.
+  const [fontTimeout, setFontTimeout] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setFontTimeout(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const [showIntro, setShowIntro] = useState(true);
+  const [user, setUser] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [wishlist, setWishlist]             = useState<Product[]>([]);
-  const [cart, setCart]                     = useState<any[]>([])
-  
-  React.useEffect(() => {
+  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [cart, setCart] = useState<any[]>([]);
+
+  useEffect(() => {
     (async () => {
       setWishlist(await loadWishlist());
       setCart(await loadCart());
     })();
   }, []);
-  React.useEffect(() => { saveWishlist(wishlist); }, [wishlist]);
-  React.useEffect(() => { saveCart(cart); }, [cart]);
+
+  useEffect(() => { saveWishlist(wishlist); }, [wishlist]);
+  useEffect(() => { saveCart(cart); }, [cart]);
+
   useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    setUser(user);
-  });
+    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
+    return unsubscribe;
+  }, []);
 
-  return unsubscribe;
-}, []);
+  // ── FIX 2: Safety net — if IntroScreen's onFinish somehow never fires,
+  // force-dismiss intro after 6 seconds so app never stays stuck ──
+  useEffect(() => {
+    if (!showIntro) return;
+    const t = setTimeout(() => {
+      console.warn('[SRJ] IntroScreen safety timeout fired — forcing navigation forward');
+      setShowIntro(false);
+    }, 6000);
+    return () => clearTimeout(t);
+  }, [showIntro]);
 
-  const openProduct    = (p: Product) => setSelectedProduct(p);
-  const closeProduct   = () => setSelectedProduct(null);
-  const toggleWishlist = () => {
-    if (!selectedProduct) return;
-    const exists = wishlist.some(w => w.id === selectedProduct.id);
-    setWishlist(
-      exists
-        ? wishlist.filter(w => w.id !== selectedProduct.id)
-        : [...wishlist, selectedProduct]
-    );
-  };
-  const addToCart = () => {
-    if (!selectedProduct) return;
-    const i = cart.findIndex(c => c.id === selectedProduct.id);
-    let nc: any[];
-    if (i >= 0) { nc = [...cart]; nc[i].quantity += 1; }
-    else nc = [...cart, { ...selectedProduct, quantity: 1 }];
-    setCart(nc);
-    closeProduct();
-  };
-
-  if (!fontsLoaded) return null;
+  // ── FIX 1 applied here: proceed if fonts loaded OR timeout hit ──
+  if (!fontsLoaded && !fontTimeout) return null;
 
   return (
     <SafeAreaProvider>
@@ -226,15 +173,30 @@ export default function App() {
         <IntroScreen onFinish={() => setShowIntro(false)} />
       ) : (
         <AppTabs
-          openProduct={openProduct}
+          openProduct={(p: Product) => setSelectedProduct(p)}
           wishlist={wishlist}
           cart={cart}
           setWishlist={setWishlist}
           setCart={setCart}
           selectedProduct={selectedProduct}
-          closeProduct={closeProduct}
-          toggleWishlist={toggleWishlist}
-          addToCart={addToCart}
+          closeProduct={() => setSelectedProduct(null)}
+          toggleWishlist={() => {
+            if (!selectedProduct) return;
+            const exists = wishlist.some(w => w.id === selectedProduct.id);
+            setWishlist(exists
+              ? wishlist.filter(w => w.id !== selectedProduct.id)
+              : [...wishlist, selectedProduct]
+            );
+          }}
+          addToCart={() => {
+            if (!selectedProduct) return;
+            const i = cart.findIndex(c => c.id === selectedProduct.id);
+            let nc: any[];
+            if (i >= 0) { nc = [...cart]; nc[i].quantity += 1; }
+            else nc = [...cart, { ...selectedProduct, quantity: 1 }];
+            setCart(nc);
+            setSelectedProduct(null);
+          }}
         />
       )}
     </SafeAreaProvider>
