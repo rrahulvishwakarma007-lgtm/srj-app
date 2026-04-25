@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Modal, Alert, Dimensions, Linking, Image,
-  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase'
-import { saveEnquiry, saveAppointment } from '../lib/firestore';
 
 const { width: W } = Dimensions.get('window');
 
@@ -29,8 +25,8 @@ const PHONE  = '+918377911745';
 const WA_NUM = '918377911745';
 const WA_URL = (msg: string) => `https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`;
 
-// Fallback images if Firebase fails
-const FALLBACK_IMAGES = [
+// ── Static showroom images (Firebase removed) ─────────────────────────────────
+const SHOWROOM_IMAGES = [
   'https://shekharrajajewellers.com/wp-content/uploads/2026/01/IMG_20260111_125559.jpg',
   'https://shekharrajajewellers.com/wp-content/uploads/2026/01/IMG_20260111_125632.jpg',
 ];
@@ -72,40 +68,11 @@ const TRUST = [
 export default function ContactScreen() {
   const insets = useSafeAreaInsets();
 
-  // State
-  const [form, setForm]         = useState({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
+  const [form, setForm]     = useState({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
   const [showAppt, setShowAppt] = useState(false);
-  const [apptF, setApptF]       = useState({ name: '', phone: '', date: DATES[0], time: TIMES[0], service: SERVICES[0] });
-  const [flash, setFlash]       = useState('');
-  const [imgIdx, setImgIdx]     = useState(0);
-  const [images, setImages]     = useState<string[]>(FALLBACK_IMAGES);
-  const [imgLoading, setImgLoading] = useState(true);
-  const [saving, setSaving]     = useState(false);
-
-  // Fetch showroom images from Firebase contact collection
-  useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDocs(collection(db, 'contact'));
-        const urls: string[] = [];
-        snap.forEach(doc => {
-          const data = doc.data();
-          // Each doc may have image, image2, image3 etc.
-          Object.keys(data).forEach(key => {
-            if (key.startsWith('image') && typeof data[key] === 'string') {
-              urls.push(data[key]);
-            }
-          });
-        });
-        if (urls.length > 0) setImages(urls);
-      } catch (e) {
-        console.warn('Could not fetch contact images:', e);
-        // Keep fallback images
-      } finally {
-        setImgLoading(false);
-      }
-    })();
-  }, []);
+  const [apptF, setApptF]   = useState({ name: '', phone: '', date: DATES[0], time: TIMES[0], service: SERVICES[0] });
+  const [flash, setFlash]   = useState('');
+  const [imgIdx, setImgIdx] = useState(0);
 
   const upd  = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
   const updA = (k: string, v: string) => setApptF(f => ({ ...f, [k]: v }));
@@ -115,53 +82,23 @@ export default function ContactScreen() {
     setTimeout(() => setFlash(''), 2000);
   };
 
-  // Submit enquiry — saves to Firestore AND opens WhatsApp
-  const submit = async () => {
+  // Submit enquiry — opens WhatsApp directly (no Firebase)
+  const submit = () => {
     if (!form.name.trim() || !form.phone.trim()) {
       Alert.alert('Required', 'Please enter your name and phone number.');
       return;
     }
-    setSaving(true);
-    try {
-      // Save to Firebase Firestore
-      await saveEnquiry({
-        name:    form.name,
-        phone:   form.phone,
-        email:   form.email,
-        type:    form.type,
-        message: form.message,
-      });
-      // Also open WhatsApp
-      const msg = `Hello! I'm ${form.name} (${form.phone}). Enquiry type: ${form.type}. ${form.message}`;
-      Linking.openURL(WA_URL(msg));
-      showFlash('ENQUIRY SAVED ✓');
-      setForm({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
-    } catch (e) {
-      // Even if Firebase fails, still open WhatsApp
-      const msg = `Hello! I'm ${form.name} (${form.phone}). Enquiry type: ${form.type}. ${form.message}`;
-      Linking.openURL(WA_URL(msg));
-      showFlash('MESSAGE SENT ✓');
-    } finally {
-      setSaving(false);
-    }
+    const msg = `Hello! I'm ${form.name} (${form.phone}). Enquiry type: ${form.type}. ${form.message}`;
+    Linking.openURL(WA_URL(msg));
+    showFlash('MESSAGE SENT ✓');
+    setForm({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
   };
 
-  // Confirm appointment — saves to Firestore AND opens WhatsApp
-  const confirmAppt = async () => {
-    if (!apptF.name.trim()) { Alert.alert('Name Required', 'Please enter your name.'); return; }
-    setSaving(true);
-    try {
-      await saveAppointment({
-        name:    apptF.name,
-        phone:   apptF.phone,
-        date:    apptF.date,
-        time:    apptF.time,
-        service: apptF.service,
-      });
-    } catch (e) {
-      console.warn('saveAppointment error:', e);
-    } finally {
-      setSaving(false);
+  // Confirm appointment — opens WhatsApp directly (no Firebase)
+  const confirmAppt = () => {
+    if (!apptF.name.trim()) {
+      Alert.alert('Name Required', 'Please enter your name.');
+      return;
     }
     const msg = `Hello! I'd like to book a ${apptF.service} appointment.\nName: ${apptF.name}\nPhone: ${apptF.phone}\nDate: ${apptF.date}\nTime: ${apptF.time}`;
     setShowAppt(false);
@@ -195,60 +132,45 @@ export default function ContactScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
       >
 
-        {/* ── SHOWROOM IMAGES (from Firebase) ── */}
+        {/* ── SHOWROOM IMAGES (static, no Firebase) ── */}
         <View style={styles.imgSection}>
-          {imgLoading ? (
-            <View style={styles.imgPlaceholder}>
-              <ActivityIndicator color={GOLD} size="small" />
-              <Text style={styles.imgLoadingText}>Loading showroom photos...</Text>
-            </View>
-          ) : (
-            <>
-              {/* Thumbnails row */}
-              <View style={styles.imgRow}>
-                {images.map((uri, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[styles.imgThumb, imgIdx === i && styles.imgThumbActive]}
-                    onPress={() => setImgIdx(i)}
-                    activeOpacity={0.85}
-                  >
-                    <Image source={{ uri }} style={styles.thumbImg} resizeMode="cover" />
-                    {imgIdx === i && (
-                      <View style={styles.imgActiveDot}>
-                        <Ionicons name="eye" size={11} color="#fff" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Main large image */}
-              <View style={styles.imgMainWrap}>
-                <Image
-                  source={{ uri: images[imgIdx] }}
-                  style={styles.imgMain}
-                  resizeMode="cover"
-                />
-                <View style={styles.imgOverlay}>
-                  <View style={styles.imgOverlayLeft}>
-                    <Ionicons name="storefront" size={14} color={GOLD} style={{ marginRight: 6 }} />
-                    <Text style={styles.imgOverlayText}>Shekhar Raja Jewellers</Text>
+          {/* Thumbnails */}
+          <View style={styles.imgRow}>
+            {SHOWROOM_IMAGES.map((uri, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.imgThumb, imgIdx === i && styles.imgThumbActive]}
+                onPress={() => setImgIdx(i)}
+                activeOpacity={0.85}
+              >
+                <Image source={{ uri }} style={styles.thumbImg} resizeMode="cover" />
+                {imgIdx === i && (
+                  <View style={styles.imgActiveDot}>
+                    <Ionicons name="eye" size={11} color="#fff" />
                   </View>
-                  <Text style={styles.imgOverlaySubText}>Jabalpur, MP</Text>
-                </View>
-                {/* Firebase badge */}
-                <View style={styles.firebaseBadge}>
-                  <Ionicons name="cloud-done" size={11} color={GOLD} />
-                  <Text style={styles.firebaseBadgeText}>Live from Firebase</Text>
-                </View>
-                {/* Image counter */}
-                <View style={styles.imgCounter}>
-                  <Text style={styles.imgCounterText}>{imgIdx + 1} / {images.length}</Text>
-                </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Main large image */}
+          <View style={styles.imgMainWrap}>
+            <Image
+              source={{ uri: SHOWROOM_IMAGES[imgIdx] }}
+              style={styles.imgMain}
+              resizeMode="cover"
+            />
+            <View style={styles.imgOverlay}>
+              <View style={styles.imgOverlayLeft}>
+                <Ionicons name="storefront" size={14} color={GOLD} style={{ marginRight: 6 }} />
+                <Text style={styles.imgOverlayText}>Shekhar Raja Jewellers</Text>
               </View>
-            </>
-          )}
+              <Text style={styles.imgOverlaySubText}>Jabalpur, MP</Text>
+            </View>
+            <View style={styles.imgCounter}>
+              <Text style={styles.imgCounterText}>{imgIdx + 1} / {SHOWROOM_IMAGES.length}</Text>
+            </View>
+          </View>
         </View>
 
         {/* ── PRIMARY CONTACT BUTTONS ── */}
@@ -285,7 +207,7 @@ export default function ContactScreen() {
           <Ionicons name="calendar" size={22} color={GOLD} />
           <View style={{ flex: 1 }}>
             <Text style={styles.apptTitle}>Request Private Appointment</Text>
-            <Text style={styles.apptSub}>Saved to our system + confirmed on WhatsApp</Text>
+            <Text style={styles.apptSub}>Confirmed directly on WhatsApp</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={GOLD} />
         </TouchableOpacity>
@@ -362,13 +284,7 @@ export default function ContactScreen() {
         </View>
 
         <View style={styles.form}>
-          <View style={styles.formTitleRow}>
-            <Text style={styles.formTitle}>Private Note to Our Concierge</Text>
-            <View style={styles.savedBadge}>
-              <Ionicons name="cloud-done" size={11} color={GREEN} />
-              <Text style={styles.savedBadgeText}>Saved to Firebase</Text>
-            </View>
-          </View>
+          <Text style={styles.formTitle}>Private Note to Our Concierge</Text>
 
           <View style={styles.typeRow}>
             {MSG_TYPES.map(t => (
@@ -424,22 +340,13 @@ export default function ContactScreen() {
             onChangeText={v => upd('message', v)}
           />
 
-          <TouchableOpacity
-            style={[styles.sendBtn, saving && styles.sendBtnDisabled]}
-            onPress={submit}
-            activeOpacity={0.88}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator color={GOLD} size="small" style={{ marginRight: 8 }} />
-            ) : (
-              <Ionicons name="send" size={16} color={GOLD} style={{ marginRight: 8 }} />
-            )}
-            <Text style={styles.sendText}>{saving ? 'SAVING...' : 'SEND TO CONCIERGE'}</Text>
+          <TouchableOpacity style={styles.sendBtn} onPress={submit} activeOpacity={0.88}>
+            <Ionicons name="logo-whatsapp" size={18} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.sendText}>SEND VIA WHATSAPP</Text>
           </TouchableOpacity>
 
           <Text style={styles.footNote}>
-            🔒 Your details are saved securely to Firebase and handled only by our senior concierge. Response guaranteed within 2 hours.
+            Your message opens directly in WhatsApp. Our senior concierge responds within 2 hours.
           </Text>
         </View>
       </ScrollView>
@@ -476,7 +383,7 @@ export default function ContactScreen() {
             <View style={styles.modalIntroCard}>
               <Ionicons name="diamond-outline" size={20} color={PURPLE_MID} />
               <Text style={styles.modalIntro}>
-                Our curator will personally host you. Your booking is saved to our system and confirmed on WhatsApp within 2 hours.
+                Our curator will personally host you. Your booking will be confirmed on WhatsApp within 2 hours.
               </Text>
             </View>
 
@@ -538,24 +445,13 @@ export default function ContactScreen() {
               ))}
             </View>
 
-            <TouchableOpacity
-              style={[styles.confirmBtn, saving && styles.sendBtnDisabled]}
-              onPress={confirmAppt}
-              activeOpacity={0.88}
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
-              ) : (
-                <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
-              )}
-              <Text style={styles.confirmText}>
-                {saving ? 'SAVING...' : 'CONFIRM ON WHATSAPP'}
-              </Text>
+            <TouchableOpacity style={styles.confirmBtn} onPress={confirmAppt} activeOpacity={0.88}>
+              <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.confirmText}>CONFIRM ON WHATSAPP</Text>
             </TouchableOpacity>
 
             <Text style={styles.modalFine}>
-              Your appointment is saved to Firebase and a senior curator will confirm within 2 hours.
+              Tapping above opens WhatsApp with your booking details. A senior curator confirms within 2 hours.
             </Text>
           </ScrollView>
         </View>
@@ -582,21 +478,18 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  // Images
-  imgSection:      { backgroundColor: BG_CARD, padding: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
-  imgPlaceholder:  { height: 120, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  imgLoadingText:  { color: TEXT_LIGHT, fontSize: 12 },
-  imgRow:          { flexDirection: 'row', gap: 10, marginBottom: 10 },
-  imgThumb:        { flex: 1, borderRadius: 10, overflow: 'hidden', borderWidth: 2, borderColor: BORDER },
-  imgThumbActive:  { borderColor: GOLD },
-  thumbImg:        { width: '100%', height: 70 },
+  imgSection:     { backgroundColor: BG_CARD, padding: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
+  imgRow:         { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  imgThumb:       { flex: 1, borderRadius: 10, overflow: 'hidden', borderWidth: 2, borderColor: BORDER },
+  imgThumbActive: { borderColor: GOLD },
+  thumbImg:       { width: '100%', height: 70 },
   imgActiveDot: {
     position: 'absolute', top: 5, right: 5,
     backgroundColor: GOLD, borderRadius: 9,
     width: 18, height: 18, alignItems: 'center', justifyContent: 'center',
   },
-  imgMainWrap:      { borderRadius: 14, overflow: 'hidden', position: 'relative' },
-  imgMain:          { width: '100%', height: 210 },
+  imgMainWrap:       { borderRadius: 14, overflow: 'hidden', position: 'relative' },
+  imgMain:           { width: '100%', height: 210 },
   imgOverlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     backgroundColor: 'rgba(45,27,94,0.65)', padding: 12,
@@ -604,13 +497,6 @@ const styles = StyleSheet.create({
   imgOverlayLeft:    { flexDirection: 'row', alignItems: 'center' },
   imgOverlayText:    { color: '#fff', fontSize: 13, fontWeight: '800' },
   imgOverlaySubText: { color: GOLD_LIGHT, fontSize: 11, marginTop: 3 },
-  firebaseBadge: {
-    position: 'absolute', top: 10, left: 10,
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(45,27,94,0.75)', borderRadius: 99,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  firebaseBadgeText: { color: GOLD, fontSize: 9, fontWeight: '700' },
   imgCounter: {
     position: 'absolute', top: 10, right: 10,
     backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 99,
@@ -618,7 +504,6 @@ const styles = StyleSheet.create({
   },
   imgCounterText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 
-  // Contact buttons
   contactBtns: { padding: 16, gap: 12, backgroundColor: BG },
   waBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
@@ -694,16 +579,9 @@ const styles = StyleSheet.create({
   divLine:     { flex: 1, height: 1, backgroundColor: BORDER },
   divText:     { color: TEXT_LIGHT, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginHorizontal: 10 },
 
-  form:      { marginHorizontal: 16, marginTop: 12, backgroundColor: BG_CARD, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: BORDER },
-  formTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  formTitle: { color: TEXT_DARK, fontSize: 15, fontWeight: '800' },
-  savedBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#dcfce7', borderRadius: 99,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  savedBadgeText: { color: GREEN, fontSize: 9, fontWeight: '700' },
-  typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  form:      { marginHorizontal: 16, marginTop: 12, backgroundColor: BG_CARD, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: BORDER, marginBottom: 8 },
+  formTitle: { color: TEXT_DARK, fontSize: 15, fontWeight: '800', marginBottom: 14 },
+  typeRow:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   typeChip: {
     paddingHorizontal: 12, paddingVertical: 6,
     backgroundColor: BG, borderRadius: 99, borderWidth: 1, borderColor: BORDER,
@@ -727,11 +605,9 @@ const styles = StyleSheet.create({
   },
   sendBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: PURPLE_DARK, borderRadius: 28, paddingVertical: 14,
-    borderWidth: 1, borderColor: 'rgba(201,168,76,0.4)',
+    backgroundColor: WHATSAPP, borderRadius: 28, paddingVertical: 14,
   },
-  sendBtnDisabled: { opacity: 0.6 },
-  sendText:  { color: GOLD, fontSize: 14, fontWeight: '900', letterSpacing: 1 },
+  sendText:  { color: '#fff', fontSize: 14, fontWeight: '900', letterSpacing: 1 },
   footNote:  { color: TEXT_LIGHT, fontSize: 11, textAlign: 'center', marginTop: 12, lineHeight: 17 },
 
   flash: {
@@ -758,8 +634,7 @@ const styles = StyleSheet.create({
   modalInput: {
     backgroundColor: BG_CARD, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 12,
-    borderWidth: 1, borderColor: BORDER, fontSize: 14, color: TEXT_DARK,
-    marginBottom: 4,
+    borderWidth: 1, borderColor: BORDER, fontSize: 14, color: TEXT_DARK, marginBottom: 4,
   },
   slotRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   slot:           { paddingHorizontal: 14, paddingVertical: 9, backgroundColor: BG_CARD, borderRadius: 99, borderWidth: 1, borderColor: BORDER },
