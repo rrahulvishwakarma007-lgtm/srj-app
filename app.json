@@ -36,8 +36,7 @@
     },
     "android": {
       "package": "com.shekharraja.jewellers",
-      "versionCode": 4,
-      "googleServicesFile": "./google-services.json",
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
