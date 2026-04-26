@@ -1,62 +1,47 @@
-// Shekhar Raja Jewellers — Auth with AsyncStorage as Database
+// ─── Local Auth System (no Firebase) ─────────────────────────────────────────
+// Uses AsyncStorage to persist user session across app restarts
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const USERS_KEY = 'srj_users';
-const SESSION_KEY = 'srj_session';
+const USER_KEY = 'srj_user';
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  password: string; // In real backend this would be hashed — stored locally here
+export interface SRJUser {
+  name:      string;
+  email:     string;
+  phone?:    string;
+  joinedAt:  string;
 }
 
-export interface Session {
-  userId: number;
-  email: string;
-  name: string;
+// Save user after signup/login
+export async function saveUser(user: SRJUser): Promise<void> {
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-async function readUsers(): Promise<User[]> {
-  const raw = await AsyncStorage.getItem(USERS_KEY);
-  return raw ? JSON.parse(raw) : [];
+// Get current logged-in user (null = not logged in)
+export async function getUser(): Promise<SRJUser | null> {
+  try {
+    const raw = await AsyncStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }
 
-async function writeUsers(users: User[]): Promise<void> {
-  await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
+// Logout — clear saved user
+export async function logoutUser(): Promise<void> {
+  await AsyncStorage.removeItem(USER_KEY);
 }
 
-export async function register(name: string, email: string, password: string): Promise<{ ok: true; user: User } | { ok: false; error: string }> {
-  const users = await readUsers();
-  if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-    return { ok: false, error: 'Email already registered' };
-  }
-  const user: User = { id: Date.now(), name: name.trim(), email: email.trim(), password };
-  users.push(user);
-  await writeUsers(users);
-  return { ok: true, user };
-}
+// Simple local "login" — just validate format and save
+export async function loginUser(email: string, password: string, name?: string): Promise<{ success: boolean; error?: string }> {
+  if (!email.trim()) return { success:false, error:'Please enter your email.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return { success:false, error:'Please enter a valid email.' };
+  if (!password || password.length < 6) return { success:false, error:'Password must be at least 6 characters.' };
 
-export async function login(email: string, password: string): Promise<{ ok: true; session: Session } | { ok: false; error: string }> {
-  const users = await readUsers();
-  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-  if (!user) return { ok: false, error: 'Invalid email or password' };
-  const session: Session = { userId: user.id, email: user.email, name: user.name };
-  await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  return { ok: true, session };
-}
-
-export async function getSession(): Promise<Session | null> {
-  const raw = await AsyncStorage.getItem(SESSION_KEY);
-  return raw ? JSON.parse(raw) : null;
-}
-
-export async function logout(): Promise<void> {
-  await AsyncStorage.removeItem(SESSION_KEY);
-}
-
-// Helper to check if any account exists (for skipping login on return visits if desired)
-export async function hasAnyUser(): Promise<boolean> {
-  const users = await readUsers();
-  return users.length > 0;
+  const user: SRJUser = {
+    name:     name?.trim() || email.split('@')[0],
+    email:    email.trim().toLowerCase(),
+    phone:    '',
+    joinedAt: new Date().toISOString(),
+  };
+  await saveUser(user);
+  return { success:true };
 }
