@@ -32,7 +32,7 @@ interface Reel {
 const STATIC_REELS: Reel[] = [
   {
     id: '1',
-    video: 'https://drive.google.com/uc?export=download&id=1-8is5IeWhZXz6kWmGIhuIgi74RSOuSnZ',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-2.mp4',
     title: 'Bridal Gold Necklace',
     description: 'Handcrafted 22K gold bridal necklace set. Perfect for your special day.',
     price: '₹45,000',
@@ -42,7 +42,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '2',
-    video: 'https://drive.google.com/uc?export=download&id=1sGVW9RvOjAo0Vg1bZ-LXqS9K9z3dvpVD',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/fe0d718a-3c3c-11f1-a24c-0242ac110005_796673563858693_raw.mp4',
     title: 'Diamond Earrings',
     description: 'Elegant diamond drop earrings in 18K white gold. BIS certified.',
     price: '₹28,500',
@@ -52,7 +52,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '3',
-    video: 'https://drive.google.com/uc?export=download&id=1otONCb9EFly1lzoAvM6gpwPggn2Qh4sN',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-3.mp4',
     title: 'Gold Bangles Set',
     description: 'Traditional gold bangles set in 22K. Available in all sizes.',
     price: '₹32,000',
@@ -62,7 +62,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '4',
-    video: 'https://drive.google.com/uc?export=download&id=12zi8LoBiFNCUoV7jvMBFBtJ8IwfDK5Kv',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-1.mp4',
     title: 'Kundan Maang Tikka',
     description: 'Royal Kundan maang tikka with meenakari work. Jabalpur special.',
     price: '₹12,800',
@@ -72,7 +72,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '5',
-    video: 'https://drive.google.com/uc?export=download&id=1RaMe--i_sjdYPgmmOeeOsr8tuAfR4KZu',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/6d320b70-3c3d-11f1-aa4d-0242ac110005_796674326651013_raw.mp4',
     title: 'Gold Chain Collection',
     description: 'Everyday wear 22K gold chains. Hallmark certified 916.',
     price: '₹18,000',
@@ -82,7 +82,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '6',
-    video: 'https://drive.google.com/uc?export=download&id=10-hAogqUc9GQi58KfphW8JXnw8Dm0D66',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/01ff1192-3c3b-11f1-b0f4-0242ac110005_796670073065541_raw.mp4',
     title: 'Antique Choker',
     description: 'Temple jewellery antique gold choker necklace. One of a kind piece.',
     price: '₹55,000',
@@ -92,7 +92,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '7',
-    video: 'https://drive.google.com/uc?export=download&id=1DaXGPoioNWS2d8KdYeBIatu6P03lrddN',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/276a2d60-3c3e-11f1-ba39-0242ac110005_796675607015813_raw.mp4',
     title: 'Ring Collection',
     description: 'Solitaire and cocktail rings in 18K and 22K gold. All sizes available.',
     price: '₹9,500',
@@ -102,7 +102,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '8',
-    video: 'https://drive.google.com/uc?export=download&id=1nEtghqzYirRswJoUMyocYXNNWJzighjI',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720.mp4',
     title: 'Bridal Jewellery Set',
     description: 'Complete bridal set — necklace, earrings, maang tikka and bangles.',
     price: '₹1,20,000',
@@ -112,7 +112,7 @@ const STATIC_REELS: Reel[] = [
   },
   {
     id: '9',
-    video: 'https://drive.google.com/uc?export=download&id=1wXwgqalnETlvSuLX2rSq5kPg6GI5-A8W',
+    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/60a0807c-3c3c-11f1-abe8-0242ac110005_796672481322309_raw.mp4',
     title: 'Silver Jewellery',
     description: '999 pure silver anklets, rings and chains. BIS hallmarked.',
     price: '₹3,200',
