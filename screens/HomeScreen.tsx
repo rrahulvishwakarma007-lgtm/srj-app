@@ -253,14 +253,6 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
               renderItem={({ item }) => (
                 <View style={styles.bannerSlide}>
                   <Image source={{ uri: item.image }} style={styles.bannerImage} resizeMode="cover" />
-                  <View style={styles.bannerOverlay} />
-                  <View style={styles.bannerContent}>
-                    <Text style={styles.bannerTitle}>{item.title}</Text>
-                    <Text style={styles.bannerSub}>{item.sub}</Text>
-                    <TouchableOpacity style={styles.bannerBtn} onPress={bookVisit}>
-                      <Text style={styles.bannerBtnText}>{item.btn}</Text>
-                    </TouchableOpacity>
-                  </View>
                 </View>
               )}
             />
@@ -351,7 +343,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                       <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
                       <Text style={styles.productDesc} numberOfLines={1}>{item.description}</Text>
                       <View style={styles.productBottom}>
-                        <Text style={styles.productPrice}>₹{item.price.toLocaleString('en-IN')}</Text>
+                        <Text style={styles.productPurity}>{item.purity} Gold</Text>
                         <View style={styles.heartBtnSmall}>
                           <Ionicons name="heart" size={13} color={GOLD} />
                         </View>
@@ -454,18 +446,8 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 14, color: TEXT_DARK },
 
   bannerWrap:    { marginTop: 12 },
-  bannerSlide:   { width: W, height: 220, position: 'relative' },
+  bannerSlide:   { width: W, height: 220 },
   bannerImage:   { width: '100%', height: '100%' },
-  bannerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(40,10,80,0.38)' },
-  bannerContent: { position: 'absolute', left: 20, bottom: 28, right: W * 0.42 },
-  bannerTitle: {
-    color: '#fff', fontSize: 28, fontWeight: '900', fontStyle: 'italic',
-    lineHeight: 32, letterSpacing: 0.5,
-    textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4,
-  },
-  bannerSub:     { color: 'rgba(255,255,255,0.88)', fontSize: 12, marginTop: 4, marginBottom: 10 },
-  bannerBtn:     { backgroundColor: 'rgba(201,168,76,0.9)', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, alignSelf: 'flex-start' },
-  bannerBtnText: { color: PURPLE_DARK, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   dots:          { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 8 },
   dot:           { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C8B8E8' },
   dotActive:     { width: 18, backgroundColor: GOLD },
@@ -514,7 +496,7 @@ const styles = StyleSheet.create({
   productName:   { color: TEXT_DARK, fontSize: 12, fontWeight: '700' },
   productDesc:   { color: TEXT_LIGHT, fontSize: 10, marginTop: 2 },
   productBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
-  productPrice:  { color: PURPLE_MID, fontSize: 13, fontWeight: '800' },
+  productPurity: { color: PURPLE_MID, fontSize: 11, fontWeight: '700' },
   heartBtnSmall: {
     backgroundColor: 'rgba(201,168,76,0.12)', borderRadius: 10,
     width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
