@@ -1,258 +1,183 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, Animated, KeyboardAvoidingView, Platform,
-  ScrollView, ActivityIndicator, Dimensions,
+  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { loginUser } from '../lib/auth';
 
-const { width, height } = Dimensions.get('window');
+const GOLD='#C9A84C', GOLD_LIGHT='#F0D080', PURPLE_DARK='#2D1B5E', PURPLE_MID='#4A2080';
+const BG='#F0EBFF', BG_CARD='#FFFFFF', BORDER='#DDD5F0';
+const TEXT_DARK='#1A0A3E', TEXT_MID='#4A3570', TEXT_LIGHT='#8B7BAF', RED='#dc2626', GREEN='#16a34a';
 
-// ─── Animated Input Field ─────────────────────────────────────────────────────
-const FloatingInput = ({ label, value, onChangeText, secureTextEntry=false, keyboardType='default', autoCapitalize='sentences', rightElement }: any) => {
-  const [focused, setFocused] = useState(false);
-  const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
-  const borderAnim = useRef(new Animated.Value(0)).current;
+interface Props {
+  onSignupSuccess: (user: any) => void;
+  onSkip: () => void;
+  onLoginPress: () => void;
+}
 
-  const handleFocus = () => {
-    setFocused(true);
-    Animated.parallel([
-      Animated.timing(labelAnim, { toValue:1, duration:180, useNativeDriver:false }),
-      Animated.timing(borderAnim, { toValue:1, duration:200, useNativeDriver:false }),
-    ]).start();
-  };
-  const handleBlur = () => {
-    setFocused(false);
-    Animated.timing(borderAnim, { toValue:0, duration:200, useNativeDriver:false }).start();
-    if (!value) Animated.timing(labelAnim, { toValue:0, duration:180, useNativeDriver:false }).start();
-  };
-
-  const labelTop   = labelAnim.interpolate({ inputRange:[0,1], outputRange:[16,-8] });
-  const labelSize  = labelAnim.interpolate({ inputRange:[0,1], outputRange:[15,11] });
-  const labelColor = labelAnim.interpolate({ inputRange:[0,1], outputRange:['rgba(255,255,255,0.35)','#D4AF37'] });
-  const borderColor= borderAnim.interpolate({ inputRange:[0,1], outputRange:['rgba(255,255,255,0.12)','#D4AF37'] });
-
-  return (
-    <Animated.View style={[styles.floatWrapper, { borderColor }]}>
-      <Animated.Text style={[styles.floatLabel, { top:labelTop, fontSize:labelSize, color:labelColor }]} pointerEvents="none">
-        {label}
-      </Animated.Text>
-      <View style={styles.floatRow}>
-        <TextInput
-          style={styles.floatInput} value={value} onChangeText={onChangeText}
-          onFocus={handleFocus} onBlur={handleBlur}
-          secureTextEntry={secureTextEntry} keyboardType={keyboardType}
-          autoCapitalize={autoCapitalize} autoCorrect={false} placeholderTextColor="transparent"
-        />
-        {rightElement}
-      </View>
-    </Animated.View>
-  );
-};
-
-// ─── Password Strength Bar ────────────────────────────────────────────────────
 const PasswordStrength = ({ password }: { password: string }) => {
-  const getStrength = () => {
-    if (!password) return { score:0, label:'', color:'transparent' };
-    let score = 0;
-    if (password.length >= 6) score++;
-    if (password.length >= 10) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    if (score <= 1) return { score:1, label:'Weak',   color:'#FF3B5C' };
-    if (score <= 3) return { score:3, label:'Fair',   color:'#FFB340' };
-    return              { score:5, label:'Strong', color:'#34C759' };
-  };
-  const { score, label, color } = getStrength();
   if (!password) return null;
+  let score = 0;
+  if (password.length >= 6)  score++;
+  if (password.length >= 10) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  const info = score<=1?{label:'Weak',color:'#ef4444'}:score<=3?{label:'Fair',color:'#f59e0b'}:{label:'Strong',color:'#22c55e'};
   return (
-    <View style={styles.strengthContainer}>
-      <View style={styles.strengthBars}>
-        {[1,2,3,4,5].map(i=>(
-          <View key={i} style={[styles.strengthBar, { backgroundColor: i<=score ? color : 'rgba(255,255,255,0.1)' }]}/>
-        ))}
-      </View>
-      <Text style={[styles.strengthLabel, { color }]}>{label}</Text>
+    <View style={pw.wrap}>
+      <View style={pw.bars}>{[1,2,3,4,5].map(i=><View key={i} style={[pw.bar,{backgroundColor:i<=score?info.color:'#e5e7eb'}]}/>)}</View>
+      <Text style={[pw.label,{color:info.color}]}>{info.label}</Text>
     </View>
   );
 };
+const pw = StyleSheet.create({
+  wrap:{flexDirection:'row',alignItems:'center',gap:8,marginTop:-6,marginBottom:4},
+  bars:{flexDirection:'row',gap:3,flex:1},bar:{flex:1,height:3,borderRadius:2},label:{fontSize:11,fontWeight:'700',width:44,textAlign:'right'},
+});
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-export default function SignupScreen({ onClose }: any) {
-  const [name, setName]           = useState('');
-  const [email, setEmail]         = useState('');
-  const [password, setPassword]   = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [agreed, setAgreed]       = useState(false);
+export default function SignUpScreen({ onSignupSuccess, onSkip, onLoginPress }: Props) {
+  const insets = useSafeAreaInsets();
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
+  const [phone, setPhone]       = useState('');
+  const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
 
-  const buttonScale = useRef(new Animated.Value(1)).current;
-  const checkAnim   = useRef(new Animated.Value(0)).current;
-
-  const handlePressIn  = () => Animated.spring(buttonScale, { toValue:0.96, useNativeDriver:true, speed:30 }).start();
-  const handlePressOut = () => Animated.spring(buttonScale, { toValue:1,    useNativeDriver:true, speed:30 }).start();
-
-  const toggleAgree = () => {
-    setAgreed(a => {
-      Animated.spring(checkAnim, { toValue: a ? 0 : 1, useNativeDriver:true, speed:25 }).start();
-      return !a;
-    });
-  };
-
-  const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
-  const signup = async () => {
-    if (!name.trim() || !email.trim() || !password) {
-      Alert.alert('Missing Fields', 'Please fill in all details.'); return;
-    }
-    if (!validateEmail(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.'); return;
-    }
-    if (password.length < 6) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters.'); return;
-    }
-    if (!agreed) {
-      Alert.alert('Terms & Conditions', 'Please agree to the terms to continue.'); return;
-    }
-
+  const handleSignup = async () => {
+    setError('');
+    if (!name.trim())  { setError('Please enter your name.'); return; }
     setLoading(true);
-    // Simulate brief loading then show success
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        'Welcome! ✦',
-        `Hello ${name.trim()}! Your account has been created.\n\nContact us on WhatsApp for personalised service.`,
-        [{ text: 'Continue', onPress: () => onClose?.() }]
-      );
-    }, 800);
+    const result = await loginUser(email, password, name);
+    setLoading(false);
+    if (result.success) {
+      onSignupSuccess({ name: name.trim(), email: email.trim().toLowerCase(), phone: phone.trim() });
+    } else {
+      setError(result.error || 'Signup failed.');
+    }
   };
-
-  const checkScale = checkAnim.interpolate({ inputRange:[0,1], outputRange:[0.5,1] });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.bgCircle1} pointerEvents="none"/>
-      <View style={styles.bgCircle2} pointerEvents="none"/>
-      <KeyboardAvoidingView style={{ flex:1 }} behavior={Platform.OS==='ios'?'padding':'height'}>
+    <View style={[styles.root,{paddingTop:insets.top}]}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.skipBtn} onPress={onSkip}>
+          <Text style={styles.skipText}>Skip</Text>
+          <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.5)" />
+        </TouchableOpacity>
+      </View>
+      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          {/* ── Brand Header ── */}
-          <View style={styles.header}>
-            <View style={styles.diamondRow}>
-              <View style={styles.diamond}/>
-              <View style={[styles.diamond, styles.diamondSm]}/>
-              <View style={[styles.diamond, styles.diamondSm]}/>
-            </View>
-            <Text style={styles.brandName}>SHEKHAR RAJA</Text>
-            <Text style={styles.brandSub}>Fine Jewellery</Text>
-            <View style={styles.dividerRow}>
-              <View style={styles.divLine}/>
-              <Text style={styles.divDot}>✦</Text>
-              <View style={styles.divLine}/>
-            </View>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join our exclusive jewellery family</Text>
+          <View style={styles.logoWrap}>
+            <View style={styles.logoCircle}><Ionicons name="diamond" size={40} color={GOLD}/></View>
+            <Text style={styles.brandName}>Shekhar Raja</Text>
+            <Text style={styles.brandSub}>JEWELLERS</Text>
           </View>
 
-          {/* ── Form ── */}
-          <View style={styles.form}>
-            <FloatingInput label="Full Name"      value={name}     onChangeText={setName}     autoCapitalize="words"/>
-            <FloatingInput label="Email Address"  value={email}    onChangeText={setEmail}    keyboardType="email-address" autoCapitalize="none"/>
-            <FloatingInput
-              label="Password" value={password} onChangeText={setPassword}
-              secureTextEntry={!showPassword} autoCapitalize="none"
-              rightElement={
-                <TouchableOpacity onPress={()=>setShowPassword(s=>!s)} style={styles.eyeBtn}>
-                  <Text style={styles.eyeIcon}>{showPassword?'🙈':'👁'}</Text>
-                </TouchableOpacity>
-              }
-            />
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Create Account</Text>
+            <Text style={styles.cardSub}>Join our jewellery family — free forever</Text>
+
+            {!!error && (
+              <View style={styles.errorBanner}>
+                <Ionicons name="alert-circle" size={15} color={RED} style={{marginRight:6}}/>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            {[
+              { label:'FULL NAME',       value:name,     set:setName,     type:'default',       icon:'person-outline',       cap:'words' as const,  secure:false },
+              { label:'EMAIL ADDRESS',   value:email,    set:setEmail,    type:'email-address', icon:'mail-outline',         cap:'none' as const,   secure:false },
+              { label:'PHONE (OPTIONAL)',value:phone,    set:setPhone,    type:'phone-pad',     icon:'call-outline',         cap:'none' as const,   secure:false },
+            ].map(f=>(
+              <View key={f.label}>
+                <Text style={styles.inputLabel}>{f.label}</Text>
+                <View style={styles.inputWrap}>
+                  <Ionicons name={f.icon as any} size={17} color={TEXT_LIGHT} style={{marginRight:10}}/>
+                  <TextInput style={styles.input} placeholder={f.label.split(' ')[0]+'...'} placeholderTextColor={TEXT_LIGHT}
+                    keyboardType={f.type as any} autoCapitalize={f.cap} autoCorrect={false}
+                    value={f.value} onChangeText={v=>{f.set(v);setError('');}}/>
+                </View>
+              </View>
+            ))}
+
+            <Text style={styles.inputLabel}>PASSWORD</Text>
+            <View style={styles.inputWrap}>
+              <Ionicons name="lock-closed-outline" size={17} color={TEXT_LIGHT} style={{marginRight:10}}/>
+              <TextInput style={styles.input} placeholder="Min 6 characters" placeholderTextColor={TEXT_LIGHT}
+                secureTextEntry={!showPass} autoCapitalize="none"
+                value={password} onChangeText={v=>{setPassword(v);setError('');}}/>
+              <TouchableOpacity onPress={()=>setShowPass(s=>!s)}>
+                <Ionicons name={showPass?'eye-off-outline':'eye-outline'} size={18} color={TEXT_LIGHT}/>
+              </TouchableOpacity>
+            </View>
             <PasswordStrength password={password}/>
 
-            {/* Terms */}
-            <TouchableOpacity style={styles.termsRow} onPress={toggleAgree} activeOpacity={0.8}>
-              <View style={[styles.checkbox, agreed&&styles.checkboxActive]}>
-                <Animated.Text style={[styles.checkmark, { transform:[{scale:checkScale}], opacity:checkAnim }]}>✓</Animated.Text>
-              </View>
-              <Text style={styles.termsText}>
-                I agree to the <Text style={styles.termsLink}>Terms & Conditions</Text>{' '}and{' '}<Text style={styles.termsLink}>Privacy Policy</Text>
-              </Text>
+            <TouchableOpacity style={[styles.signupBtn,loading&&{opacity:0.7}]} onPress={handleSignup} disabled={loading} activeOpacity={0.88}>
+              {loading?<ActivityIndicator color={PURPLE_DARK} size="small"/>:(
+                <><Ionicons name="person-add-outline" size={19} color={PURPLE_DARK} style={{marginRight:8}}/><Text style={styles.signupBtnText}>CREATE ACCOUNT</Text></>
+              )}
             </TouchableOpacity>
 
-            {/* Sign Up button */}
-            <Animated.View style={{ transform:[{scale:buttonScale}] }}>
-              <TouchableOpacity
-                style={[styles.button, loading&&styles.buttonDisabled]}
-                onPress={signup} onPressIn={handlePressIn} onPressOut={handlePressOut}
-                activeOpacity={1} disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#1a1209" size="small"/>
-                ) : (
-                  <><Text style={styles.buttonText}>Create Account</Text><Text style={styles.buttonIcon}>→</Text></>
-                )}
-              </TouchableOpacity>
-            </Animated.View>
+            <View style={styles.divRow}><View style={styles.divLine}/><Text style={styles.divText}>OR</Text><View style={styles.divLine}/></View>
 
-            <View style={styles.orRow}>
-              <View style={styles.orLine}/><Text style={styles.orText}>or</Text><View style={styles.orLine}/>
-            </View>
-
-            <TouchableOpacity onPress={onClose} style={styles.skipBtn} activeOpacity={0.7}>
-              <Text style={styles.skipText}>Continue without account</Text>
+            <TouchableOpacity style={styles.guestBtn} onPress={onSkip} activeOpacity={0.85}>
+              <Ionicons name="walk-outline" size={18} color={PURPLE_MID} style={{marginRight:8}}/>
+              <Text style={styles.guestBtnText}>Continue as Guest</Text>
             </TouchableOpacity>
+
+            <Text style={styles.footNote}>
+              Already have an account?{' '}
+              <Text style={styles.loginLink} onPress={onLoginPress}>Sign in</Text>
+            </Text>
           </View>
 
-          <Text style={styles.bottomNote}>✦ Exclusive members get early access to new collections</Text>
+          <View style={styles.benefitsCard}>
+            <Text style={styles.benefitsTitle}>✦ Member Benefits</Text>
+            {['Save wishlist across devices','Track enquiry history','Early access to new collections','Personalised recommendations'].map((b,i)=>(
+              <View key={i} style={styles.benefitRow}>
+                <Ionicons name="checkmark-circle" size={15} color={GOLD}/>
+                <Text style={styles.benefitText}>{b}</Text>
+              </View>
+            ))}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container:   { flex:1, backgroundColor:'#0e0b14' },
-  bgCircle1:   { position:'absolute', width:width*0.8, height:width*0.8, borderRadius:width*0.4, backgroundColor:'rgba(212,175,55,0.04)', top:-width*0.2, right:-width*0.25 },
-  bgCircle2:   { position:'absolute', width:width*0.6, height:width*0.6, borderRadius:width*0.3, backgroundColor:'rgba(212,175,55,0.03)', bottom:height*0.1, left:-width*0.2 },
-  scroll:      { paddingHorizontal:24, paddingBottom:40, flexGrow:1 },
-  header:      { alignItems:'center', paddingTop:32, marginBottom:36 },
-  diamondRow:  { flexDirection:'row', alignItems:'center', gap:6, marginBottom:12 },
-  diamond:     { width:14, height:14, backgroundColor:'#D4AF37', transform:[{rotate:'45deg'}] },
-  diamondSm:   { width:8, height:8, backgroundColor:'rgba(212,175,55,0.5)' },
-  brandName:   { color:'#D4AF37', fontSize:22, fontWeight:'900', letterSpacing:6 },
-  brandSub:    { color:'rgba(212,175,55,0.6)', fontSize:11, letterSpacing:4, marginTop:2, textTransform:'uppercase' },
-  dividerRow:  { flexDirection:'row', alignItems:'center', width:'60%', marginVertical:18 },
-  divLine:     { flex:1, height:1, backgroundColor:'rgba(212,175,55,0.25)' },
-  divDot:      { color:'#D4AF37', fontSize:10, marginHorizontal:8 },
-  title:       { color:'#fff', fontSize:26, fontWeight:'800', letterSpacing:0.5 },
-  subtitle:    { color:'rgba(255,255,255,0.4)', fontSize:13, marginTop:6, letterSpacing:0.3 },
-  form:        { gap:16 },
-  floatWrapper:{ borderWidth:1, borderRadius:12, backgroundColor:'rgba(255,255,255,0.05)', paddingHorizontal:16, paddingTop:18, paddingBottom:10, position:'relative' },
-  floatLabel:  { position:'absolute', left:16, color:'rgba(255,255,255,0.35)', backgroundColor:'transparent' },
-  floatRow:    { flexDirection:'row', alignItems:'center' },
-  floatInput:  { flex:1, color:'#fff', fontSize:15, fontWeight:'500', paddingVertical:0, paddingTop:4 },
-  eyeBtn:      { padding:4 },
-  eyeIcon:     { fontSize:16 },
-  strengthContainer: { flexDirection:'row', alignItems:'center', gap:8, marginTop:-6, paddingHorizontal:2 },
-  strengthBars:{ flexDirection:'row', gap:4, flex:1 },
-  strengthBar: { flex:1, height:3, borderRadius:2 },
-  strengthLabel:{ fontSize:11, fontWeight:'700', letterSpacing:0.5, width:46, textAlign:'right' },
-  termsRow:    { flexDirection:'row', alignItems:'flex-start', gap:10, marginTop:2 },
-  checkbox:    { width:20, height:20, borderRadius:5, borderWidth:1.5, borderColor:'rgba(212,175,55,0.4)', alignItems:'center', justifyContent:'center', marginTop:1 },
-  checkboxActive:{ backgroundColor:'#D4AF37', borderColor:'#D4AF37' },
-  checkmark:   { color:'#1a1209', fontSize:12, fontWeight:'900' },
-  termsText:   { flex:1, color:'rgba(255,255,255,0.45)', fontSize:12, lineHeight:18 },
-  termsLink:   { color:'#D4AF37', fontWeight:'600' },
-  button:      { backgroundColor:'#D4AF37', paddingVertical:16, borderRadius:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, elevation:8, marginTop:4 },
-  buttonDisabled:{ opacity:0.7 },
-  buttonText:  { color:'#1a1209', fontWeight:'900', fontSize:15, letterSpacing:0.8 },
-  buttonIcon:  { color:'#1a1209', fontSize:18, fontWeight:'700' },
-  orRow:       { flexDirection:'row', alignItems:'center', gap:12 },
-  orLine:      { flex:1, height:1, backgroundColor:'rgba(255,255,255,0.08)' },
-  orText:      { color:'rgba(255,255,255,0.3)', fontSize:12, letterSpacing:1 },
-  skipBtn:     { alignItems:'center', paddingVertical:4 },
-  skipText:    { color:'rgba(255,255,255,0.35)', fontSize:13, letterSpacing:0.3 },
-  bottomNote:  { color:'rgba(212,175,55,0.4)', fontSize:11, textAlign:'center', marginTop:32, letterSpacing:0.5, fontStyle:'italic' },
+  root:{flex:1,backgroundColor:PURPLE_DARK},
+  header:{paddingHorizontal:16,paddingVertical:8,alignItems:'flex-end'},
+  skipBtn:{flexDirection:'row',alignItems:'center',backgroundColor:'rgba(255,255,255,0.1)',borderRadius:99,paddingHorizontal:12,paddingVertical:6,gap:2},
+  skipText:{color:'rgba(255,255,255,0.6)',fontSize:13,fontWeight:'600'},
+  scroll:{flexGrow:1,paddingHorizontal:20,paddingBottom:30},
+  logoWrap:{alignItems:'center',paddingVertical:18},
+  logoCircle:{width:76,height:76,borderRadius:38,backgroundColor:'rgba(201,168,76,0.15)',alignItems:'center',justifyContent:'center',borderWidth:1.5,borderColor:'rgba(201,168,76,0.35)',marginBottom:12},
+  brandName:{color:GOLD,fontSize:24,fontWeight:'900',letterSpacing:0.5},
+  brandSub:{color:GOLD_LIGHT,fontSize:10,letterSpacing:5,marginTop:2},
+  card:{backgroundColor:BG_CARD,borderRadius:24,padding:22,shadowColor:'#000',shadowOpacity:0.12,shadowRadius:16,elevation:8,marginBottom:16},
+  cardTitle:{color:TEXT_DARK,fontSize:22,fontWeight:'900',marginBottom:3},
+  cardSub:{color:TEXT_LIGHT,fontSize:13,marginBottom:16},
+  errorBanner:{flexDirection:'row',alignItems:'center',backgroundColor:'#fee2e2',borderRadius:10,padding:10,marginBottom:12,borderWidth:1,borderColor:'#fca5a5'},
+  errorText:{color:RED,fontSize:12,flex:1},
+  inputLabel:{color:PURPLE_MID,fontSize:10,fontWeight:'800',letterSpacing:1.5,marginBottom:5,marginTop:4},
+  inputWrap:{flexDirection:'row',alignItems:'center',backgroundColor:BG,borderRadius:12,paddingHorizontal:13,paddingVertical:12,borderWidth:1.5,borderColor:BORDER,marginBottom:10},
+  input:{flex:1,fontSize:14,color:TEXT_DARK},
+  signupBtn:{flexDirection:'row',alignItems:'center',justifyContent:'center',backgroundColor:GOLD,borderRadius:28,paddingVertical:14,marginTop:6,marginBottom:14,elevation:4},
+  signupBtnText:{color:PURPLE_DARK,fontSize:15,fontWeight:'900',letterSpacing:1},
+  divRow:{flexDirection:'row',alignItems:'center',marginBottom:14},
+  divLine:{flex:1,height:1,backgroundColor:BORDER},divText:{color:TEXT_LIGHT,fontSize:12,marginHorizontal:10},
+  guestBtn:{flexDirection:'row',alignItems:'center',justifyContent:'center',backgroundColor:BG,borderRadius:28,paddingVertical:13,borderWidth:1.5,borderColor:BORDER,marginBottom:14},
+  guestBtnText:{color:PURPLE_MID,fontSize:14,fontWeight:'700'},
+  footNote:{color:TEXT_LIGHT,fontSize:12,textAlign:'center'},loginLink:{color:GOLD,fontWeight:'700'},
+  benefitsCard:{backgroundColor:'rgba(255,255,255,0.08)',borderRadius:16,padding:16,borderWidth:1,borderColor:'rgba(201,168,76,0.2)'},
+  benefitsTitle:{color:GOLD,fontSize:13,fontWeight:'800',marginBottom:12,letterSpacing:0.5},
+  benefitRow:{flexDirection:'row',alignItems:'center',gap:8,marginBottom:8},
+  benefitText:{color:'rgba(255,255,255,0.6)',fontSize:12},
 });
