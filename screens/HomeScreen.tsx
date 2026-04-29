@@ -56,7 +56,7 @@ const CATEGORIES = [
   { id: '3', image: `${WP}/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png`, label: 'Bridal' },
   { id: '4', image: `${WP}/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png`, label: 'Rings' },
   { id: '5', image: `${WP}/file_00000000d1a071fab06fbf048655557e.png`,                 label: 'Chains' },
-  { id: '6', image: `${WP}/file_0000000016a4720bb922e408d0fb4532.png`,                 label: 'Daily W' },
+  { id: '6', image: `${WP}/file_0000000016a4720bb922e408d0fb4532.png`,                 label: 'Daily Wear' },
   { id: '7', image: `${WP}/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png`, label: 'Special' },
 ];
 
