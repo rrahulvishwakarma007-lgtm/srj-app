@@ -1,254 +1,273 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, Modal, ScrollView,
-  StyleSheet, Linking, Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Image, Linking, Dimensions, Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme, Radius } from '../lib/theme';
 import { Product } from '../lib/types';
 
-const WHATSAPP = '918377911745';
-const WA_URL = (msg: string) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
+const { width: W } = Dimensions.get('window');
+
+const GOLD        = '#C9A84C';
+const PURPLE_DARK = '#2D1B5E';
+const PURPLE_MID  = '#4A2080';
+const PURPLE_HERO = '#3D1A6E';
+const BG          = '#F0EBFF';
+const BG_CARD     = '#FFFFFF';
+const BORDER      = '#DDD5F0';
+const TEXT_DARK   = '#1A0A3E';
+const TEXT_MID    = '#4A3570';
+const TEXT_LIGHT  = '#8B7BAF';
+const WHATSAPP    = '#25D366';
 
 interface Props {
   visible: boolean;
   product: Product | null;
   onClose: () => void;
-  onAddToWishlist: () => void;
-  onAddToCart: () => void;
-  isWishlisted: boolean;
+  onAddToWishlist?: () => void;
+  onAddToCart?: () => void;
+  isWishlisted?: boolean;
 }
 
 export default function ProductModal({
-  visible, product, onClose, onAddToWishlist, onAddToCart, isWishlisted,
+  visible, product, onClose, onAddToWishlist, isWishlisted,
 }: Props) {
+  const insets = useSafeAreaInsets();
+
   if (!product) return null;
 
-  const enquireWhatsApp = () => {
-    const msg = `Hello Shekhar Raja Jewellers,\n\nI am interested in:\n*${product.name}*\nCategory: ${product.category} · Purity: ${product.purity}\n\nPlease share details and current pricing.`;
-    Linking.openURL(WA_URL(msg)).catch(() =>
-      Alert.alert('WhatsApp', `Please contact us at +${WHATSAPP}`)
-    );
+  // Resolve image from whichever field is set
+  const imageUri =
+    (product as any).image ||
+    (product as any).imageUrl ||
+    (product as any).photo ||
+    null;
+
+  const enquire = () => {
+    const msg =
+      `Hello Shekhar Raja Jewellers! 🙏\n\n` +
+      `I'm interested in:\n` +
+      `💎 *${product.name}*\n` +
+      `📦 Category: ${product.category}\n` +
+      `📝 ${product.description}\n\n` +
+      `Please share more details. Thank you!`;
+    Linking.openURL(`https://wa.me/918377911745?text=${encodeURIComponent(msg)}`);
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={[styles.root, { paddingTop: insets.top }]}>
 
-        {/* ── Header ── */}
+        {/* ── HEADER ── */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color={Theme.textDark} />
+          <TouchableOpacity style={styles.headerBtn} onPress={onClose} activeOpacity={0.8}>
+            <Ionicons name="arrow-back" size={20} color={TEXT_DARK} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Product Details</Text>
-          <TouchableOpacity onPress={onAddToWishlist} style={styles.wishBtn}>
+          <TouchableOpacity style={styles.headerBtn} onPress={onAddToWishlist} activeOpacity={0.8}>
             <Ionicons
               name={isWishlisted ? 'heart' : 'heart-outline'}
-              size={22}
-              color={isWishlisted ? '#E91E8C' : Theme.textMuted}
+              size={20}
+              color={isWishlisted ? '#e53e3e' : TEXT_MID}
             />
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}
+        >
 
-          {/* ── Hero Image / Icon ── */}
-          <View style={styles.heroWrap}>
-            <View style={styles.hero}>
-              <View style={styles.heroIconCircle}>
-                <Ionicons name={product.icon as any} size={88} color={Theme.gold} />
+          {/* ── IMAGE HERO ── */}
+          <View style={styles.imageHero}>
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.iconFallback}>
+                <Ionicons name="diamond-outline" size={80} color={GOLD} />
               </View>
-            </View>
+            )}
+
             {/* Category pill */}
-            <View style={styles.catPill}>
-              <Ionicons name="diamond-outline" size={11} color={Theme.purple} />
-              <Text style={styles.catPillText}>{product.category}  ·  {product.purity}</Text>
+            <View style={styles.categoryPill}>
+              <Ionicons name="diamond-outline" size={13} color={PURPLE_MID} style={{ marginRight: 5 }} />
+              <Text style={styles.categoryPillText}>
+                {product.category}
+              </Text>
             </View>
           </View>
 
-          {/* ── Info ── */}
-          <View style={styles.infoSection}>
-            <Text style={styles.name}>{product.name}</Text>
-            <Text style={styles.description}>{product.description}</Text>
+          {/* ── INFO ── */}
+          <View style={styles.infoWrap}>
 
-            {!!product.details && (
-              <Text style={styles.details}>{product.details}</Text>
-            )}
+            <Text style={styles.productName}>{product.name}</Text>
+            <Text style={styles.productDesc}>{product.description}</Text>
 
-            {/* Specs row */}
-            <View style={styles.specsCard}>
-              {[
-                { label: 'Category',   value: product.category },
-                { label: 'Purity',     value: product.purity },
-                { label: 'Weight',     value: `${product.weight}g` },
-                { label: 'Hallmark',   value: 'BIS Certified' },
-              ].map((s, i) => (
-                <View key={i} style={[styles.specItem, i < 3 && styles.specBorder]}>
-                  <Text style={styles.specLabel}>{s.label}</Text>
-                  <Text style={styles.specValue}>{s.value}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Price card */}
-            <View style={styles.priceCard}>
-              <View>
-                <Text style={styles.priceLabel}>PRICE (INDICATIVE)</Text>
-                <Text style={styles.price}>₹{product.price.toLocaleString('en-IN')}</Text>
-                <Text style={styles.taxNote}>Inclusive of taxes · Lifetime polish</Text>
+            {/* Specs — NO price, NO weight */}
+            <View style={styles.specsRow}>
+              <View style={styles.specItem}>
+                <Text style={styles.specLabel}>CATEGORY</Text>
+                <Text style={styles.specValue}>{product.category}</Text>
               </View>
-              <View style={styles.priceBadge}>
-                <Ionicons name="shield-checkmark" size={16} color={Theme.purple} />
-                <Text style={styles.priceBadgeText}>BIS{'\n'}Hallmarked</Text>
+              <View style={styles.specDivider} />
+              <View style={styles.specItem}>
+                <Text style={styles.specLabel}>HALLMARK</Text>
+                <Text style={styles.specValue}>BIS Certified</Text>
+              </View>
+              <View style={styles.specDivider} />
+              <View style={styles.specItem}>
+                <Text style={styles.specLabel}>QUALITY</Text>
+                <Text style={styles.specValue}>Premium</Text>
               </View>
             </View>
 
             {/* Trust badges */}
             <View style={styles.trustRow}>
-              {[
-                { icon: 'refresh',         label: 'Easy Exchange' },
-                { icon: 'shield-checkmark',label: 'Genuine Gold' },
-                { icon: 'star',            label: 'Est. 1987' },
-              ].map((t, i) => (
-                <View key={i} style={styles.trustItem}>
-                  <View style={styles.trustIcon}>
-                    <Ionicons name={t.icon as any} size={18} color={Theme.purple} />
-                  </View>
-                  <Text style={styles.trustLabel}>{t.label}</Text>
-                </View>
-              ))}
+              <View style={styles.trustItem}>
+                <Ionicons name="shield-checkmark" size={22} color={GOLD} />
+                <Text style={styles.trustLabel}>100%{'\n'}Hallmarked</Text>
+              </View>
+              <View style={styles.trustItem}>
+                <Ionicons name="ribbon" size={22} color={GOLD} />
+                <Text style={styles.trustLabel}>BIS{'\n'}Certified</Text>
+              </View>
+              <View style={styles.trustItem}>
+                <Ionicons name="swap-horizontal" size={22} color={GOLD} />
+                <Text style={styles.trustLabel}>Easy{'\n'}Exchange</Text>
+              </View>
+              <View style={styles.trustItem}>
+                <Ionicons name="star" size={22} color={GOLD} />
+                <Text style={styles.trustLabel}>Lifetime{'\n'}Polish</Text>
+              </View>
             </View>
+
+            {/* Note */}
+            <View style={styles.noteCard}>
+              <Ionicons name="information-circle-outline" size={18} color={PURPLE_MID} style={{ marginRight: 8, marginTop: 1 }} />
+              <Text style={styles.noteText}>
+                For pricing and availability, please enquire via WhatsApp. Our team will assist you personally.
+              </Text>
+            </View>
+
           </View>
         </ScrollView>
 
-        {/* ── Footer Actions ── */}
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.wishlistBtn} onPress={onAddToWishlist}>
+        {/* ── BOTTOM ACTIONS ── */}
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
+          <TouchableOpacity style={styles.saveBtn} onPress={onAddToWishlist} activeOpacity={0.8}>
             <Ionicons
               name={isWishlisted ? 'heart' : 'heart-outline'}
               size={20}
-              color={isWishlisted ? '#E91E8C' : Theme.purple}
+              color={isWishlisted ? '#e53e3e' : PURPLE_MID}
             />
-            <Text style={[styles.wishlistBtnText, isWishlisted && { color: '#E91E8C' }]}>
-              {isWishlisted ? 'Saved' : 'Save'}
-            </Text>
+            <Text style={styles.saveBtnText}>{isWishlisted ? 'Saved' : 'Save'}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.waBtn} onPress={enquireWhatsApp}>
-            <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
+          <TouchableOpacity style={styles.waBtn} onPress={enquire} activeOpacity={0.85}>
+            <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.waBtnText}>Enquire on WhatsApp</Text>
           </TouchableOpacity>
         </View>
 
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Theme.bgPrimary },
+  root:   { flex: 1, backgroundColor: BG },
+  scroll: { flex: 1 },
 
-  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1, borderBottomColor: Theme.border,
+    backgroundColor: BG, paddingHorizontal: 14, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: BORDER,
   },
-  backBtn: {
-    width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Theme.bgPrimary, borderRadius: Radius.full,
-  },
-  headerTitle: { color: Theme.textDark, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
-  wishBtn: {
-    width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: Theme.bgPrimary, borderRadius: Radius.full,
-  },
-
-  scroll: { paddingBottom: 110 },
-
-  // Hero
-  heroWrap: { backgroundColor: Theme.bgPurple, paddingTop: 28, paddingBottom: 36, alignItems: 'center' },
-  hero: { alignItems: 'center', justifyContent: 'center' },
-  heroIconCircle: {
-    width: 180, height: 180, borderRadius: 90,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 2, borderColor: 'rgba(201,168,76,0.4)',
+  headerBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: BG_CARD, borderWidth: 1, borderColor: BORDER,
     alignItems: 'center', justifyContent: 'center',
   },
-  catPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16, paddingVertical: 7,
-    borderRadius: Radius.full, marginTop: 16,
-  },
-  catPillText: { color: Theme.purple, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: TEXT_DARK },
 
-  // Info section
-  infoSection: { padding: 20 },
-  name: {
-    color: Theme.textDark, fontSize: 26, fontWeight: '900',
-    letterSpacing: 0.3, lineHeight: 32, marginBottom: 8,
+  imageHero: {
+    width: W, height: W * 0.85,
+    backgroundColor: PURPLE_HERO,
   },
-  description: { color: Theme.purple, fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
-  details: {
-    color: Theme.textMuted, fontSize: 14, lineHeight: 22,
-    marginTop: 10,
+  productImage: { width: '100%', height: '100%' },
+  iconFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  categoryPill: {
+    position: 'absolute', bottom: 16, alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 18, paddingVertical: 8,
+    borderRadius: 99,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 4,
   },
+  categoryPillText: { color: PURPLE_MID, fontSize: 13, fontWeight: '700', letterSpacing: 0.5 },
 
-  // Specs card
-  specsCard: {
-    flexDirection: 'row', backgroundColor: '#FFFFFF',
-    borderRadius: Radius.lg, borderWidth: 1, borderColor: Theme.border,
-    marginTop: 20, overflow: 'hidden',
-  },
-  specItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
-  specBorder: { borderRightWidth: 1, borderRightColor: Theme.border },
-  specLabel: { color: Theme.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
-  specValue: { color: Theme.textDark, fontSize: 13, fontWeight: '800', marginTop: 5, textAlign: 'center' },
+  infoWrap: { backgroundColor: BG, paddingHorizontal: 16, paddingTop: 20 },
+  productName: { fontSize: 26, fontWeight: '900', color: TEXT_DARK, marginBottom: 6 },
+  productDesc: { fontSize: 14, color: PURPLE_MID, fontWeight: '600', lineHeight: 20, marginBottom: 20 },
 
-  // Price card
-  priceCard: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF', borderRadius: Radius.lg, padding: 18,
-    borderWidth: 1, borderColor: Theme.border, marginTop: 14,
-    borderLeftWidth: 4, borderLeftColor: Theme.gold,
+  specsRow: {
+    flexDirection: 'row', backgroundColor: BG_CARD,
+    borderRadius: 14, borderWidth: 1, borderColor: BORDER,
+    overflow: 'hidden', marginBottom: 18,
   },
-  priceLabel: { color: Theme.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 2, marginBottom: 4 },
-  price: { color: Theme.purple, fontSize: 30, fontWeight: '900', letterSpacing: 0.5 },
-  taxNote: { color: Theme.textMuted, fontSize: 11, marginTop: 4 },
-  priceBadge: {
-    alignItems: 'center', backgroundColor: Theme.bgCardPurple,
-    padding: 12, borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Theme.purpleBorder,
+  specItem:   { flex: 1, alignItems: 'center', paddingVertical: 14 },
+  specDivider:{ width: 1, backgroundColor: BORDER },
+  specLabel:  { fontSize: 9, fontWeight: '700', color: TEXT_LIGHT, letterSpacing: 0.8, marginBottom: 4 },
+  specValue:  { fontSize: 12, fontWeight: '800', color: TEXT_DARK },
+
+  trustRow: {
+    flexDirection: 'row', justifyContent: 'space-around',
+    backgroundColor: BG_CARD, borderRadius: 14,
+    borderWidth: 1, borderColor: BORDER,
+    paddingVertical: 16, marginBottom: 16,
   },
-  priceBadgeText: { color: Theme.purple, fontSize: 10, fontWeight: '800', textAlign: 'center', marginTop: 4 },
+  trustItem:  { alignItems: 'center', gap: 6 },
+  trustLabel: { color: TEXT_MID, fontSize: 10, fontWeight: '600', textAlign: 'center', lineHeight: 14 },
 
-  // Trust row
-  trustRow: { flexDirection: 'row', marginTop: 16, gap: 10 },
-  trustItem: { flex: 1, alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: Radius.md, paddingVertical: 14, borderWidth: 1, borderColor: Theme.border },
-  trustIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: Theme.bgCardPurple, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  trustLabel: { color: Theme.textDark, fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  noteCard: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    backgroundColor: 'rgba(74,32,128,0.06)',
+    borderRadius: 12, borderWidth: 1,
+    borderColor: 'rgba(74,32,128,0.15)',
+    padding: 14, marginBottom: 10,
+  },
+  noteText: { flex: 1, fontSize: 12, color: TEXT_MID, lineHeight: 18, fontWeight: '500' },
 
-  // Footer
-  footer: {
+  bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    flexDirection: 'row', gap: 12,
-    padding: 16, paddingBottom: 24,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1, borderTopColor: Theme.border,
+    flexDirection: 'row', gap: 10,
+    backgroundColor: BG_CARD,
+    borderTopWidth: 1, borderTopColor: BORDER,
+    paddingHorizontal: 16, paddingTop: 12,
+    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, elevation: 6,
   },
-  wishlistBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 15, paddingHorizontal: 20, borderRadius: Radius.lg,
-    backgroundColor: Theme.bgCardPurple,
-    borderWidth: 1, borderColor: Theme.purpleBorder,
+  saveBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: BG, borderRadius: 28,
+    borderWidth: 1.5, borderColor: BORDER,
+    paddingHorizontal: 20, paddingVertical: 13,
   },
-  wishlistBtnText: { color: Theme.purple, fontSize: 14, fontWeight: '800' },
+  saveBtnText: { color: PURPLE_MID, fontSize: 14, fontWeight: '700' },
   waBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: '#25D366', paddingVertical: 15, borderRadius: Radius.lg,
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: WHATSAPP, borderRadius: 28, paddingVertical: 13,
+    shadowColor: WHATSAPP, shadowOpacity: 0.35, shadowRadius: 8, elevation: 4,
   },
-  waBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
+  waBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
 });
