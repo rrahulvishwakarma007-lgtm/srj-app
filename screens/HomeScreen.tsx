@@ -333,10 +333,9 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                     name:        item.name,
                     category:    item.category,
                     description: item.description,
-                    purity:      item.purity,
-                    color:       item.color,
-                    icon:        item.icon,
+                    purity:      '',
                     image:       item.imageUrl,
+                    imageUrl:    item.imageUrl,
                   } as any)}
                     activeOpacity={0.85}
                   >
