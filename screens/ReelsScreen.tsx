@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, FlatList, Dimensions, StyleSheet,
   TouchableOpacity, TouchableWithoutFeedback,
@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Video, ResizeMode } from 'expo-av';
 
 const { height: H, width: W } = Dimensions.get('window');
 
@@ -31,70 +32,34 @@ const STATIC_REELS: Reel[] = [
   { id:'9', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/60a0807c-3c3c-11f1-abe8-0242ac110005_796672481322309_raw.mp4', title:'Silver Jewellery', description:'999 pure silver anklets, rings and chains. BIS hallmarked.', price:'₹3,200', likes:760, productTag:'Silver Collection' },
 ];
 
-// ── Lazy-load Video to prevent crash on mount ─────────────────────────────────
-let VideoComponent: any = null;
-
-function SafeVideo({ uri, isActive, onError }: { uri: string; isActive: boolean; onError: () => void }) {
-  const videoRef = useRef<any>(null);
-  const [VideoLoaded, setVideoLoaded] = useState(false);
-  const [loadError, setLoadError]     = useState(false);
-
-  useEffect(() => {
-    // Lazy import expo-av only when needed
-    if (!VideoComponent) {
-      try {
-        const av = require('expo-av');
-        VideoComponent = av.Video;
-        setVideoLoaded(true);
-      } catch (e) {
-        setLoadError(true);
-        onError();
-      }
-    } else {
-      setVideoLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!videoRef.current || !VideoLoaded) return;
-    try {
-      if (isActive) videoRef.current.playAsync?.();
-      else          videoRef.current.pauseAsync?.();
-    } catch {}
-  }, [isActive, VideoLoaded]);
-
-  if (loadError || !VideoLoaded || !VideoComponent) {
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#111' }]} />;
-  }
-
-  const ResizeMode = require('expo-av').ResizeMode;
-
-  return (
-    <VideoComponent
-      ref={videoRef}
-      source={{ uri }}
-      style={StyleSheet.absoluteFill}
-      resizeMode={ResizeMode?.COVER ?? 'cover'}
-      isLooping
-      isMuted={false}
-      shouldPlay={isActive}
-      onError={(e: any) => { console.warn('Video error:', e); onError(); }}
-      useNativeControls={false}
-    />
-  );
-}
-
 // ── Single Reel ───────────────────────────────────────────────────────────────
 function ReelItem({ item, isActive }: { item: Reel; isActive: boolean }) {
-  const [liked, setLiked]         = useState(false);
-  const [likeCount, setLikeCount] = useState(item.likes ?? 999);
-  const [videoError, setVideoError] = useState(false);
-  const [paused, setPaused]       = useState(false);
-  const infoAnim = useRef(new Animated.Value(0)).current;
+  const videoRef  = useRef<Video>(null);
+  const infoAnim  = useRef(new Animated.Value(0)).current;
 
+  const [liked,      setLiked]      = useState(false);
+  const [likeCount,  setLikeCount]  = useState(item.likes ?? 999);
+  const [videoError, setVideoError] = useState(false);
+  const [paused,     setPaused]     = useState(false);
+
+  // Play / pause when active changes
+  useEffect(() => {
+    if (!videoRef.current) return;
+    try {
+      if (isActive && !paused) {
+        videoRef.current.playAsync();
+      } else {
+        videoRef.current.pauseAsync();
+      }
+    } catch (_) {}
+  }, [isActive, paused]);
+
+  // Animate info bar in
   useEffect(() => {
     if (isActive) {
-      Animated.spring(infoAnim, { toValue:1, useNativeDriver:true, delay:300, speed:12 }).start();
+      Animated.spring(infoAnim, {
+        toValue: 1, useNativeDriver: true, delay: 300, speed: 12,
+      }).start();
     } else {
       infoAnim.setValue(0);
       setPaused(false);
@@ -102,55 +67,71 @@ function ReelItem({ item, isActive }: { item: Reel; isActive: boolean }) {
   }, [isActive]);
 
   const handleLike = () => {
-    setLiked(l => { setLikeCount(c => l ? c-1 : c+1); return !l; });
+    setLiked(l => {
+      setLikeCount(c => l ? c - 1 : c + 1);
+      return !l;
+    });
   };
 
   const handleEnquire = () => {
-    const msg = `Hello! I saw your reel about "${item.title}" (${item.price ?? ''}) and I'm interested. Can you share more details?`;
+    const msg =
+      `Hello! I saw your reel about "${item.title}" (${item.price ?? ''}) and I'm interested. ` +
+      `Can you share more details?`;
     Linking.openURL(`https://wa.me/918377911745?text=${encodeURIComponent(msg)}`);
   };
 
-  const formatCount = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : `${n}`;
+  const formatCount = (n: number) =>
+    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 
   return (
     <View style={styles.reelContainer}>
 
-      {/* Video or fallback */}
+      {/* ── VIDEO ── */}
       {videoError ? (
         <View style={[StyleSheet.absoluteFill, styles.videoFallback]}>
           <Ionicons name="videocam-off-outline" size={48} color={GOLD} />
           <Text style={styles.videoFallbackText}>Video unavailable</Text>
         </View>
       ) : (
-        <SafeVideo
-          uri={item.video}
-          isActive={isActive && !paused}
+        <Video
+          ref={videoRef}
+          source={{ uri: item.video }}
+          style={StyleSheet.absoluteFill}
+          resizeMode={ResizeMode.COVER}
+          isLooping
+          isMuted={false}
+          shouldPlay={isActive && !paused}
+          useNativeControls={false}
           onError={() => setVideoError(true)}
         />
       )}
 
-      {/* Dark overlays */}
+      {/* Overlays */}
       <View style={styles.overlayTop}    pointerEvents="none" />
       <View style={styles.overlayBottom} pointerEvents="none" />
 
-      {/* Tap to pause */}
+      {/* Tap to pause/play */}
       <TouchableWithoutFeedback onPress={() => setPaused(p => !p)}>
         <View style={StyleSheet.absoluteFill} />
       </TouchableWithoutFeedback>
 
-      {/* Pause indicator */}
+      {/* Pause icon */}
       {paused && (
         <View style={styles.pauseWrap} pointerEvents="none">
-          <Ionicons name="play" size={48} color="rgba(255,255,255,0.8)" />
+          <Ionicons name="play" size={56} color="rgba(255,255,255,0.75)" />
         </View>
       )}
 
-      {/* Bottom info */}
-      <Animated.View style={[styles.bottomInfo, {
-        opacity: infoAnim,
-        transform: [{ translateY: infoAnim.interpolate({ inputRange:[0,1], outputRange:[30,0] }) }],
-      }]} pointerEvents="box-none">
-        {/* Seller row */}
+      {/* ── BOTTOM INFO ── */}
+      <Animated.View
+        style={[styles.bottomInfo, {
+          opacity: infoAnim,
+          transform: [{
+            translateY: infoAnim.interpolate({ inputRange:[0,1], outputRange:[30,0] }),
+          }],
+        }]}
+        pointerEvents="box-none"
+      >
         <View style={styles.sellerRow}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>S</Text>
@@ -159,28 +140,35 @@ function ReelItem({ item, isActive }: { item: Reel; isActive: boolean }) {
         </View>
         <Text style={styles.reelTitle}>{item.title}</Text>
         <Text style={styles.reelDesc} numberOfLines={2}>{item.description}</Text>
+
         {item.productTag && (
           <View style={styles.productTag}>
             <Ionicons name="diamond-outline" size={11} color={GOLD} />
             <Text style={styles.productTagText}>{item.productTag}</Text>
           </View>
         )}
-        {/* Enquire button */}
-        <TouchableOpacity style={styles.enquireBtn} onPress={handleEnquire} activeOpacity={0.88}>
-          <Ionicons name="logo-whatsapp" size={16} color="#fff" style={{marginRight:6}} />
+
+        <TouchableOpacity
+          style={styles.enquireBtn}
+          onPress={handleEnquire}
+          activeOpacity={0.88}
+        >
+          <Ionicons name="logo-whatsapp" size={16} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.enquireBtnText}>Enquire on WhatsApp</Text>
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Right sidebar */}
+      {/* ── SIDEBAR ── */}
       <View style={styles.sidebar}>
-        {/* Like */}
         <TouchableOpacity style={styles.sideAction} onPress={handleLike} activeOpacity={0.7}>
-          <Ionicons name={liked?'heart':'heart-outline'} size={28} color={liked?'#FF3B5C':'#fff'} />
+          <Ionicons
+            name={liked ? 'heart' : 'heart-outline'}
+            size={28}
+            color={liked ? '#FF3B5C' : '#fff'}
+          />
           <Text style={styles.sideLabel}>{formatCount(likeCount)}</Text>
         </TouchableOpacity>
 
-        {/* WhatsApp */}
         <TouchableOpacity style={styles.sideAction} onPress={handleEnquire} activeOpacity={0.7}>
           <View style={styles.waCircle}>
             <Ionicons name="logo-whatsapp" size={22} color="#fff" />
@@ -188,13 +176,11 @@ function ReelItem({ item, isActive }: { item: Reel; isActive: boolean }) {
           <Text style={styles.sideLabel}>Enquire</Text>
         </TouchableOpacity>
 
-        {/* Share */}
         <TouchableOpacity style={styles.sideAction} activeOpacity={0.7}>
           <Ionicons name="share-social-outline" size={26} color="#fff" />
           <Text style={styles.sideLabel}>Share</Text>
         </TouchableOpacity>
 
-        {/* Price */}
         {item.price && (
           <View style={styles.priceBubble}>
             <Text style={styles.priceText}>{item.price}</Text>
@@ -202,7 +188,7 @@ function ReelItem({ item, isActive }: { item: Reel; isActive: boolean }) {
         )}
       </View>
 
-      {/* Brand watermark */}
+      {/* Watermark */}
       <View style={styles.watermark} pointerEvents="none">
         <Ionicons name="diamond" size={10} color={GOLD} />
         <Text style={styles.watermarkText}>SRJ</Text>
@@ -217,13 +203,18 @@ export default function ReelsScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) setActiveIndex(viewableItems[0].index ?? 0);
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index ?? 0);
+    }
   }).current;
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
 
+  const REEL_H = H - insets.top - 50;
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
+
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="diamond" size={16} color={GOLD} />
@@ -241,15 +232,15 @@ export default function ReelsScreen() {
           <ReelItem item={item} isActive={index === activeIndex} />
         )}
         pagingEnabled
-        snapToInterval={H - insets.top - 50}
+        snapToInterval={REEL_H}
         snapToAlignment="start"
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(_, index) => ({
-          length: H - insets.top - 50,
-          offset: (H - insets.top - 50) * index,
+          length: REEL_H,
+          offset: REEL_H * index,
           index,
         })}
         initialNumToRender={1}
@@ -261,63 +252,108 @@ export default function ReelsScreen() {
   );
 }
 
-const REEL_H = H - 50;
-
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  screen: { flex:1, backgroundColor:'#000' },
+  screen: { flex: 1, backgroundColor: '#000' },
 
   header: {
-    flexDirection:'row', alignItems:'center', gap:8,
-    backgroundColor:PURPLE_DARK, paddingHorizontal:16, paddingVertical:10,
-    borderBottomWidth:1, borderBottomColor:'rgba(201,168,76,0.3)',
-    height:50,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: PURPLE_DARK,
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(201,168,76,0.3)',
+    height: 50,
   },
-  headerTitle: { color:GOLD, fontSize:16, fontWeight:'800', flex:1 },
-  liveBadge:   { flexDirection:'row', alignItems:'center', gap:4, backgroundColor:'rgba(201,168,76,0.12)', borderRadius:99, paddingHorizontal:8, paddingVertical:3 },
-  liveDot:     { width:6, height:6, borderRadius:3, backgroundColor:GOLD },
-  liveText:    { color:GOLD, fontSize:9, fontWeight:'800', letterSpacing:1 },
+  headerTitle: { color: GOLD, fontSize: 16, fontWeight: '800', flex: 1 },
+  liveBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(201,168,76,0.12)',
+    borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  liveDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: GOLD },
+  liveText: { color: GOLD, fontSize: 9, fontWeight: '800', letterSpacing: 1 },
 
-  reelContainer: { height:REEL_H, width:W, backgroundColor:'#000' },
+  reelContainer: { height: H - 50, width: W, backgroundColor: '#000' },
 
-  overlayTop:    { position:'absolute', top:0, left:0, right:0, height:100, backgroundColor:'rgba(0,0,0,0.2)' },
-  overlayBottom: { position:'absolute', bottom:0, left:0, right:0, height:REEL_H*0.5, backgroundColor:'rgba(0,0,0,0.4)' },
+  overlayTop: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 100,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  overlayBottom: {
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: H * 0.5,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
 
-  videoFallback: { alignItems:'center', justifyContent:'center', backgroundColor:'#111' },
-  videoFallbackText: { color:'rgba(255,255,255,0.4)', fontSize:13, marginTop:10 },
+  videoFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#111' },
+  videoFallbackText: { color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 10 },
 
-  pauseWrap: { ...StyleSheet.absoluteFillObject, alignItems:'center', justifyContent:'center' },
+  pauseWrap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+  },
 
   bottomInfo: {
-    position:'absolute',
-    bottom: Platform.OS==='ios' ? 80 : 60,
-    left:16, right:80, zIndex:10,
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 80 : 60,
+    left: 16, right: 80, zIndex: 10,
   },
-  sellerRow:   { flexDirection:'row', alignItems:'center', marginBottom:8 },
-  avatar:      { width:32, height:32, borderRadius:16, backgroundColor:GOLD, alignItems:'center', justifyContent:'center', marginRight:8, borderWidth:1.5, borderColor:'#fff' },
-  avatarText:  { color:PURPLE_DARK, fontWeight:'900', fontSize:13 },
-  sellerName:  { color:'#fff', fontWeight:'700', fontSize:13, flex:1, textShadowColor:'rgba(0,0,0,0.8)', textShadowOffset:{width:0,height:1}, textShadowRadius:4 },
-  reelTitle:   { color:'#fff', fontSize:16, fontWeight:'800', marginBottom:3, textShadowColor:'rgba(0,0,0,0.9)', textShadowOffset:{width:0,height:1}, textShadowRadius:6 },
-  reelDesc:    { color:'rgba(255,255,255,0.8)', fontSize:12, lineHeight:17, marginBottom:8, textShadowColor:'rgba(0,0,0,0.8)', textShadowOffset:{width:0,height:1}, textShadowRadius:4 },
-  productTag:  { flexDirection:'row', alignItems:'center', gap:5, backgroundColor:'rgba(0,0,0,0.5)', borderRadius:20, paddingHorizontal:10, paddingVertical:4, alignSelf:'flex-start', borderWidth:1, borderColor:'rgba(201,168,76,0.4)', marginBottom:10 },
-  productTagText: { color:'#fff', fontSize:11, fontWeight:'600' },
-  enquireBtn:  { flexDirection:'row', alignItems:'center', backgroundColor:WHATSAPP, borderRadius:20, paddingVertical:8, paddingHorizontal:14, alignSelf:'flex-start' },
-  enquireBtnText: { color:'#fff', fontSize:12, fontWeight:'700' },
+  sellerRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  avatar: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center',
+    marginRight: 8, borderWidth: 1.5, borderColor: '#fff',
+  },
+  avatarText: { color: PURPLE_DARK, fontWeight: '900', fontSize: 13 },
+  sellerName: {
+    color: '#fff', fontWeight: '700', fontSize: 13, flex: 1,
+    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width:0, height:1 }, textShadowRadius: 4,
+  },
+  reelTitle: {
+    color: '#fff', fontSize: 16, fontWeight: '800', marginBottom: 3,
+    textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width:0, height:1 }, textShadowRadius: 6,
+  },
+  reelDesc: {
+    color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 17, marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width:0, height:1 }, textShadowRadius: 4,
+  },
+  productTag: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start',
+    borderWidth: 1, borderColor: 'rgba(201,168,76,0.4)', marginBottom: 10,
+  },
+  productTagText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  enquireBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: WHATSAPP, borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 14, alignSelf: 'flex-start',
+  },
+  enquireBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
 
   sidebar: {
-    position:'absolute', right:12,
-    bottom: Platform.OS==='ios' ? 80 : 60,
-    alignItems:'center', zIndex:10, gap:20,
+    position: 'absolute', right: 12,
+    bottom: Platform.OS === 'ios' ? 80 : 60,
+    alignItems: 'center', zIndex: 10, gap: 20,
   },
-  sideAction:  { alignItems:'center', gap:3 },
-  sideLabel:   { color:'rgba(255,255,255,0.9)', fontSize:10, fontWeight:'600', textShadowColor:'rgba(0,0,0,0.8)', textShadowOffset:{width:0,height:1}, textShadowRadius:3 },
-  waCircle:    { width:40, height:40, borderRadius:20, backgroundColor:WHATSAPP, alignItems:'center', justifyContent:'center' },
-  priceBubble: { backgroundColor:GOLD, borderRadius:16, paddingHorizontal:10, paddingVertical:5, marginTop:4 },
-  priceText:   { color:PURPLE_DARK, fontWeight:'900', fontSize:11 },
+  sideAction: { alignItems: 'center', gap: 3 },
+  sideLabel: {
+    color: 'rgba(255,255,255,0.9)', fontSize: 10, fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width:0, height:1 }, textShadowRadius: 3,
+  },
+  waCircle: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: WHATSAPP, alignItems: 'center', justifyContent: 'center',
+  },
+  priceBubble: {
+    backgroundColor: GOLD, borderRadius: 16,
+    paddingHorizontal: 10, paddingVertical: 5, marginTop: 4,
+  },
+  priceText: { color: PURPLE_DARK, fontWeight: '900', fontSize: 11 },
 
   watermark: {
-    position:'absolute', top:12, left:12,
-    flexDirection:'row', alignItems:'center', gap:4,
-    backgroundColor:'rgba(45,27,94,0.6)', borderRadius:99, paddingHorizontal:8, paddingVertical:3,
+    position: 'absolute', top: 12, left: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(45,27,94,0.6)',
+    borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3,
   },
-  watermarkText: { color:GOLD, fontSize:9, fontWeight:'700' },
+  watermarkText: { color: GOLD, fontSize: 9, fontWeight: '700' },
 });
