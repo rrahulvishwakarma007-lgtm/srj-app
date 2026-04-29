@@ -1,328 +1,219 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  Dimensions,
-  StyleSheet,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Animated,
-  StatusBar,
-  Platform,
+  View, Text, FlatList, Dimensions, StyleSheet,
+  TouchableOpacity, TouchableWithoutFeedback,
+  Animated, Platform, Linking,
 } from 'react-native';
-import { Video, AVPlaybackStatus, ResizeMode } from 'expo-av';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-const { height, width } = Dimensions.get('window');
+const { height: H, width: W } = Dimensions.get('window');
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const GOLD        = '#C9A84C';
+const PURPLE_DARK = '#2D1B5E';
+const WHATSAPP    = '#25D366';
+
 interface Reel {
-  id: string;
-  video: string;
-  title: string;
-  description: string;
-  price?: string;
-  likes?: number;
-  sellerName?: string;
-  productTag?: string;
+  id: string; video: string; title: string;
+  description: string; price?: string;
+  likes?: number; productTag?: string;
 }
 
-// ─── Static reels data (Firebase removed) ────────────────────────────────────
-// Google Drive direct stream URLs (converted from /view to /uc?export=download)
 const STATIC_REELS: Reel[] = [
-  {
-    id: '1',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-2.mp4',
-    title: 'Bridal Gold Necklace',
-    description: 'Handcrafted 22K gold bridal necklace set. Perfect for your special day.',
-    price: '₹45,000',
-    likes: 1240,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Bridal Collection',
-  },
-  {
-    id: '2',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/fe0d718a-3c3c-11f1-a24c-0242ac110005_796673563858693_raw.mp4',
-    title: 'Diamond Earrings',
-    description: 'Elegant diamond drop earrings in 18K white gold. BIS certified.',
-    price: '₹28,500',
-    likes: 980,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Diamond Series',
-  },
-  {
-    id: '3',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-3.mp4',
-    title: 'Gold Bangles Set',
-    description: 'Traditional gold bangles set in 22K. Available in all sizes.',
-    price: '₹32,000',
-    likes: 2100,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Festive Wear',
-  },
-  {
-    id: '4',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-1.mp4',
-    title: 'Kundan Maang Tikka',
-    description: 'Royal Kundan maang tikka with meenakari work. Jabalpur special.',
-    price: '₹12,800',
-    likes: 1560,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Traditional',
-  },
-  {
-    id: '5',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/6d320b70-3c3d-11f1-aa4d-0242ac110005_796674326651013_raw.mp4',
-    title: 'Gold Chain Collection',
-    description: 'Everyday wear 22K gold chains. Hallmark certified 916.',
-    price: '₹18,000',
-    likes: 870,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Daily Wear',
-  },
-  {
-    id: '6',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/01ff1192-3c3b-11f1-b0f4-0242ac110005_796670073065541_raw.mp4',
-    title: 'Antique Choker',
-    description: 'Temple jewellery antique gold choker necklace. One of a kind piece.',
-    price: '₹55,000',
-    likes: 3200,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Antique Collection',
-  },
-  {
-    id: '7',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/276a2d60-3c3e-11f1-ba39-0242ac110005_796675607015813_raw.mp4',
-    title: 'Ring Collection',
-    description: 'Solitaire and cocktail rings in 18K and 22K gold. All sizes available.',
-    price: '₹9,500',
-    likes: 1100,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Ring Collection',
-  },
-  {
-    id: '8',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720.mp4',
-    title: 'Bridal Jewellery Set',
-    description: 'Complete bridal set — necklace, earrings, maang tikka and bangles.',
-    price: '₹1,20,000',
-    likes: 4500,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Bridal Set',
-  },
-  {
-    id: '9',
-    video: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/60a0807c-3c3c-11f1-abe8-0242ac110005_796672481322309_raw.mp4',
-    title: 'Silver Jewellery',
-    description: '999 pure silver anklets, rings and chains. BIS hallmarked.',
-    price: '₹3,200',
-    likes: 760,
-    sellerName: 'Shekhar Raja Jewellers',
-    productTag: 'Silver Collection',
-  },
+  { id:'1', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-2.mp4',       title:'Bridal Gold Necklace',   description:'Handcrafted 22K gold bridal necklace set. Perfect for your special day.',        price:'₹45,000',  likes:1240, productTag:'Bridal Collection'   },
+  { id:'2', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/fe0d718a-3c3c-11f1-a24c-0242ac110005_796673563858693_raw.mp4', title:'Diamond Earrings', description:'Elegant diamond drop earrings in 18K white gold. BIS certified.', price:'₹28,500', likes:980, productTag:'Diamond Series' },
+  { id:'3', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-3.mp4',       title:'Gold Bangles Set',       description:'Traditional gold bangles set in 22K. Available in all sizes.',               price:'₹32,000',  likes:2100, productTag:'Festive Wear'        },
+  { id:'4', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720-1.mp4',       title:'Kundan Maang Tikka',     description:'Royal Kundan maang tikka with meenakari work. Jabalpur special.',            price:'₹12,800',  likes:1560, productTag:'Traditional'          },
+  { id:'5', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/6d320b70-3c3d-11f1-aa4d-0242ac110005_796674326651013_raw.mp4', title:'Gold Chain Collection', description:'Everyday wear 22K gold chains. Hallmark certified 916.', price:'₹18,000', likes:870, productTag:'Daily Wear' },
+  { id:'6', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/01ff1192-3c3b-11f1-b0f4-0242ac110005_796670073065541_raw.mp4', title:'Antique Choker', description:'Temple jewellery antique gold choker necklace. One of a kind piece.', price:'₹55,000', likes:3200, productTag:'Antique Collection' },
+  { id:'7', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/276a2d60-3c3e-11f1-ba39-0242ac110005_796675607015813_raw.mp4', title:'Ring Collection', description:'Solitaire and cocktail rings in 18K and 22K gold.', price:'₹9,500', likes:1100, productTag:'Ring Collection' },
+  { id:'8', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/output_1280x720.mp4',          title:'Bridal Jewellery Set',   description:'Complete bridal set — necklace, earrings, maang tikka and bangles.',           price:'₹1,20,000',likes:4500, productTag:'Bridal Set'          },
+  { id:'9', video:'https://shekharrajajewellers.com/wp-content/uploads/2026/04/60a0807c-3c3c-11f1-abe8-0242ac110005_796672481322309_raw.mp4', title:'Silver Jewellery', description:'999 pure silver anklets, rings and chains. BIS hallmarked.', price:'₹3,200', likes:760, productTag:'Silver Collection' },
 ];
 
-// ─── Heart burst animation ────────────────────────────────────────────────────
-const HeartBurst = ({ visible }: { visible: boolean }) => {
-  const scale   = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+// ── Lazy-load Video to prevent crash on mount ─────────────────────────────────
+let VideoComponent: any = null;
+
+function SafeVideo({ uri, isActive, onError }: { uri: string; isActive: boolean; onError: () => void }) {
+  const videoRef = useRef<any>(null);
+  const [VideoLoaded, setVideoLoaded] = useState(false);
+  const [loadError, setLoadError]     = useState(false);
 
   useEffect(() => {
-    if (visible) {
-      scale.setValue(0);
-      opacity.setValue(1);
-      Animated.parallel([
-        Animated.spring(scale,   { toValue: 1.4, useNativeDriver: true, speed: 20 }),
-        Animated.sequence([
-          Animated.delay(300),
-          Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-        ]),
-      ]).start();
+    // Lazy import expo-av only when needed
+    if (!VideoComponent) {
+      try {
+        const av = require('expo-av');
+        VideoComponent = av.Video;
+        setVideoLoaded(true);
+      } catch (e) {
+        setLoadError(true);
+        onError();
+      }
+    } else {
+      setVideoLoaded(true);
     }
-  }, [visible]);
+  }, []);
 
-  if (!visible) return null;
+  useEffect(() => {
+    if (!videoRef.current || !VideoLoaded) return;
+    try {
+      if (isActive) videoRef.current.playAsync?.();
+      else          videoRef.current.pauseAsync?.();
+    } catch {}
+  }, [isActive, VideoLoaded]);
+
+  if (loadError || !VideoLoaded || !VideoComponent) {
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#111' }]} />;
+  }
+
+  const ResizeMode = require('expo-av').ResizeMode;
+
   return (
-    <Animated.View style={[styles.heartBurst, { transform: [{ scale }], opacity }]}>
-      <Text style={{ fontSize: 80 }}>♥</Text>
-    </Animated.View>
+    <VideoComponent
+      ref={videoRef}
+      source={{ uri }}
+      style={StyleSheet.absoluteFill}
+      resizeMode={ResizeMode?.COVER ?? 'cover'}
+      isLooping
+      isMuted={false}
+      shouldPlay={isActive}
+      onError={(e: any) => { console.warn('Video error:', e); onError(); }}
+      useNativeControls={false}
+    />
   );
-};
+}
 
-// ─── Single Reel Item ─────────────────────────────────────────────────────────
-const ReelItem = ({ item, isActive }: { item: Reel; isActive: boolean }) => {
-  const videoRef          = useRef<Video>(null);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(item.likes ?? Math.floor(Math.random() * 9000) + 1000);
-  const [muted, setMuted]         = useState(false);
-  const [showHeart, setShowHeart] = useState(false);
+// ── Single Reel ───────────────────────────────────────────────────────────────
+function ReelItem({ item, isActive }: { item: Reel; isActive: boolean }) {
+  const [liked, setLiked]         = useState(false);
+  const [likeCount, setLikeCount] = useState(item.likes ?? 999);
+  const [videoError, setVideoError] = useState(false);
   const [paused, setPaused]       = useState(false);
-  const [showPauseIcon, setShowPauseIcon] = useState(false);
-  const [progress, setProgress]   = useState(0);
-
-  const pauseIconOpacity = useRef(new Animated.Value(0)).current;
-  const sidebarAnim      = useRef(new Animated.Value(0)).current;
-  const infoAnim         = useRef(new Animated.Value(0)).current;
+  const infoAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (isActive) {
-      videoRef.current?.playAsync();
-      Animated.parallel([
-        Animated.spring(sidebarAnim, { toValue: 1, useNativeDriver: true, delay: 200, speed: 12 }),
-        Animated.spring(infoAnim,    { toValue: 1, useNativeDriver: true, delay: 400, speed: 12 }),
-      ]).start();
+      Animated.spring(infoAnim, { toValue:1, useNativeDriver:true, delay:300, speed:12 }).start();
     } else {
-      videoRef.current?.pauseAsync();
-      sidebarAnim.setValue(0);
       infoAnim.setValue(0);
       setPaused(false);
     }
   }, [isActive]);
 
-  const lastTap = useRef<number>(0);
-
-  const handleDoubleTap = useCallback(() => {
-    if (!liked) { setLiked(true); setLikeCount(c => c + 1); }
-    setShowHeart(true);
-    setTimeout(() => setShowHeart(false), 900);
-  }, [liked]);
-
-  const handleTap = () => {
-    const now = Date.now();
-    if (now - lastTap.current < 300) {
-      handleDoubleTap();
-    } else {
-      setPaused(p => {
-        const next = !p;
-        if (next) videoRef.current?.pauseAsync();
-        else      videoRef.current?.playAsync();
-        setShowPauseIcon(true);
-        Animated.sequence([
-          Animated.timing(pauseIconOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
-          Animated.delay(600),
-          Animated.timing(pauseIconOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-        ]).start(() => setShowPauseIcon(false));
-        return next;
-      });
-    }
-    lastTap.current = now;
-  };
-
   const handleLike = () => {
-    setLiked(l => { setLikeCount(c => l ? c - 1 : c + 1); return !l; });
+    setLiked(l => { setLikeCount(c => l ? c-1 : c+1); return !l; });
   };
 
-  const onPlaybackUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded && status.durationMillis) {
-      setProgress((status.positionMillis ?? 0) / status.durationMillis);
-    }
+  const handleEnquire = () => {
+    const msg = `Hello! I saw your reel about "${item.title}" (${item.price ?? ''}) and I'm interested. Can you share more details?`;
+    Linking.openURL(`https://wa.me/918377911745?text=${encodeURIComponent(msg)}`);
   };
 
-  const formatCount = (n: number) =>
-    n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
+  const formatCount = (n: number) => n >= 1000 ? `${(n/1000).toFixed(1)}k` : `${n}`;
 
   return (
     <View style={styles.reelContainer}>
-      <StatusBar hidden />
 
-      {/* Full-screen video */}
-      <TouchableWithoutFeedback onPress={handleTap}>
-        <View style={StyleSheet.absoluteFill}>
-          <Video
-            ref={videoRef}
-            source={{ uri: item.video }}
-            style={StyleSheet.absoluteFill}
-            resizeMode={ResizeMode.COVER}
-            isLooping
-            isMuted={muted}
-            onPlaybackStatusUpdate={onPlaybackUpdate}
-          />
-          <View style={styles.gradientOverlayTop}  pointerEvents="none" />
-          <View style={styles.gradientOverlayBottom} pointerEvents="none" />
+      {/* Video or fallback */}
+      {videoError ? (
+        <View style={[StyleSheet.absoluteFill, styles.videoFallback]}>
+          <Ionicons name="videocam-off-outline" size={48} color={GOLD} />
+          <Text style={styles.videoFallbackText}>Video unavailable</Text>
         </View>
-      </TouchableWithoutFeedback>
-
-      <HeartBurst visible={showHeart} />
-
-      {showPauseIcon && (
-        <Animated.View style={[styles.pauseIcon, { opacity: pauseIconOpacity }]}>
-          <Text style={styles.pauseIconText}>{paused ? '▶' : '⏸'}</Text>
-        </Animated.View>
+      ) : (
+        <SafeVideo
+          uri={item.video}
+          isActive={isActive && !paused}
+          onError={() => setVideoError(true)}
+        />
       )}
 
-      {/* Progress bar */}
-      <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
-      </View>
+      {/* Dark overlays */}
+      <View style={styles.overlayTop}    pointerEvents="none" />
+      <View style={styles.overlayBottom} pointerEvents="none" />
+
+      {/* Tap to pause */}
+      <TouchableWithoutFeedback onPress={() => setPaused(p => !p)}>
+        <View style={StyleSheet.absoluteFill} />
+      </TouchableWithoutFeedback>
+
+      {/* Pause indicator */}
+      {paused && (
+        <View style={styles.pauseWrap} pointerEvents="none">
+          <Ionicons name="play" size={48} color="rgba(255,255,255,0.8)" />
+        </View>
+      )}
 
       {/* Bottom info */}
-      <Animated.View
-        style={[styles.bottomInfo, {
-          opacity: infoAnim,
-          transform: [{ translateY: infoAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }],
-        }]}
-        pointerEvents="none"
-      >
+      <Animated.View style={[styles.bottomInfo, {
+        opacity: infoAnim,
+        transform: [{ translateY: infoAnim.interpolate({ inputRange:[0,1], outputRange:[30,0] }) }],
+      }]} pointerEvents="box-none">
+        {/* Seller row */}
         <View style={styles.sellerRow}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarInitial}>
-              {(item.sellerName ?? 'S')[0].toUpperCase()}
-            </Text>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>S</Text>
           </View>
-          <Text style={styles.sellerName}>{item.sellerName ?? 'Shekhar Raja Jewellers'}</Text>
-          <View style={styles.followBadge}>
-            <Text style={styles.followText}>Follow</Text>
-          </View>
+          <Text style={styles.sellerName}>Shekhar Raja Jewellers</Text>
         </View>
         <Text style={styles.reelTitle}>{item.title}</Text>
         <Text style={styles.reelDesc} numberOfLines={2}>{item.description}</Text>
         {item.productTag && (
           <View style={styles.productTag}>
-            <Text style={styles.productTagIcon}>◈</Text>
+            <Ionicons name="diamond-outline" size={11} color={GOLD} />
             <Text style={styles.productTagText}>{item.productTag}</Text>
           </View>
         )}
+        {/* Enquire button */}
+        <TouchableOpacity style={styles.enquireBtn} onPress={handleEnquire} activeOpacity={0.88}>
+          <Ionicons name="logo-whatsapp" size={16} color="#fff" style={{marginRight:6}} />
+          <Text style={styles.enquireBtnText}>Enquire on WhatsApp</Text>
+        </TouchableOpacity>
       </Animated.View>
 
       {/* Right sidebar */}
-      <Animated.View
-        style={[styles.sidebar, {
-          opacity: sidebarAnim,
-          transform: [{ translateX: sidebarAnim.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }],
-        }]}
-      >
+      <View style={styles.sidebar}>
+        {/* Like */}
         <TouchableOpacity style={styles.sideAction} onPress={handleLike} activeOpacity={0.7}>
-          <Text style={[styles.sideIcon, liked && styles.sideIconLiked]}>{liked ? '♥' : '♡'}</Text>
+          <Ionicons name={liked?'heart':'heart-outline'} size={28} color={liked?'#FF3B5C':'#fff'} />
           <Text style={styles.sideLabel}>{formatCount(likeCount)}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sideAction} activeOpacity={0.7}>
-          <Text style={styles.sideIcon}>💬</Text>
-          <Text style={styles.sideLabel}>Comment</Text>
+        {/* WhatsApp */}
+        <TouchableOpacity style={styles.sideAction} onPress={handleEnquire} activeOpacity={0.7}>
+          <View style={styles.waCircle}>
+            <Ionicons name="logo-whatsapp" size={22} color="#fff" />
+          </View>
+          <Text style={styles.sideLabel}>Enquire</Text>
         </TouchableOpacity>
 
+        {/* Share */}
         <TouchableOpacity style={styles.sideAction} activeOpacity={0.7}>
-          <Text style={styles.sideIcon}>↗</Text>
+          <Ionicons name="share-social-outline" size={26} color="#fff" />
           <Text style={styles.sideLabel}>Share</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sideAction} onPress={() => setMuted(m => !m)} activeOpacity={0.7}>
-          <Text style={styles.sideIcon}>{muted ? '🔇' : '🔊'}</Text>
-          <Text style={styles.sideLabel}>{muted ? 'Unmute' : 'Mute'}</Text>
-        </TouchableOpacity>
-
+        {/* Price */}
         {item.price && (
           <View style={styles.priceBubble}>
             <Text style={styles.priceText}>{item.price}</Text>
           </View>
         )}
-      </Animated.View>
+      </View>
+
+      {/* Brand watermark */}
+      <View style={styles.watermark} pointerEvents="none">
+        <Ionicons name="diamond" size={10} color={GOLD} />
+        <Text style={styles.watermarkText}>SRJ</Text>
+      </View>
     </View>
   );
-};
+}
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// ── Main Screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
+  const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -332,7 +223,17 @@ export default function ReelsScreen() {
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Ionicons name="diamond" size={16} color={GOLD} />
+        <Text style={styles.headerTitle}>Jewellery Reels</Text>
+        <View style={styles.liveBadge}>
+          <View style={styles.liveDot} />
+          <Text style={styles.liveText}>LIVE</Text>
+        </View>
+      </View>
+
       <FlatList
         data={STATIC_REELS}
         keyExtractor={item => item.id}
@@ -340,113 +241,83 @@ export default function ReelsScreen() {
           <ReelItem item={item} isActive={index === activeIndex} />
         )}
         pagingEnabled
-        snapToInterval={height}
+        snapToInterval={H - insets.top - 50}
         snapToAlignment="start"
         decelerationRate="fast"
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        getItemLayout={(_, index) => ({ length: height, offset: height * index, index })}
-        initialNumToRender={2}
-        maxToRenderPerBatch={3}
-        windowSize={5}
-        removeClippedSubviews
+        getItemLayout={(_, index) => ({
+          length: H - insets.top - 50,
+          offset: (H - insets.top - 50) * index,
+          index,
+        })}
+        initialNumToRender={1}
+        maxToRenderPerBatch={2}
+        windowSize={3}
+        removeClippedSubviews={Platform.OS === 'android'}
       />
     </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+const REEL_H = H - 50;
+
 const styles = StyleSheet.create({
-  screen:         { flex: 1, backgroundColor: '#000' },
-  reelContainer:  { height, width, backgroundColor: '#000' },
+  screen: { flex:1, backgroundColor:'#000' },
 
-  gradientOverlayTop: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    height: 120, backgroundColor: 'rgba(0,0,0,0.25)',
+  header: {
+    flexDirection:'row', alignItems:'center', gap:8,
+    backgroundColor:PURPLE_DARK, paddingHorizontal:16, paddingVertical:10,
+    borderBottomWidth:1, borderBottomColor:'rgba(201,168,76,0.3)',
+    height:50,
   },
-  gradientOverlayBottom: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: height * 0.5, backgroundColor: 'rgba(0,0,0,0.45)',
-  },
+  headerTitle: { color:GOLD, fontSize:16, fontWeight:'800', flex:1 },
+  liveBadge:   { flexDirection:'row', alignItems:'center', gap:4, backgroundColor:'rgba(201,168,76,0.12)', borderRadius:99, paddingHorizontal:8, paddingVertical:3 },
+  liveDot:     { width:6, height:6, borderRadius:3, backgroundColor:GOLD },
+  liveText:    { color:GOLD, fontSize:9, fontWeight:'800', letterSpacing:1 },
 
-  heartBurst: {
-    position: 'absolute', alignSelf: 'center',
-    top: height / 2 - 60, zIndex: 99,
-  },
-  pauseIcon: {
-    position: 'absolute', alignSelf: 'center',
-    top: height / 2 - 40, zIndex: 98,
-    backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 50,
-    width: 80, height: 80, alignItems: 'center', justifyContent: 'center',
-  },
-  pauseIconText:  { fontSize: 32, color: '#fff' },
+  reelContainer: { height:REEL_H, width:W, backgroundColor:'#000' },
 
-  progressBar: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    height: 2, backgroundColor: 'rgba(255,255,255,0.2)', zIndex: 10,
-  },
-  progressFill:   { height: 2, backgroundColor: '#D4AF37' },
+  overlayTop:    { position:'absolute', top:0, left:0, right:0, height:100, backgroundColor:'rgba(0,0,0,0.2)' },
+  overlayBottom: { position:'absolute', bottom:0, left:0, right:0, height:REEL_H*0.5, backgroundColor:'rgba(0,0,0,0.4)' },
+
+  videoFallback: { alignItems:'center', justifyContent:'center', backgroundColor:'#111' },
+  videoFallbackText: { color:'rgba(255,255,255,0.4)', fontSize:13, marginTop:10 },
+
+  pauseWrap: { ...StyleSheet.absoluteFillObject, alignItems:'center', justifyContent:'center' },
 
   bottomInfo: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 100 : 80,
-    left: 16, right: 80, zIndex: 10,
+    position:'absolute',
+    bottom: Platform.OS==='ios' ? 80 : 60,
+    left:16, right:80, zIndex:10,
   },
-  sellerRow:      { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  avatarPlaceholder: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#D4AF37', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: '#fff', marginRight: 8,
-  },
-  avatarInitial:  { color: '#1a1209', fontWeight: '800', fontSize: 14 },
-  sellerName: {
-    color: '#fff', fontWeight: '700', fontSize: 14, letterSpacing: 0.4, flex: 1,
-    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
-  },
-  followBadge: {
-    borderWidth: 1.5, borderColor: '#D4AF37',
-    borderRadius: 14, paddingHorizontal: 12, paddingVertical: 3,
-  },
-  followText:     { color: '#D4AF37', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
-  reelTitle: {
-    color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: 0.3, marginBottom: 4,
-    textShadowColor: 'rgba(0,0,0,0.9)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6,
-  },
-  reelDesc: {
-    color: 'rgba(255,255,255,0.85)', fontSize: 13, lineHeight: 18,
-    textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
-    marginBottom: 10,
-  },
-  productTag: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 5, alignSelf: 'flex-start',
-    borderWidth: 1, borderColor: 'rgba(212,175,55,0.5)',
-  },
-  productTagIcon: { color: '#D4AF37', fontSize: 12, marginRight: 5 },
-  productTagText: { color: '#fff', fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
+  sellerRow:   { flexDirection:'row', alignItems:'center', marginBottom:8 },
+  avatar:      { width:32, height:32, borderRadius:16, backgroundColor:GOLD, alignItems:'center', justifyContent:'center', marginRight:8, borderWidth:1.5, borderColor:'#fff' },
+  avatarText:  { color:PURPLE_DARK, fontWeight:'900', fontSize:13 },
+  sellerName:  { color:'#fff', fontWeight:'700', fontSize:13, flex:1, textShadowColor:'rgba(0,0,0,0.8)', textShadowOffset:{width:0,height:1}, textShadowRadius:4 },
+  reelTitle:   { color:'#fff', fontSize:16, fontWeight:'800', marginBottom:3, textShadowColor:'rgba(0,0,0,0.9)', textShadowOffset:{width:0,height:1}, textShadowRadius:6 },
+  reelDesc:    { color:'rgba(255,255,255,0.8)', fontSize:12, lineHeight:17, marginBottom:8, textShadowColor:'rgba(0,0,0,0.8)', textShadowOffset:{width:0,height:1}, textShadowRadius:4 },
+  productTag:  { flexDirection:'row', alignItems:'center', gap:5, backgroundColor:'rgba(0,0,0,0.5)', borderRadius:20, paddingHorizontal:10, paddingVertical:4, alignSelf:'flex-start', borderWidth:1, borderColor:'rgba(201,168,76,0.4)', marginBottom:10 },
+  productTagText: { color:'#fff', fontSize:11, fontWeight:'600' },
+  enquireBtn:  { flexDirection:'row', alignItems:'center', backgroundColor:WHATSAPP, borderRadius:20, paddingVertical:8, paddingHorizontal:14, alignSelf:'flex-start' },
+  enquireBtnText: { color:'#fff', fontSize:12, fontWeight:'700' },
 
   sidebar: {
-    position: 'absolute', right: 12,
-    bottom: Platform.OS === 'ios' ? 100 : 80,
-    alignItems: 'center', zIndex: 10,
+    position:'absolute', right:12,
+    bottom: Platform.OS==='ios' ? 80 : 60,
+    alignItems:'center', zIndex:10, gap:20,
   },
-  sideAction:     { alignItems: 'center', marginBottom: 22 },
-  sideIcon: {
-    fontSize: 28, color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  sideAction:  { alignItems:'center', gap:3 },
+  sideLabel:   { color:'rgba(255,255,255,0.9)', fontSize:10, fontWeight:'600', textShadowColor:'rgba(0,0,0,0.8)', textShadowOffset:{width:0,height:1}, textShadowRadius:3 },
+  waCircle:    { width:40, height:40, borderRadius:20, backgroundColor:WHATSAPP, alignItems:'center', justifyContent:'center' },
+  priceBubble: { backgroundColor:GOLD, borderRadius:16, paddingHorizontal:10, paddingVertical:5, marginTop:4 },
+  priceText:   { color:PURPLE_DARK, fontWeight:'900', fontSize:11 },
+
+  watermark: {
+    position:'absolute', top:12, left:12,
+    flexDirection:'row', alignItems:'center', gap:4,
+    backgroundColor:'rgba(45,27,94,0.6)', borderRadius:99, paddingHorizontal:8, paddingVertical:3,
   },
-  sideIconLiked:  { color: '#FF3B5C' },
-  sideLabel: {
-    color: 'rgba(255,255,255,0.9)', fontSize: 11,
-    marginTop: 3, fontWeight: '600', letterSpacing: 0.2,
-  },
-  priceBubble: {
-    backgroundColor: '#D4AF37', borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 6, marginTop: 4,
-    shadowColor: '#D4AF37', shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7, shadowRadius: 8, elevation: 6,
-  },
-  priceText:      { color: '#1a1209', fontWeight: '900', fontSize: 12, letterSpacing: 0.5 },
+  watermarkText: { color:GOLD, fontSize:9, fontWeight:'700' },
 });
