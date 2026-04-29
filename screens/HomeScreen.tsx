@@ -329,14 +329,14 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                   <TouchableOpacity
                     style={search ? styles.productGridCard : styles.productCard}
                     onPress={() => onOpenProduct?.({
-                    id:          parseInt(item.id),
-                    name:        item.name,
-                    category:    item.category,
-                    description: item.description,
-                    purity:      '',
-                    image:       item.imageUrl,
-                    imageUrl:    item.imageUrl,
-                  } as any)}
+                      id:          parseInt(item.id),
+                      name:        item.name,
+                      category:    item.category,
+                      description: item.description,
+                      purity:      '',
+                      image:       item.imageUrl,
+                      imageUrl:    item.imageUrl,
+                    } as any)}
                     activeOpacity={0.85}
                   >
                     <View style={styles.productImgWrap}>
@@ -356,11 +356,10 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                       <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
                       <Text style={styles.productDesc} numberOfLines={1}>{item.description}</Text>
                       <View style={styles.productBottom}>
-                      <Text style={styles.productPurity}>{item.category}</Text>
-                      <View style={styles.heartBtnSmall}>
-                      <Ionicons name="heart" size={13} color={GOLD} />
+                        <Text style={styles.productPurity}>{item.category}</Text>
+                        <View style={styles.heartBtnSmall}>
+                          <Ionicons name="heart" size={13} color={GOLD} />
                         </View>
-                       </View>
                       </View>
                     </View>
                   </TouchableOpacity>
