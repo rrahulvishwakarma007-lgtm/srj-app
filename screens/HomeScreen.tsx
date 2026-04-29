@@ -63,8 +63,8 @@ const CATEGORIES = [
 // ── FEATURED PRODUCTS ─────────────────────────────────────────────────────────
 interface StaticProduct {
   id: string; name: string; category: string;
-  description: string; price: number; purity: string;
-  weight: number; imageUrl: string; color: string; icon: string;
+  description: string; purity: string;
+  imageUrl: string; color: string; icon: string;
 }
 
 const FEATURED_PRODUCTS: StaticProduct[] = [
@@ -329,17 +329,15 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                   <TouchableOpacity
                     style={search ? styles.productGridCard : styles.productCard}
                     onPress={() => onOpenProduct?.({
-                      id:          parseInt(item.id),
-                      name:        item.name,
-                      category:    item.category,
-                      description: item.description,
-                      price:       item.price,
-                      purity:      item.purity,
-                      weight:      item.weight,
-                      color:       item.color,
-                      icon:        item.icon,
-                      imageUrl:    item.imageUrl,
-                    } as any)}
+                    id:          parseInt(item.id),
+                    name:        item.name,
+                    category:    item.category,
+                    description: item.description,
+                    purity:      item.purity,
+                    color:       item.color,
+                    icon:        item.icon,
+                    image:       item.imageUrl,
+                  } as any)}
                     activeOpacity={0.85}
                   >
                     <View style={styles.productImgWrap}>
@@ -359,10 +357,11 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                       <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
                       <Text style={styles.productDesc} numberOfLines={1}>{item.description}</Text>
                       <View style={styles.productBottom}>
-                        <Text style={styles.productPurity}>{item.purity} Gold</Text>
-                        <View style={styles.heartBtnSmall}>
-                          <Ionicons name="heart" size={13} color={GOLD} />
+                      <Text style={styles.productPurity}>{item.category}</Text>
+                      <View style={styles.heartBtnSmall}>
+                      <Ionicons name="heart" size={13} color={GOLD} />
                         </View>
+                       </View>
                       </View>
                     </View>
                   </TouchableOpacity>
