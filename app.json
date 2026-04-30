@@ -25,7 +25,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#6B21A8"
         }
-      ]
+      ],
+      "expo-av"
     ],
     "splash": {
       "image": "./assets/images/app-icon.png",
@@ -44,7 +45,7 @@
     },
     "android": {
       "package": "com.shekharraja.jewellers",
-      "versionCode": 7,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
@@ -59,7 +60,8 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.INTERNET",
-        "android.permission.ACCESS_NETWORK_STATE"
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ]
     },
     "web": {
@@ -71,7 +73,9 @@
       "web"
     ],
     "extra": {
-      "eas": {}
+      "eas": {
+        "projectId": "da781bee-f31d-4e2e-a828-f757eb1abd55"
+      }
     }
   }
 }
