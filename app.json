@@ -7,6 +7,7 @@
     "icon": "./assets/images/app-icon.png",
     "userInterfaceStyle": "light",
     "plugins": [
+      "expo-av",
       "expo-camera",
       [
         "expo-font",
@@ -43,7 +44,7 @@
     },
     "android": {
       "package": "com.shekharraja.jewellers",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
@@ -70,9 +71,7 @@
       "web"
     ],
     "extra": {
-      "eas": {
-      
-      }
+      "eas": {}
     }
   }
 }
