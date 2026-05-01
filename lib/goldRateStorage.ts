@@ -1,58 +1,60 @@
-/**
- * goldRateStorage.ts
- * Shared AsyncStorage keys & helpers used by both
- * GoldRatesScreen (admin write) and HomeScreen (read).
- *
- * Import these constants/functions in both screens so
- * they always read/write the exact same storage keys.
- */
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const STORAGE_KEY_24K   = '@srj_gold_rate_24k';
-export const STORAGE_KEY_DATE  = '@srj_gold_rate_date';
-export const STORAGE_KEY_SILVER = '@srj_silver_rate';
+const STORAGE_KEY = 'srj_gold_rates';
+const RATES_URL = 'https://nxtgenailabs.work/gold-rates.json';
 
 export interface GoldRateData {
-  rate24k:    number;   // ₹ per gram for 24K
-  rate22k:    number;   // auto-calculated  (24K × 22/24)
-  silverRate: number;   // ₹ per gram for silver (0 if not set)
-  updatedDate: string;  // "DD/MM/YYYY" string
+  rate24k:     number;
+  rate22k:     number;
+  rate20k:     number;
+  rate18k:     number;
+  silverRate:  number;
+  updatedDate: string;
 }
 
-/** Read all rates saved by the admin screen. Returns null if never set. */
-export async function loadGoldRates(): Promise<GoldRateData | null> {
+const DEFAULT_RATES: GoldRateData = {
+  rate24k:     0,
+  rate22k:     0,
+  rate20k:     0,
+  rate18k:     0,
+  silverRate:  0,
+  updatedDate: '',
+};
+
+// ── Fetch from website (shared for ALL users) ─────────────────────────────────
+async function fetchFromWebsite(): Promise<GoldRateData | null> {
   try {
-    const [r24, rDate, rSilver] = await Promise.all([
-      AsyncStorage.getItem(STORAGE_KEY_24K),
-      AsyncStorage.getItem(STORAGE_KEY_DATE),
-      AsyncStorage.getItem(STORAGE_KEY_SILVER),
-    ]);
-
-    if (!r24) return null;
-
-    const rate24k = parseInt(r24, 10);
-    return {
-      rate24k,
-      rate22k:     Math.round(rate24k * (22 / 24)),
-      silverRate:  rSilver ? parseInt(rSilver, 10) : 0,
-      updatedDate: rDate ?? '',
-    };
-  } catch (e) {
-    console.warn('goldRateStorage: read error', e);
-    return null;
+    const res = await fetch(RATES_URL, {
+      headers: { 'Cache-Control': 'no-cache' }, // always get fresh data
+    });
+    if (!res.ok) return null;
+    const data: GoldRateData = await res.json();
+    // Cache it locally so app works offline too
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return data;
+  } catch {
+    return null; // network error → fall through to AsyncStorage
   }
 }
 
-/** Save all rates (called by admin screen). */
-export async function saveGoldRates(
-  rate24k: number,
-  silverRate: number,
-  date: string,
-): Promise<void> {
-  await AsyncStorage.multiSet([
-    [STORAGE_KEY_24K,    String(rate24k)],
-    [STORAGE_KEY_DATE,   date],
-    [STORAGE_KEY_SILVER, String(silverRate)],
-  ]);
+// ── Load gold rates — URL first, AsyncStorage fallback ────────────────────────
+export async function loadGoldRates(): Promise<GoldRateData | null> {
+  // 1. Try website first (live shared rates)
+  const fromWeb = await fetchFromWebsite();
+  if (fromWeb) return fromWeb;
+
+  // 2. Fall back to locally cached rates (offline support)
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as GoldRateData;
+  } catch {}
+
+  return DEFAULT_RATES;
+}
+
+// ── Save rates locally (used by admin GoldRatesScreen) ───────────────────────
+export async function saveGoldRates(data: GoldRateData): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
 }
