@@ -231,9 +231,8 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
   const isUp = offset >= 0;
 
   return (
-    {/* ✅ OUTER: backgroundColor only — useNativeDriver: false */}
     <Animated.View style={{ backgroundColor: flashBg as any, borderRadius: 16 }}>
-      {/* ✅ INNER: scale only — useNativeDriver: true */}
+      {/* OUTER: backgroundColor — useNativeDriver: false */}
       <Animated.View style={[
         styles.rateCard,
         featured && styles.rateCardFeatured,
