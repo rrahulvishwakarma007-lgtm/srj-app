@@ -6,6 +6,15 @@
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "userInterfaceStyle": "light",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/da781bee-f31d-4e2e-a828-f757eb1abd55",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "plugins": [
       "expo-av",
       "expo-camera",
@@ -25,8 +34,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#6B21A8"
         }
-      ],
-      "expo-av"
+      ]
     ],
     "splash": {
       "image": "./assets/images/app-icon.png",
@@ -45,7 +53,7 @@
     },
     "android": {
       "package": "com.shekharraja.jewellers",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#6B21A8",
         "foregroundImage": "./assets/images/app-icon.png"
