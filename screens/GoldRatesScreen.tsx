@@ -213,12 +213,10 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
   useEffect(() => {
     if (prevOff.current === offset) return;
     prevOff.current = offset;
-    // Subtle scale pulse on every tick
     Animated.sequence([
-      Animated.timing(scale,    { toValue: 1.018, duration: 100, useNativeDriver: true }),
-      Animated.spring(scale,    { toValue: 1,     friction: 6,   useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1.018, duration: 100, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1, friction: 6,        useNativeDriver: true }),
     ]).start();
-    // Flash card bg green or red briefly
     Animated.sequence([
       Animated.timing(flashClr, { toValue: 1, duration: 120, useNativeDriver: false }),
       Animated.timing(flashClr, { toValue: 0, duration: 600, useNativeDriver: false }),
@@ -233,25 +231,47 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
   const isUp = offset >= 0;
 
   return (
-    <Animated.View style={[
-      styles.rateCard,
-      featured && styles.rateCardFeatured,
-      { transform: [{ scale }], backgroundColor: flashBg as any },
-    ]}>
-      {featured && (
-        <View style={styles.popularTag}>
-          <Text style={styles.popularText}>MOST POPULAR</Text>
+    {/* ✅ OUTER: backgroundColor only — useNativeDriver: false */}
+    <Animated.View style={{ backgroundColor: flashBg as any, borderRadius: 16 }}>
+      {/* ✅ INNER: scale only — useNativeDriver: true */}
+      <Animated.View style={[
+        styles.rateCard,
+        featured && styles.rateCardFeatured,
+        { transform: [{ scale }] },
+      ]}>
+        {featured && (
+          <View style={styles.popularTag}>
+            <Text style={styles.popularText}>MOST POPULAR</Text>
+          </View>
+        )}
+        <View style={styles.rateCardLeft}>
+          <View style={[styles.karatBadge, { borderColor: color + '60', backgroundColor: color + '15' }]}>
+            <Text style={[styles.karatNum, { color }]}>{k.replace('K','')}</Text>
+            <Text style={[styles.karatK,  { color }]}>K</Text>
+          </View>
+          <View>
+            <Text style={styles.rateCardTitle}>{k} Gold</Text>
+            <Text style={styles.rateCardPurity}>{purity} Fineness</Text>
+          </View>
         </View>
-      )}
-      <View style={styles.rateCardLeft}>
-        <View style={[styles.karatBadge, { borderColor: color + '60', backgroundColor: color + '15' }]}>
-          <Text style={[styles.karatNum, { color }]}>{k.replace('K','')}</Text>
-          <Text style={[styles.karatK,  { color }]}>K</Text>
+        <View style={styles.rateCardRight}>
+          <Text style={styles.ratePerGram}>per gram</Text>
+          <FluctuatingPrice basePrice={basePrice} offset={offset} color={color} />
+          <View style={styles.changeRow}>
+            <Ionicons
+              name={isUp ? 'caret-up' : 'caret-down'}
+              size={10}
+              color={isUp ? GREEN : RED}
+            />
+            <Text style={[styles.changeText, { color: isUp ? GREEN : RED }]}>
+              {isUp ? '+' : ''}{offset}
+            </Text>
+          </View>
         </View>
-        <View>
-          <Text style={styles.rateCardTitle}>{k} Gold</Text>
-          <Text style={styles.rateCardPurity}>{purity} Fineness</Text>
-        </View>
+      </Animated.View>
+    </Animated.View>
+  );
+}
       </View>
       <View style={styles.rateCardRight}>
         <Text style={styles.ratePerGram}>per gram</Text>
