@@ -272,25 +272,7 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
     </Animated.View>
   );
 }
-      </View>
-      <View style={styles.rateCardRight}>
-        <Text style={styles.ratePerGram}>per gram</Text>
-        {/* ✅ Last 2 digits animate on every tick */}
-        <FluctuatingPrice basePrice={basePrice} offset={offset} color={color} />
-        <View style={styles.changeRow}>
-          <Ionicons
-            name={isUp ? 'caret-up' : 'caret-down'}
-            size={10}
-            color={isUp ? GREEN : RED}
-          />
-          <Text style={[styles.changeText, { color: isUp ? GREEN : RED }]}>
-            {isUp ? '+' : ''}{offset}
-          </Text>
-        </View>
-      </View>
-    </Animated.View>
-  );
-}
+      
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function GoldRatesScreen() {
