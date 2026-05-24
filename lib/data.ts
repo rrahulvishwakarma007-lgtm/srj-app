@@ -8,130 +8,110 @@ export const initialGoldRates: GoldRate[] = [
   { type: 'Platinum', price: 3480, change: 2.1,  unit: 'per 10g' },
 ];
 
-const WP = 'https://shekharrajajewellers.com/wp-content/uploads/2026/03';
+// ── Google Drive direct URL helper ────────────────────────────────────────────
+const gd = (id: string) => `https://drive.google.com/uc?export=view&id=${id}`;
 
-// ── CORRECTLY MAPPED BY CATEGORY ─────────────────────────────────────────
-
+// ── RING IMAGES (7 from Google Drive) ─────────────────────────────────────────
 const RING_IMAGES = [
-  `${WP}/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-37-30-713_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-37-06-076_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-36-58-021_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-36-43-423_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-36-37-183_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-36-32-788_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-35-08-570_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-34-36-825_com.facebook.lite_.png`,
+  gd('1IB_iNGjIlPQl2h4rqNfypU-Uqtrl2egk'),
+  gd('1y9O-LEkRfva8KAYrRvQwtYSuqce71jRL'),
+  gd('199ujiz-55egisPpSz57JO_7JIlNPsaqK'),
+  gd('1quBTTS1bwijG-XAoT_7RLfQqBgk3kp_W'),
+  gd('1LwA1xfMggIH_KywUUUuEEf9WJtpXdxmN'),
+  gd('1nQRYBdiR2VFjhf85y9aTyGzfuTv-KHk6'),
+  gd('1275Tcoywws7DtFDVQ4UmzEvVk9FnRy9d'),
 ];
 
+// ── NECKLACE IMAGES (6 from Google Drive) ─────────────────────────────────────
 const NECKLACE_IMAGES = [
-  `${WP}/Screenshot_2026-03-08-19-44-49-941_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-44-44-723_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-44-34-003_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-44-26-303_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-44-13-385_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-44-52-245_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-43-14-774_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-43-01-295_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-28-43-298_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-28-32-934_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-28-27-301_com.facebook.lite_.png`,
-  `${WP}/file_00000000d1a071fab06fbf048655557e.png`,
-  `${WP}/file_00000000663471fab64e8b3c9f7acebb.png`,
-  `${WP}/file_000000009b0871faa3d2f53497543095.png`,
+  gd('178WZEQ5UhlSu0NJ2D7buXiBFyhRXd0TN'),
+  gd('1etFrF2xVdxtcEYDZkAPD4NNZwNGkUmWN'),
+  gd('1gjyEU0uPpfHKiuvoTfR847mkr2J5LHqW'),
+  gd('1ZYL2io58ZBM3Zj5TUb29yZzIZCBpERVp'),
+  gd('1MGHQ9y1ZwLSZFwyWzqPLMy4s2u0s4YCw'),
+  gd('1u28Db88v2mghzWUUf8wweLxtWygCLxwr'),
 ];
 
+// ── EARRING IMAGES (6 from Google Drive) ──────────────────────────────────────
 const EARRING_IMAGES = [
-  `${WP}/file_000000002d20720b968f06d1e82af97d.png`,
-  `${WP}/file_0000000016a4720bb922e408d0fb4532.png`,
-  `${WP}/Screenshot_2026-03-08-19-46-28-732_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-46-28-732_com.facebook.lite-1.png`,
-  `${WP}/Screenshot_2026-03-08-19-46-23-960_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-08-19-46-18-172_com.facebook.lite_.png`,
-  `${WP}/IMG-20250924-WA0035.png`,
-  `${WP}/Screenshot_2026-03-11-02-44-02-271_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-44-02-271_com.facebook.lite-1.png`,
-  `${WP}/Screenshot_2026-03-11-02-38-00-970_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-37-56-903_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-35-12-083_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-31-14-005_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-29-01-417_com.facebook.lite_.png`,
+  gd('1rz-e2uhRWYQsOyEJG_O0B3dekF0kpu43'),
+  gd('1UFEF3zn8NKjGHxJjmlaAa4ZF0utIVwae'),
+  gd('1UBsPeXQU5XHUyVjpeT3iSIyTt1PJPIRx'),
+  gd('1VpZkJ5u7IVaj3ifTBMbHC2IJsvCCh-qh'),
+  gd('1zdHsdwLPyBt6O5Zf4zk_i-XmDvcB7IRv'),
+  gd('1WmTgcFqU_UT3rFMeXmeWIF-68DJgsO05'),
 ];
 
+// ── BANGLE IMAGES (5 from Google Drive) ───────────────────────────────────────
 const BANGLE_IMAGES = [
-  `${WP}/Screenshot_2026-03-11-02-45-56-331_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-45-14-589_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-33-23-043_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-32-56-418_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-32-53-253_com.facebook.lite_.png`,
+  gd('1bOjrDufMVW8WSHXRVaWvwSgaFVrNPafB'),
+  gd('1JMwkg6uXC_tnnB9ytEUolrehfj6f4-nv'),
+  gd('1qdjSq4qUROtXjSEEfSR5AEWrbGWwJhve'),
+  gd('1t2DbNoLDld25xryH5owdAAbDoFs674RW'),
+  gd('1Q7P4-Yi-_tJ48rD3OW6P5OjuwFCTXGWs'),
 ];
 
+// ── CHAIN IMAGES (5 from Google Drive) ────────────────────────────────────────
+const CHAIN_IMAGES = [
+  gd('1uFouP3vJqRn3xg0_-XaYF5WstCjDmoOK'),
+  gd('1Js6g0OUeKC8dNVhqHczaP0XhjcYn6cgP'),
+  gd('1w9ywVe_xPI8JL7yzHo5bH8B-exvYgHYf'),
+  gd('1zZrMUlrPdYgzEX3u679ogJTj9TY3Tord'),
+  gd('18EZBNVN3MvqiKdXrVOf-xDn76YTXEE21'),
+];
+
+// ── PENDANT IMAGES — keeping necklace images as fallback ──────────────────────
 const PENDANT_IMAGES = [
-  `${WP}/Screenshot_2026-03-11-02-39-28-425_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-39-18-037_com.facebook.lite_.png`,
-  `${WP}/Screenshot_2026-03-11-02-39-11-106_com.facebook.lite_.png`,
-  `${WP}/Photoroom-20260311_030954850.png`,
-  `${WP}/Screenshot_2026-03-11-02-38-44-877_com.facebook.lite_.png`,
+  gd('1gjyEU0uPpfHKiuvoTfR847mkr2J5LHqW'),
+  gd('1ZYL2io58ZBM3Zj5TUb29yZzIZCBpERVp'),
+  gd('1etFrF2xVdxtcEYDZkAPD4NNZwNGkUmWN'),
+  gd('1MGHQ9y1ZwLSZFwyWzqPLMy4s2u0s4YCw'),
+  gd('1u28Db88v2mghzWUUf8wweLxtWygCLxwr'),
 ];
 
 // NO PRICE FIELD — customers enquire on WhatsApp
 export const products: Product[] = [
 
-  // ── RINGS ──────────────────────────────────────────────────────────────
+  // ── RINGS ──────────────────────────────────────────────────────────────────
   { id: 1,  name: 'Royal Solitaire Ring',    category: 'Rings',     weight: 6.2,  purity: '22K', description: 'VVS1 Diamond Ring',          details: 'Crafted in 22K gold with a VVS1 round diamond. Intricate floral engraving on the band.',                      icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[0] },
   { id: 2,  name: 'Emerald Cocktail Ring',   category: 'Rings',     weight: 9.1,  purity: '18K', description: 'Zambian Emerald & Diamonds',  details: 'Statement ring with Zambian emerald surrounded by brilliant-cut diamonds in 18K gold.',                       icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[1] },
   { id: 3,  name: 'Vintage Signet Ring',     category: 'Rings',     weight: 8.7,  purity: '22K', description: 'Engraved Family Crest',       details: 'Classic signet ring in 22K gold with hand-engraved motif. A timeless heirloom piece.',                       icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[2] },
   { id: 4,  name: 'Diamond Eternity Band',   category: 'Rings',     weight: 5.4,  purity: '18K', description: 'Full Eternity Diamond Ring',  details: 'Full eternity band in 18K gold with 24 round brilliant diamonds. Perfect for anniversaries.',                 icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[3] },
   { id: 5,  name: 'Gents Bold Ring',         category: 'Rings',     weight: 10.2, purity: '22K', description: 'Bold Gents Design 22K',       details: 'Heavy bold gents ring in 22K gold with traditional engraving. A signature piece for men.',                   icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[4] },
   { id: 6,  name: 'Kundan Bridal Ring',      category: 'Rings',     weight: 7.8,  purity: '22K', description: 'Kundan & Meenakari Work',     details: 'Bridal ring with intricate Kundan setting and colorful Meenakari enamel work.',                              icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[5] },
-  { id: 7,  name: 'Floral Gold Ring',        category: 'Rings',     weight: 5.9,  purity: '22K', description: 'Floral Motif 22K',            details: 'Delicate floral ring in 22K gold with petal-shaped design. Lightweight for everyday wear.',                  icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[6] },
-  { id: 8,  name: 'Temple Gold Ring',        category: 'Rings',     weight: 7.1,  purity: '22K', description: 'Temple Art Design',           details: 'Traditional temple-style ring with deity motifs in 22K gold. Divine and auspicious.',                        icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[7] },
-  { id: 9,  name: 'Ladies Fancy Ring',       category: 'Rings',     weight: 4.8,  purity: '22K', description: 'Fancy Ladies Design',         details: 'Elegant ladies ring with fancy stone setting in 22K gold. Versatile for all occasions.',                     icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[8] },
-  { id: 10, name: 'Classic Band Ring',       category: 'Rings',     weight: 6.0,  purity: '22K', description: 'Classic Gold Band',           details: 'Simple and elegant gold band in 22K. Perfect as a wedding band or everyday ring.',                           icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[9] },
+  { id: 7,  name: 'Luxury Ring',             category: 'Rings',     weight: 5.9,  purity: '22K', description: 'SRJ Premium Collection',      details: 'Premium luxury ring in 22K gold. SRJ signature design.',                                                    icon: 'diamond-outline', color: '#8C5C2D', image: RING_IMAGES[6] },
 
-  // ── NECKLACES ──────────────────────────────────────────────────────────
-  { id: 11, name: 'Heritage Necklace Set',   category: 'Necklaces', weight: 38.5, purity: '22K', description: 'Polki Diamonds & Emeralds',  details: 'Traditional heritage necklace with uncut polki diamonds and Colombian emeralds. Matching earrings included.',  icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[0]  },
-  { id: 12, name: 'Diamond Mangalsutra',     category: 'Necklaces', weight: 28.0, purity: '22K', description: '22K Gold with Diamonds',      details: 'Elegant mangalsutra with 18 brilliant diamonds in 22K gold. A timeless symbol of love.',                      icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[1]  },
-  { id: 13, name: 'Temple Coin Necklace',    category: 'Necklaces', weight: 45.0, purity: '22K', description: 'Lakshmi Coin Design',         details: 'Grand temple necklace with Lakshmi coin pendants in 22K gold with antique finish.',                          icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[2]  },
-  { id: 14, name: 'Antique Rani Haar',       category: 'Necklaces', weight: 62.0, purity: '22K', description: 'Traditional Rani Haar',       details: 'Magnificent Rani Haar in 22K gold with ruby and emerald accents. A bridal showstopper.',                    icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[3]  },
-  { id: 15, name: 'Pearl & Gold Necklace',   category: 'Necklaces', weight: 22.5, purity: '22K', description: 'South Sea Pearls in 22K',     details: 'Elegant necklace with premium South Sea pearls interspersed with 22K gold beads.',                          icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[4]  },
-  { id: 16, name: 'Layered Chain Necklace',  category: 'Necklaces', weight: 24.3, purity: '22K', description: 'Multi-Chain with Charms',     details: 'Contemporary layered necklace with three 22K chains and delicate diamond charms.',                           icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[5]  },
-  { id: 17, name: 'Kundan Bridal Necklace',  category: 'Necklaces', weight: 55.0, purity: '22K', description: 'Kundan Polki Bridal Set',     details: 'Stunning bridal Kundan necklace with uncut diamonds and precious stones in 22K gold.',                      icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[6]  },
-  { id: 18, name: 'Gold Choker Necklace',    category: 'Necklaces', weight: 32.0, purity: '22K', description: 'Classic Gold Choker',         details: 'Elegant close-fitting choker in 22K gold with intricate filigree work.',                                   icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[7]  },
-  { id: 19, name: 'Meenakari Necklace',      category: 'Necklaces', weight: 28.5, purity: '22K', description: 'Colorful Meenakari Art',      details: 'Vibrant Meenakari necklace in 22K gold with traditional Rajasthani enamel work.',                           icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[8]  },
-  { id: 20, name: 'Diamond Pendant Chain',   category: 'Necklaces', weight: 18.0, purity: '18K', description: 'Diamond Solitaire Chain',     details: 'Elegant 18K gold chain with a diamond solitaire pendant.',                                                  icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[9]  },
-  { id: 21, name: 'Long Gold Chain',         category: 'Necklaces', weight: 20.0, purity: '22K', description: 'Long 22K Gold Chain',         details: 'Classic long gold chain in 22K. Versatile and timeless.',                                                   icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[10] },
-  { id: 22, name: 'Fancy Link Chain',        category: 'Necklaces', weight: 15.0, purity: '22K', description: 'Fancy Link Gold Chain',       details: 'Stylish fancy link chain in 22K gold. A modern classic.',                                                   icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[11] },
-  { id: 23, name: 'Rope Gold Chain',         category: 'Necklaces', weight: 14.0, purity: '22K', description: 'Rope Style 22K Chain',        details: 'Beautiful rope-style gold chain in 22K. Suitable for pendants or worn alone.',                              icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[12] },
-  { id: 24, name: 'Box Gold Chain',          category: 'Necklaces', weight: 12.0, purity: '22K', description: 'Box Link Gold Chain',         details: 'Classic box link chain in 22K gold. Durable and elegant.',                                                  icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[13] },
-  { id: 25, name: 'Singapore Gold Chain',    category: 'Necklaces', weight: 10.0, purity: '22K', description: 'Singapore Style 22K Chain',   details: 'Delicate Singapore-style chain in 22K gold. Light and versatile.',                                          icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[14] },
+  // ── NECKLACES ──────────────────────────────────────────────────────────────
+  { id: 11, name: 'Heritage Necklace Set',   category: 'Necklaces', weight: 38.5, purity: '22K', description: 'Polki Diamonds & Emeralds',  details: 'Traditional heritage necklace with uncut polki diamonds and Colombian emeralds. Matching earrings included.',  icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[0] },
+  { id: 12, name: 'Bridal Necklace',         category: 'Necklaces', weight: 28.0, purity: '22K', description: 'Bridal Gold Necklace',        details: 'Stunning bridal necklace in 22K gold. Perfect for weddings and special occasions.',                           icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[1] },
+  { id: 13, name: 'Kundan Necklace',         category: 'Necklaces', weight: 45.0, purity: '22K', description: 'Kundan Polki Design',         details: 'Grand Kundan necklace with polki diamonds in 22K gold.',                                                    icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[2] },
+  { id: 14, name: 'Antique Rani Haar',       category: 'Necklaces', weight: 62.0, purity: '22K', description: 'Traditional Rani Haar',       details: 'Magnificent Rani Haar in 22K gold with ruby and emerald accents. A bridal showstopper.',                    icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[3] },
+  { id: 15, name: 'Temple Necklace',         category: 'Necklaces', weight: 22.5, purity: '22K', description: 'Temple Art Necklace',         details: 'Traditional temple necklace with deity motifs in 22K gold with antique finish.',                             icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[4] },
+  { id: 16, name: 'Gold Choker Necklace',    category: 'Necklaces', weight: 24.3, purity: '22K', description: 'Classic Gold Choker',         details: 'Elegant close-fitting choker in 22K gold with intricate filigree work.',                                   icon: 'flower-outline',  color: '#8C5C2D', image: NECKLACE_IMAGES[5] },
 
-  // ── EARRINGS ───────────────────────────────────────────────────────────
-  { id: 26, name: 'Kundan Jhumka Set',       category: 'Earrings',  weight: 12.8, purity: '22K', description: 'Kundan Work with Pearls',     details: 'Classic Kundan jhumka earrings with natural freshwater pearls. Lightweight for all-day wear.',               icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[0]  },
-  { id: 27, name: 'Chandelier Earrings',     category: 'Earrings',  weight: 15.6, purity: '22K', description: 'Rose Cut Diamonds',           details: 'Stunning chandelier earrings featuring rose cut diamonds and delicate gold chains.',                          icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[1]  },
-  { id: 28, name: 'Gold Hoop Earrings',      category: 'Earrings',  weight: 9.4,  purity: '22K', description: 'Classic Gold Hoops',          details: 'Timeless gold hoop earrings in 22K. A wardrobe essential for every woman.',                                  icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[2]  },
-  { id: 29, name: 'Polki Drop Earrings',     category: 'Earrings',  weight: 11.0, purity: '22K', description: 'Uncut Diamond Polki',         details: 'Beautiful polki earrings with uncut diamonds in 22K gold with enamel backing.',                              icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[3]  },
-  { id: 30, name: 'Regal Stud Earrings',     category: 'Earrings',  weight: 8.0,  purity: '22K', description: 'Royal Stud Design',           details: 'Elegant stud earrings in 22K gold with detailed craftsmanship.',                                            icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[4]  },
-  { id: 31, name: 'Diamond Stud Earrings',   category: 'Earrings',  weight: 4.2,  purity: '18K', description: '0.8ct Total Diamond Weight',  details: 'Classic diamond studs in 18K white gold. GIA certified VVS2 diamonds. Everyday luxury.',                    icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[5]  },
-  { id: 32, name: 'Antique Gold Earrings',   category: 'Earrings',  weight: 11.2, purity: '22K', description: 'Antique Finish Earrings',     details: 'Traditional antique finish earrings with intricate detailing in 22K gold.',                                  icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[6]  },
-  { id: 33, name: 'Baali Long Earrings',     category: 'Earrings',  weight: 14.5, purity: '22K', description: 'Bridal Long Baali',           details: 'Elegant long baali earrings with ruby drops and diamond accents. Perfect for bridal wear.',                  icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[7]  },
-  { id: 34, name: 'Meenakari Jhumka',        category: 'Earrings',  weight: 10.5, purity: '22K', description: 'Colorful Meenakari Jhumka',   details: 'Vibrant Meenakari jhumka in 22K gold. Traditional Rajasthani artform.',                                     icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[8]  },
-  { id: 35, name: 'Pearl Drop Earrings',     category: 'Earrings',  weight: 7.8,  purity: '22K', description: 'Pearl & Gold Drop',           details: 'Elegant drop earrings with South Sea pearls in 22K gold setting.',                                          icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[9]  },
-  { id: 36, name: 'Ruby Gold Earrings',      category: 'Earrings',  weight: 9.0,  purity: '22K', description: 'Natural Ruby Earrings',       details: 'Beautiful earrings with natural Burmese rubies and diamond accents in 22K gold.',                           icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[10] },
-  { id: 37, name: 'Emerald Drop Earrings',   category: 'Earrings',  weight: 8.5,  purity: '22K', description: 'Emerald & Diamond Drops',     details: 'Stunning drop earrings with Colombian emeralds surrounded by diamonds in 22K gold.',                         icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[11] },
-  { id: 38, name: 'Filigree Earrings',       category: 'Earrings',  weight: 6.2,  purity: '22K', description: 'Handcrafted Filigree',        details: 'Delicate filigree earrings handcrafted in 22K gold. A masterpiece of artisanship.',                         icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[12] },
-  { id: 39, name: 'Temple Earrings',         category: 'Earrings',  weight: 13.0, purity: '22K', description: 'Temple Art Earrings',         details: 'Traditional temple earrings with deity motifs in 22K gold. Divine and auspicious.',                         icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[13] },
+  // ── EARRINGS ───────────────────────────────────────────────────────────────
+  { id: 26, name: 'Gold Earrings',           category: 'Earrings',  weight: 12.8, purity: '22K', description: 'Classic Gold Earrings',       details: 'Elegant 22K gold earrings. Lightweight and perfect for all occasions.',                                      icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[0] },
+  { id: 27, name: 'Jhumka Earrings',         category: 'Earrings',  weight: 15.6, purity: '22K', description: 'Traditional Jhumka',          details: 'Classic jhumka earrings in 22K gold. A timeless Indian jewellery staple.',                                  icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[1] },
+  { id: 28, name: 'Chandbali Earrings',      category: 'Earrings',  weight: 9.4,  purity: '22K', description: 'Royal Chandbali Design',      details: 'Royal chandbali earrings with stone work in 22K gold.',                                                     icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[2] },
+  { id: 29, name: 'Drop Earrings',           category: 'Earrings',  weight: 11.0, purity: '22K', description: 'Gold Drop Earrings',          details: 'Beautiful gold drop earrings in 22K. Elegant and versatile.',                                               icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[3] },
+  { id: 30, name: 'Stud Earrings',           category: 'Earrings',  weight: 8.0,  purity: '22K', description: 'Gold Stud Earrings',          details: 'Classic gold stud earrings in 22K. Perfect for everyday wear.',                                            icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[4] },
+  { id: 31, name: 'Pearl Drop Earrings',     category: 'Earrings',  weight: 7.8,  purity: '22K', description: 'Pearl & Gold Drop Earrings',  details: 'Elegant drop earrings with pearl accents in 22K gold setting.',                                            icon: 'ellipse-outline', color: '#8C5C2D', image: EARRING_IMAGES[5] },
 
-  // ── BRACELETS / BANGLES ────────────────────────────────────────────────
-  { id: 40, name: 'Bangle Trio Set',         category: 'Bracelets', weight: 42.0, purity: '22K', description: 'Hand Engraved 22K Bangles',   details: 'Set of three 22K gold bangles with hand-engraved motifs and subtle diamond accents.',                      icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[0] },
-  { id: 41, name: 'Antique Kada Bracelet',   category: 'Bracelets', weight: 36.2, purity: '22K', description: 'Hand Hammered Finish',        details: 'Heavy 22K gold kada with traditional hammered finish and subtle engraving. A statement piece.',              icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[1] },
-  { id: 42, name: 'Meenakari Bangle Set',    category: 'Bracelets', weight: 28.5, purity: '22K', description: 'Colorful Meenakari Bangles',  details: 'Gorgeous set of two bangles with vibrant Meenakari enamel work in 22K gold.',                              icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[2] },
-  { id: 43, name: 'Classic Gold Bangle',     category: 'Bracelets', weight: 22.0, purity: '22K', description: 'Plain Classic Bangle 22K',    details: 'Elegant plain gold bangle in 22K. A timeless classic for everyday or special occasions.',                  icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[3] },
-  { id: 44, name: 'Diamond Bangle',          category: 'Bracelets', weight: 18.4, purity: '18K', description: 'Diamond Line Bangle',         details: 'Stunning bangle in 18K white gold with a line of round brilliant diamonds.',                               icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[4] },
+  // ── BANGLES / BRACELETS ────────────────────────────────────────────────────
+  { id: 40, name: 'Gold Bangles Set',        category: 'Bracelets', weight: 42.0, purity: '22K', description: 'Traditional Gold Bangles',    details: 'Set of gold bangles in 22K. Traditional design perfect for all occasions.',                                  icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[0] },
+  { id: 41, name: 'Designer Bangles',        category: 'Bracelets', weight: 36.2, purity: '22K', description: 'Designer Gold Bangles',       details: 'Beautifully designed gold bangles in 22K with intricate detailing.',                                         icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[1] },
+  { id: 42, name: 'Antique Bangles',         category: 'Bracelets', weight: 28.5, purity: '22K', description: 'Antique Finish Bangles',      details: 'Traditional antique finish bangles in 22K gold. A timeless classic.',                                       icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[2] },
+  { id: 43, name: 'Bridal Bangles',          category: 'Bracelets', weight: 22.0, purity: '22K', description: 'Bridal Gold Bangles',         details: 'Elegant bridal bangles in 22K gold. Perfect for weddings.',                                                 icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[3] },
+  { id: 44, name: 'Kada Bangles',            category: 'Bracelets', weight: 18.4, purity: '22K', description: 'Heavy Gold Kada',             details: 'Heavy gold kada in 22K. A statement piece for special occasions.',                                           icon: 'ellipse',         color: '#8C5C2D', image: BANGLE_IMAGES[4] },
 
-  // ── PENDANTS ───────────────────────────────────────────────────────────
+  // ── CHAINS ─────────────────────────────────────────────────────────────────
+  { id: 50, name: 'Gold Chain',              category: 'Chains',    weight: 15.0, purity: '22K', description: 'Everyday Gold Chain',         details: 'Classic everyday wear 22K gold chain. 916 certified and hallmarked.',                                        icon: 'flower-outline',  color: '#8C5C2D', image: CHAIN_IMAGES[0] },
+  { id: 51, name: 'Figaro Chain',            category: 'Chains',    weight: 18.0, purity: '22K', description: 'Figaro Style Gold Chain',     details: 'Italian figaro style gold chain in 22K. Strong and elegant.',                                               icon: 'flower-outline',  color: '#8C5C2D', image: CHAIN_IMAGES[1] },
+  { id: 52, name: 'Box Chain',               category: 'Chains',    weight: 12.0, purity: '22K', description: 'Box Link Gold Chain',         details: 'Classic box link gold chain in 22K. Durable and versatile.',                                                icon: 'flower-outline',  color: '#8C5C2D', image: CHAIN_IMAGES[2] },
+  { id: 53, name: 'Rope Chain',              category: 'Chains',    weight: 14.0, purity: '22K', description: 'Rope Style Gold Chain',       details: 'Beautiful rope-style gold chain in 22K. Suitable for pendants or worn alone.',                              icon: 'flower-outline',  color: '#8C5C2D', image: CHAIN_IMAGES[3] },
+  { id: 54, name: 'Curb Chain',              category: 'Chains',    weight: 20.0, purity: '22K', description: 'Heavy Curb Gold Chain',       details: 'Heavy curb chain in 22K gold. A bold statement piece.',                                                     icon: 'flower-outline',  color: '#8C5C2D', image: CHAIN_IMAGES[4] },
+
+  // ── PENDANTS ───────────────────────────────────────────────────────────────
   { id: 45, name: 'Temple Pendant',          category: 'Pendants',  weight: 18.4, purity: '22K', description: 'Goddess Lakshmi Design',      details: 'Exquisite temple pendant depicting Goddess Lakshmi, handcrafted with fine detailing in 22K gold.',          icon: 'star-outline',    color: '#8C5C2D', image: PENDANT_IMAGES[0] },
   { id: 46, name: 'Peacock Motif Pendant',   category: 'Pendants',  weight: 14.9, purity: '22K', description: 'Ruby & Diamond Accents',      details: 'Beautiful peacock pendant with natural rubies and sparkling diamonds in 22K gold.',                        icon: 'star-outline',    color: '#8C5C2D', image: PENDANT_IMAGES[1] },
   { id: 47, name: 'Diamond Heart Pendant',   category: 'Pendants',  weight: 8.5,  purity: '18K', description: 'Heart Diamond 18K',           details: 'Romantic heart-shaped diamond pendant in 18K white gold with pear-shaped diamond.',                        icon: 'star-outline',    color: '#8C5C2D', image: PENDANT_IMAGES[2] },
