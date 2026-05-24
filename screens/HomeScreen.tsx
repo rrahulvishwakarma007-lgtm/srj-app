@@ -6,11 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '../lib/types';
-
-// ── Shared storage helper (same keys as GoldRatesScreen) ─────────────────────
 import { loadGoldRates, GoldRateData } from '../lib/goldRateStorage';
-// ↑ Adjust the import path to wherever you place goldRateStorage.ts in your project.
-//   e.g. '../utils/goldRateStorage' or '../services/goldRateStorage'
 
 const { width: W } = Dimensions.get('window');
 
@@ -29,35 +25,50 @@ const WHATSAPP    = '#25D366';
 const GREEN       = '#16a34a';
 const RED         = '#dc2626';
 
-const WP = 'https://shekharrajajewellers.com/wp-content/uploads/2026/03';
+// ── Google Drive direct URL helper ────────────────────────────────────────────
+const gd = (id: string) => `https://drive.google.com/uc?export=view&id=${id}`;
 
-// ── BANNERS ───────────────────────────────────────────────────────────────────
+// ── BANNER IMAGES (4 slides) ──────────────────────────────────────────────────
 const BANNERS = [
   {
     id: '1',
-    image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/jewellery_banner_1920x1080.png',
+    image: gd('1rWIZWMuFpSeKJm00vLm6ZeQnCyucIY1X'),
     title: 'Bridal\nCollection',
-    sub: 'Discover Your Perfect Look',
-    btn: 'Explore Collection',
+    sub:   'Discover Your Perfect Look',
+    btn:   'Explore Collection',
   },
   {
     id: '2',
-    image: 'https://shekharrajajewellers.com/wp-content/uploads/2026/04/ChatGPT-Image-Apr-5-2026-01_09-1.png',
+    image: gd('1hjlowZZTSXZ5ikEy4eldIxMg30FOLeYv'),
     title: 'Fine\nJewellery',
-    sub: '22K & 24K Gold · Hallmarked',
-    btn: 'View Catalogue',
+    sub:   '22K & 24K Gold · Hallmarked',
+    btn:   'View Catalogue',
+  },
+  {
+    id: '3',
+    image: gd('15ABFjbt7LgqeD0zjbNv9tQyuTIHL3z-b'),
+    title: 'Gold\nCollections',
+    sub:   'Crafted for Every Occasion',
+    btn:   'Shop Now',
+  },
+  {
+    id: '4',
+    image: gd('1PWCiHTyvgTxAcMJ5W_y-cbt5E_C2pUUG'),
+    title: 'Exclusive\nDesigns',
+    sub:   'BIS Hallmarked · Certified',
+    btn:   'Explore Now',
   },
 ];
 
 // ── CATEGORIES ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id: '1', image: `${WP}/Screenshot_2026-03-11-02-43-01-295_com.facebook.lite_.png`, label: 'Gold' },
-  { id: '2', image: `${WP}/Screenshot_2026-03-11-02-36-37-183_com.facebook.lite_.png`, label: 'Silver' },
-  { id: '3', image: `${WP}/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png`, label: 'Bridal' },
-  { id: '4', image: `${WP}/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png`, label: 'Rings' },
-  { id: '5', image: `${WP}/file_00000000d1a071fab06fbf048655557e.png`,                 label: 'Chains' },
-  { id: '6', image: `${WP}/file_0000000016a4720bb922e408d0fb4532.png`,                 label: 'Daily Wear' },
-  { id: '7', image: `${WP}/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png`, label: 'Special' },
+  { id: '1', image: gd('178WZEQ5UhlSu0NJ2D7buXiBFyhRXd0TN'), label: 'Gold'      },
+  { id: '2', image: gd('1UFEF3zn8NKjGHxJjmlaAa4ZF0utIVwae'), label: 'Silver'    },
+  { id: '3', image: gd('1etFrF2xVdxtcEYDZkAPD4NNZwNGkUmWN'), label: 'Bridal'    },
+  { id: '4', image: gd('1IB_iNGjIlPQl2h4rqNfypU-Uqtrl2egk'), label: 'Rings'     },
+  { id: '5', image: gd('1uFouP3vJqRn3xg0_-XaYF5WstCjDmoOK'), label: 'Chains'    },
+  { id: '6', image: gd('1bOjrDufMVW8WSHXRVaWvwSgaFVrNPafB'), label: 'Daily Wear' },
+  { id: '7', image: gd('1rz-e2uhRWYQsOyEJG_O0B3dekF0kpu43'), label: 'Special'   },
 ];
 
 // ── FEATURED PRODUCTS ─────────────────────────────────────────────────────────
@@ -68,53 +79,196 @@ interface StaticProduct {
 }
 
 const FEATURED_PRODUCTS: StaticProduct[] = [
+  // ── RINGS ──
   {
     id: '1', name: 'Gold Ring', category: 'Rings',
     description: 'Classic 22K gold ring with intricate design',
-    imageUrl: `${WP}/Screenshot_2026-03-11-02-37-35-489_com.facebook.lite_.png`,
-    color: '#C9A84C', icon: 'diamond-outline',
+    imageUrl: gd('1IB_iNGjIlPQl2h4rqNfypU-Uqtrl2egk'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
   },
+  {
+    id: '9', name: 'Designer Ring', category: 'Rings',
+    description: 'Elegant 22K gold designer ring',
+    imageUrl: gd('1y9O-LEkRfva8KAYrRvQwtYSuqce71jRL'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '10', name: 'Solitaire Ring', category: 'Rings',
+    description: 'Premium 18K gold solitaire ring',
+    imageUrl: gd('199ujiz-55egisPpSz57JO_7JIlNPsaqK'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '11', name: 'Cocktail Ring', category: 'Rings',
+    description: 'Statement cocktail ring in 22K gold',
+    imageUrl: gd('1quBTTS1bwijG-XAoT_7RLfQqBgk3kp_W'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '12', name: 'Floral Ring', category: 'Rings',
+    description: 'Beautiful floral motif gold ring',
+    imageUrl: gd('1LwA1xfMggIH_KywUUUuEEf9WJtpXdxmN'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '13', name: 'Traditional Ring', category: 'Rings',
+    description: 'Traditional 22K gold ring with stone work',
+    imageUrl: gd('1nQRYBdiR2VFjhf85y9aTyGzfuTv-KHk6'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '14', name: 'Luxury Ring', category: 'Rings',
+    description: 'SRJ Premium luxury gold ring',
+    imageUrl: gd('1275Tcoywws7DtFDVQ4UmzEvVk9FnRy9d'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+
+  // ── NECKLACES ──
   {
     id: '2', name: 'Gold Necklace', category: 'Necklaces',
     description: 'Traditional 22K gold necklace, BIS hallmarked',
-    imageUrl: `${WP}/Screenshot_2026-03-08-19-44-44-723_com.facebook.lite_.png`,
-    color: '#C9A84C', icon: 'diamond-outline',
+    imageUrl: gd('178WZEQ5UhlSu0NJ2D7buXiBFyhRXd0TN'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
   },
   {
-    id: '3', name: 'Diamond Earrings', category: 'Earrings',
-    description: 'Elegant 18K gold diamond earrings',
-    imageUrl: `${WP}/Screenshot_2026-03-11-02-44-02-271_com.facebook.lite-1.png`,
-    color: '#9B6ED4', icon: 'diamond-outline',
+    id: '15', name: 'Bridal Necklace', category: 'Necklaces',
+    description: 'Stunning bridal necklace in 22K gold',
+    imageUrl: gd('1etFrF2xVdxtcEYDZkAPD4NNZwNGkUmWN'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
   },
+  {
+    id: '16', name: 'Kundan Necklace', category: 'Necklaces',
+    description: 'Royal Kundan necklace with meenakari work',
+    imageUrl: gd('1gjyEU0uPpfHKiuvoTfR847mkr2J5LHqW'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '17', name: 'Temple Necklace', category: 'Necklaces',
+    description: 'Antique temple jewellery necklace',
+    imageUrl: gd('1ZYL2io58ZBM3Zj5TUb29yZzIZCBpERVp'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '18', name: 'Long Haar', category: 'Necklaces',
+    description: 'Long gold haar with pendant',
+    imageUrl: gd('1MGHQ9y1ZwLSZFwyWzqPLMy4s2u0s4YCw'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '19', name: 'Choker Necklace', category: 'Necklaces',
+    description: 'Elegant gold choker necklace',
+    imageUrl: gd('1u28Db88v2mghzWUUf8wweLxtWygCLxwr'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+
+  // ── EARRINGS ──
+  {
+    id: '3', name: 'Gold Earrings', category: 'Earrings',
+    description: 'Elegant 22K gold earrings',
+    imageUrl: gd('1rz-e2uhRWYQsOyEJG_O0B3dekF0kpu43'),
+    color: '#9B6ED4', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '20', name: 'Jhumka Earrings', category: 'Earrings',
+    description: 'Traditional jhumka earrings in 22K gold',
+    imageUrl: gd('1UFEF3zn8NKjGHxJjmlaAa4ZF0utIVwae'),
+    color: '#9B6ED4', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '21', name: 'Chandbali Earrings', category: 'Earrings',
+    description: 'Royal chandbali earrings with stone work',
+    imageUrl: gd('1UBsPeXQU5XHUyVjpeT3iSIyTt1PJPIRx'),
+    color: '#9B6ED4', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '22', name: 'Drop Earrings', category: 'Earrings',
+    description: 'Beautiful gold drop earrings',
+    imageUrl: gd('1VpZkJ5u7IVaj3ifTBMbHC2IJsvCCh-qh'),
+    color: '#9B6ED4', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '23', name: 'Stud Earrings', category: 'Earrings',
+    description: 'Classic gold stud earrings, everyday wear',
+    imageUrl: gd('1zdHsdwLPyBt6O5Zf4zk_i-XmDvcB7IRv'),
+    color: '#9B6ED4', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '24', name: 'Pearl Earrings', category: 'Earrings',
+    description: 'Gold earrings with pearl drops',
+    imageUrl: gd('1WmTgcFqU_UT3rFMeXmeWIF-68DJgsO05'),
+    color: '#9B6ED4', icon: 'diamond-outline', purity: '',
+  },
+
+  // ── BANGLES ──
   {
     id: '4', name: 'Gold Bangles', category: 'Bangles',
     description: 'Set of 4 traditional 22K gold bangles',
-    imageUrl: `${WP}/Screenshot_2026-03-11-02-32-56-418_com.facebook.lite_.png`,
-    color: '#E8A838', icon: 'diamond-outline',
+    imageUrl: gd('1bOjrDufMVW8WSHXRVaWvwSgaFVrNPafB'),
+    color: '#E8A838', icon: 'diamond-outline', purity: '',
   },
+  {
+    id: '25', name: 'Designer Bangles', category: 'Bangles',
+    description: 'Designer gold bangles with enamel work',
+    imageUrl: gd('1JMwkg6uXC_tnnB9ytEUolrehfj6f4-nv'),
+    color: '#E8A838', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '26', name: 'Antique Bangles', category: 'Bangles',
+    description: 'Antique finish gold bangles',
+    imageUrl: gd('1qdjSq4qUROtXjSEEfSR5AEWrbGWwJhve'),
+    color: '#E8A838', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '27', name: 'Bridal Bangles', category: 'Bangles',
+    description: 'Bridal gold bangle set with stone work',
+    imageUrl: gd('1t2DbNoLDld25xryH5owdAAbDoFs674RW'),
+    color: '#E8A838', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '28', name: 'Kada Bangles', category: 'Bangles',
+    description: 'Heavy gold kada for special occasions',
+    imageUrl: gd('1Q7P4-Yi-_tJ48rD3OW6P5OjuwFCTXGWs'),
+    color: '#E8A838', icon: 'diamond-outline', purity: '',
+  },
+
+  // ── CHAINS ──
   {
     id: '5', name: 'Gold Chain', category: 'Chains',
     description: 'Everyday wear 22K gold chain, 916 certified',
-    imageUrl: `${WP}/file_00000000d1a071fab06fbf048655557e.png`,
-    color: '#C9A84C', icon: 'diamond-outline',
+    imageUrl: gd('1uFouP3vJqRn3xg0_-XaYF5WstCjDmoOK'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
   },
+  {
+    id: '29', name: 'Figaro Chain', category: 'Chains',
+    description: 'Italian figaro chain in 22K gold',
+    imageUrl: gd('1Js6g0OUeKC8dNVhqHczaP0XhjcYn6cgP'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '30', name: 'Box Chain', category: 'Chains',
+    description: 'Elegant box chain in 22K gold',
+    imageUrl: gd('1w9ywVe_xPI8JL7yzHo5bH8B-exvYgHYf'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '31', name: 'Rope Chain', category: 'Chains',
+    description: 'Classic rope chain in 22K gold',
+    imageUrl: gd('1zZrMUlrPdYgzEX3u679ogJTj9TY3Tord'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+  {
+    id: '32', name: 'Curb Chain', category: 'Chains',
+    description: 'Heavy curb chain in 22K gold',
+    imageUrl: gd('18EZBNVN3MvqiKdXrVOf-xDn76YTXEE21'),
+    color: '#C9A84C', icon: 'diamond-outline', purity: '',
+  },
+
+  // ── BRIDAL ──
   {
     id: '6', name: 'Bridal Set', category: 'Bridal',
     description: 'Complete bridal jewellery set — necklace, earrings & maang tikka',
-    imageUrl: `${WP}/Screenshot_2026-03-08-19-44-40-125_com.facebook.lite_.png`,
-    color: '#D4608A', icon: 'diamond-outline',
-  },
-  {
-    id: '7', name: 'Elegant Ring', category: 'Silver',
-    description: '999 pure silver anklets, BIS hallmarked',
-    imageUrl: `${WP}/Screenshot_2026-03-11-02-36-37-183_com.facebook.lite_.png`,
-    color: '#A0A0B8', icon: 'diamond-outline',
-  },
-  {
-    id: '8', name: 'Luxury Ring', category: 'Special',
-    description: 'SRJ Premium Collection',
-    imageUrl: `${WP}/Screenshot_2026-03-11-02-37-24-543_com.facebook.lite_.png`,
-    color: '#C9A84C', icon: 'diamond-outline',
+    imageUrl: gd('1gjyEU0uPpfHKiuvoTfR847mkr2J5LHqW'),
+    color: '#D4608A', icon: 'diamond-outline', purity: '',
   },
 ];
 
@@ -132,12 +286,11 @@ interface Props {
 export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   const insets = useSafeAreaInsets();
 
-  const [search, setSearch]       = useState('');
-  const [bannerIdx, setBannerIdx] = useState(0);
-
-  // ── Gold rates — loaded from AsyncStorage (set by GoldRatesScreen admin) ──
-  const [goldData, setGoldData]   = useState<GoldRateData | null>(null);
+  const [search,       setSearch]       = useState('');
+  const [bannerIdx,    setBannerIdx]    = useState(0);
+  const [goldData,     setGoldData]     = useState<GoldRateData | null>(null);
   const [ratesLoading, setRatesLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
 
   const bannerRef = useRef<FlatList>(null);
   const scrollX   = useRef(new Animated.Value(0)).current;
@@ -152,42 +305,21 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
     return () => clearInterval(t);
   }, [bannerIdx]);
 
-  // ── Load gold rates from AsyncStorage (shared with GoldRatesScreen) ───────
+  // ── Load gold rates ───────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
-
     const fetchRates = async () => {
       setRatesLoading(true);
       const data = await loadGoldRates();
-      if (mounted) {
-        setGoldData(data);
-        setRatesLoading(false);
-      }
+      if (mounted) { setGoldData(data); setRatesLoading(false); }
     };
-
     fetchRates();
-
-    // Re-fetch every time the screen comes into focus.
-    // If you're using React Navigation, replace this with useFocusEffect.
-    // For a simple interval refresh every 30 s (catches admin updates):
     const interval = setInterval(fetchRates, 30_000);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
+    return () => { mounted = false; clearInterval(interval); };
   }, []);
 
   const whatsapp  = () => Linking.openURL('https://wa.me/918377911745');
   const bookVisit = () => Linking.openURL('https://wa.me/918377911745?text=I%20would%20like%20to%20book%20a%20store%20visit');
-
-  // ── Filter products by search ─────────────────────────────────────────────
-  const filteredProducts = search
-    ? FEATURED_PRODUCTS.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.category.toLowerCase().includes(search.toLowerCase())
-      )
-    : FEATURED_PRODUCTS;
 
   const getCatColor = (cat: string) => {
     const map: Record<string, string> = {
@@ -198,11 +330,22 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
     return map[cat] || '#C9A84C';
   };
 
-  // ── Helpers for gold rate display ─────────────────────────────────────────
+  // ── Filter by search AND category ─────────────────────────────────────────
+  const filteredProducts = FEATURED_PRODUCTS.filter(p => {
+    const matchSearch = search
+      ? p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase())
+      : true;
+    const matchCat = activeCategory === 'All' ? true : p.category === activeCategory;
+    return matchSearch && matchCat;
+  });
+
   const ratesSet    = !!goldData && goldData.rate24k > 0;
   const k22Display  = ratesSet ? goldData!.rate22k.toLocaleString('en-IN') : '---';
   const k24Display  = ratesSet ? goldData!.rate24k.toLocaleString('en-IN') : '---';
   const dateDisplay = goldData?.updatedDate || null;
+
+  const catTabs = ['All', 'Rings', 'Necklaces', 'Earrings', 'Bangles', 'Chains', 'Bridal'];
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -249,7 +392,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           )}
         </View>
 
-        {/* ── BANNER CAROUSEL ── */}
+        {/* ── BANNER CAROUSEL (4 slides) ── */}
         {!search && (
           <View style={styles.bannerWrap}>
             <Animated.FlatList
@@ -268,7 +411,11 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
               }
               renderItem={({ item }) => (
                 <View style={styles.bannerSlide}>
-                  <Image source={{ uri: item.image }} style={styles.bannerImage} resizeMode="cover" />
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.bannerImage}
+                    resizeMode="cover"
+                  />
                 </View>
               )}
             />
@@ -290,22 +437,60 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
               keyExtractor={c => c.id}
               contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.catItem} activeOpacity={0.8}>
-                  <View style={styles.catCircle}>
+                <TouchableOpacity
+                  style={styles.catItem}
+                  activeOpacity={0.8}
+                  onPress={() => setActiveCategory(
+                    activeCategory === item.label ? 'All' : item.label
+                  )}
+                >
+                  <View style={[
+                    styles.catCircle,
+                    activeCategory === item.label && { borderColor: PURPLE_MID, borderWidth: 3 },
+                  ]}>
                     <Image source={{ uri: item.image }} style={styles.catImage} resizeMode="cover" />
                   </View>
-                  <Text style={styles.catLabel}>{item.label}</Text>
+                  <Text style={[
+                    styles.catLabel,
+                    activeCategory === item.label && { color: PURPLE_MID, fontWeight: '800' },
+                  ]}>{item.label}</Text>
                 </TouchableOpacity>
               )}
             />
           </View>
         )}
 
+        {/* ── CATEGORY FILTER TABS ── */}
+        {!search && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabsWrap}
+          >
+            {catTabs.map(tab => (
+              <TouchableOpacity
+                key={tab}
+                style={[styles.tab, activeCategory === tab && styles.tabActive]}
+                onPress={() => setActiveCategory(tab)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.tabText, activeCategory === tab && styles.tabTextActive]}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
         {/* ── FEATURED PRODUCTS ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              {search ? `Results for "${search}"` : 'Featured Products'}
+              {search
+                ? `Results for "${search}"`
+                : activeCategory === 'All'
+                  ? 'All Products'
+                  : activeCategory}
             </Text>
             {!search && <View style={styles.sectionLine} />}
           </View>
@@ -315,19 +500,22 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           ) : (
             <FlatList
               data={filteredProducts}
-              horizontal={!search}
-              numColumns={search ? 2 : undefined}
-              key={search ? 'grid' : 'list'}
+              horizontal={!search && activeCategory === 'All'}
+              numColumns={search || activeCategory !== 'All' ? 2 : undefined}
+              key={search || activeCategory !== 'All' ? 'grid' : 'list'}
               showsHorizontalScrollIndicator={false}
               keyExtractor={p => p.id}
               contentContainerStyle={
-                search ? styles.gridContent : { paddingHorizontal: 16, gap: 12 }
+                search || activeCategory !== 'All'
+                  ? styles.gridContent
+                  : { paddingHorizontal: 16, gap: 12 }
               }
               renderItem={({ item }) => {
                 const color = getCatColor(item.category);
+                const isGrid = search || activeCategory !== 'All';
                 return (
                   <TouchableOpacity
-                    style={search ? styles.productGridCard : styles.productCard}
+                    style={isGrid ? styles.productGridCard : styles.productCard}
                     onPress={() => onOpenProduct?.({
                       id:          parseInt(item.id),
                       name:        item.name,
@@ -369,8 +557,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
           )}
         </View>
 
-        {/* ── GOLD RATES ────────────────────────────────────────────────────── */}
-        {/* Now reads from AsyncStorage — same data the admin sets in GoldRatesScreen */}
+        {/* ── GOLD RATES ── */}
         {!search && (
           <View style={styles.section}>
             <View style={[styles.sectionHeader, { justifyContent: 'center' }]}>
@@ -380,7 +567,6 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
             </View>
 
             <View style={styles.goldCard}>
-              {/* 22K / 24K prices */}
               <View style={styles.goldRow}>
                 <View style={styles.goldItem}>
                   <Text style={styles.goldKarat}>22K</Text>
@@ -394,8 +580,6 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                   <Text style={styles.goldSubLabel}>per gram</Text>
                 </View>
               </View>
-
-              {/* Status row */}
               <View style={styles.goldStatusRow}>
                 {ratesLoading ? (
                   <Text style={styles.goldStatusText}>Loading rates…</Text>
@@ -486,6 +670,16 @@ const styles = StyleSheet.create({
   dot:         { width: 6, height: 6, borderRadius: 3, backgroundColor: '#C8B8E8' },
   dotActive:   { width: 18, backgroundColor: GOLD },
 
+  tabsWrap: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+  tab: {
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 20, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: BG_CARD,
+  },
+  tabActive:     { backgroundColor: PURPLE_DARK, borderColor: PURPLE_DARK },
+  tabText:       { fontSize: 12, fontWeight: '600', color: TEXT_MID },
+  tabTextActive: { color: GOLD },
+
   section: { marginTop: 18 },
   sectionHeader: {
     flexDirection: 'row', alignItems: 'center',
@@ -515,7 +709,7 @@ const styles = StyleSheet.create({
   },
   gridContent:    { paddingHorizontal: 10 },
   productImgWrap: { position: 'relative' },
-  productImg:     { width: '100%', height: 130 },
+  productImg:     { width: '100%', height: 150 },
   heartBadge: {
     position: 'absolute', top: 8, right: 8,
     backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12,
@@ -536,7 +730,6 @@ const styles = StyleSheet.create({
     width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
   },
 
-  // Gold card
   goldCard: {
     marginHorizontal: 16, backgroundColor: PURPLE_HERO,
     borderRadius: 16, borderWidth: 1.5, borderColor: GOLD, padding: 16,
@@ -552,9 +745,7 @@ const styles = StyleSheet.create({
     gap: 4, marginTop: 12, paddingTop: 10,
     borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.2)',
   },
-  goldStatusText: {
-    fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: '600',
-  },
+  goldStatusText: { fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: '600' },
 
   trustRow: {
     flexDirection: 'row', justifyContent: 'space-around',
