@@ -25,11 +25,19 @@ const PHONE  = '+918377911745';
 const WA_NUM = '918377911745';
 const WA_URL = (msg: string) => `https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`;
 
-// ── Static showroom images (Firebase removed) ─────────────────────────────────
+// ── Showroom images — local assets ───────────────────────────────────────────
+// dixitpura.webp  → Dixitpura / Flagship showroom
+// napier town.webp → Napier Town / Heritage showroom
 const SHOWROOM_IMAGES = [
-  'https://shekharrajajewellers.com/wp-content/uploads/2026/01/IMG_20260111_125559.jpg',
-  'https://shekharrajajewellers.com/wp-content/uploads/2026/01/IMG_20260111_125632.jpg',
+  require('../assets/images/dixitpura.webp'),
+  require('../assets/images/napier town.webp'),
 ];
+
+// Location-specific images (shown inside each showroom card)
+const LOCATION_IMAGES: Record<number, any> = {
+  0: require('../assets/images/dixitpura.webp'),      // Flagship — Dixitpura
+  1: require('../assets/images/napier town.webp'),    // Heritage  — Napier Town
+};
 
 const LOCATIONS = [
   {
@@ -143,7 +151,7 @@ export default function ContactScreen() {
                 onPress={() => setImgIdx(i)}
                 activeOpacity={0.85}
               >
-                <Image source={{ uri }} style={styles.thumbImg} resizeMode="cover" />
+                <Image source={uri} style={styles.thumbImg} resizeMode="cover" />
                 {imgIdx === i && (
                   <View style={styles.imgActiveDot}>
                     <Ionicons name="eye" size={11} color="#fff" />
@@ -156,7 +164,7 @@ export default function ContactScreen() {
           {/* Main large image */}
           <View style={styles.imgMainWrap}>
             <Image
-              source={{ uri: SHOWROOM_IMAGES[imgIdx] }}
+              source={SHOWROOM_IMAGES[imgIdx]}
               style={styles.imgMain}
               resizeMode="cover"
             />
@@ -239,6 +247,18 @@ export default function ContactScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.showroomName}>{loc.name}</Text>
                 <Text style={styles.showroomArea}>{loc.area}</Text>
+              </View>
+            </View>
+            {/* Showroom photo */}
+            <View style={styles.showroomImgWrap}>
+              <Image
+                source={LOCATION_IMAGES[i]}
+                style={styles.showroomImg}
+                resizeMode="cover"
+              />
+              <View style={styles.showroomImgTag}>
+                <Ionicons name="location" size={11} color={GOLD} />
+                <Text style={styles.showroomImgTagText}>{loc.area}</Text>
               </View>
             </View>
             <View style={styles.infoRow}>
@@ -610,6 +630,19 @@ const styles = StyleSheet.create({
   sendText:  { color: '#fff', fontSize: 14, fontWeight: '900', letterSpacing: 1 },
   footNote:  { color: TEXT_LIGHT, fontSize: 11, textAlign: 'center', marginTop: 12, lineHeight: 17 },
 
+
+  showroomImgWrap: {
+    borderRadius: 12, overflow: 'hidden',
+    marginBottom: 12, position: 'relative',
+  },
+  showroomImg: { width: '100%', height: 160 },
+  showroomImgTag: {
+    position: 'absolute', bottom: 8, left: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(45,27,94,0.75)',
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99,
+  },
+  showroomImgTagText: { color: GOLD, fontSize: 10, fontWeight: '700' },
   flash: {
     position: 'absolute', bottom: 30, alignSelf: 'center',
     flexDirection: 'row', alignItems: 'center',
