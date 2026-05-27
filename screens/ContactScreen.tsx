@@ -25,19 +25,11 @@ const PHONE  = '+918377911745';
 const WA_NUM = '918377911745';
 const WA_URL = (msg: string) => `https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`;
 
-// ── Showroom images — local assets ───────────────────────────────────────────
-// dixitpura.webp  → Dixitpura / Flagship showroom
-// napier town.webp → Napier Town / Heritage showroom
+// ── Static showroom images (Firebase removed) ─────────────────────────────────
 const SHOWROOM_IMAGES = [
-  require('../assets/images/dixitpura.webp'),
-  require('../assets/images/napier town.webp'),
+  'https://nxtgenailabs.work/dixitpura.webp',
+  'https://nxtgenailabs.work/napier%20town.webp',
 ];
-
-// Location-specific images (shown inside each showroom card)
-const LOCATION_IMAGES: Record<number, any> = {
-  0: require('../assets/images/dixitpura.webp'),      // Flagship — Dixitpura
-  1: require('../assets/images/napier town.webp'),    // Heritage  — Napier Town
-};
 
 const LOCATIONS = [
   {
@@ -151,7 +143,7 @@ export default function ContactScreen() {
                 onPress={() => setImgIdx(i)}
                 activeOpacity={0.85}
               >
-                <Image source={uri} style={styles.thumbImg} resizeMode="cover" />
+                <Image source={{ uri }} style={styles.thumbImg} resizeMode="cover" />
                 {imgIdx === i && (
                   <View style={styles.imgActiveDot}>
                     <Ionicons name="eye" size={11} color="#fff" />
@@ -164,7 +156,7 @@ export default function ContactScreen() {
           {/* Main large image */}
           <View style={styles.imgMainWrap}>
             <Image
-              source={SHOWROOM_IMAGES[imgIdx]}
+              source={{ uri: SHOWROOM_IMAGES[imgIdx] }}
               style={styles.imgMain}
               resizeMode="cover"
             />
@@ -247,18 +239,6 @@ export default function ContactScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.showroomName}>{loc.name}</Text>
                 <Text style={styles.showroomArea}>{loc.area}</Text>
-              </View>
-            </View>
-            {/* Showroom photo */}
-            <View style={styles.showroomImgWrap}>
-              <Image
-                source={LOCATION_IMAGES[i]}
-                style={styles.showroomImg}
-                resizeMode="cover"
-              />
-              <View style={styles.showroomImgTag}>
-                <Ionicons name="location" size={11} color={GOLD} />
-                <Text style={styles.showroomImgTagText}>{loc.area}</Text>
               </View>
             </View>
             <View style={styles.infoRow}>
@@ -512,172 +492,4 @@ const styles = StyleSheet.create({
   imgMain:           { width: '100%', height: 210 },
   imgOverlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(45,27,94,0.65)', padding: 12,
-  },
-  imgOverlayLeft:    { flexDirection: 'row', alignItems: 'center' },
-  imgOverlayText:    { color: '#fff', fontSize: 13, fontWeight: '800' },
-  imgOverlaySubText: { color: GOLD_LIGHT, fontSize: 11, marginTop: 3 },
-  imgCounter: {
-    position: 'absolute', top: 10, right: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 99,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  imgCounterText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-
-  contactBtns: { padding: 16, gap: 12, backgroundColor: BG },
-  waBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: WHATSAPP, borderRadius: 16, padding: 16,
-    elevation: 4, shadowColor: WHATSAPP, shadowOpacity: 0.3, shadowRadius: 8,
-  },
-  waIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  waTitle:    { color: '#fff', fontSize: 16, fontWeight: '800' },
-  waSub:      { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
-  callBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: BG_CARD, borderRadius: 16, padding: 16,
-    borderWidth: 1.5, borderColor: BORDER,
-    elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6,
-  },
-  callIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#EDE8F5', alignItems: 'center', justifyContent: 'center' },
-  callTitle:    { color: TEXT_DARK, fontSize: 16, fontWeight: '800' },
-  callSub:      { color: PURPLE_MID, fontSize: 13, fontWeight: '700', marginTop: 2 },
-
-  apptBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: PURPLE_DARK, marginHorizontal: 16, marginBottom: 16,
-    borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: 'rgba(201,168,76,0.35)',
-  },
-  apptTitle: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  apptSub:   { color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 2 },
-
-  trustRow: { flexDirection: 'row', marginHorizontal: 16, gap: 10, marginBottom: 8 },
-  trustCard: {
-    flex: 1, alignItems: 'center', backgroundColor: BG_CARD,
-    borderRadius: 14, paddingVertical: 14,
-    borderWidth: 1, borderColor: BORDER,
-  },
-  trustIcon:  { width: 40, height: 40, borderRadius: 20, backgroundColor: '#EDE8F5', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  trustLabel: { color: TEXT_DARK, fontSize: 10, fontWeight: '800', textAlign: 'center' },
-  trustSub:   { color: TEXT_LIGHT, fontSize: 9, textAlign: 'center', marginTop: 2, paddingHorizontal: 4 },
-
-  sectionLabel: {
-    color: PURPLE_MID, fontSize: 11, fontWeight: '800',
-    letterSpacing: 3, marginHorizontal: 16, marginTop: 16, marginBottom: 10,
-  },
-
-  showroom: {
-    backgroundColor: BG_CARD, marginHorizontal: 16, marginBottom: 12,
-    borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: BORDER,
-    elevation: 3, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 8,
-  },
-  showroomTagWrap:  { alignSelf: 'flex-start', backgroundColor: PURPLE_DARK, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, marginBottom: 10 },
-  showroomTag:      { color: GOLD, fontSize: 9, fontWeight: '900', letterSpacing: 2 },
-  showroomHead:     { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  showroomIconWrap: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#EDE8F5', alignItems: 'center', justifyContent: 'center' },
-  showroomName:     { color: TEXT_DARK, fontSize: 16, fontWeight: '800' },
-  showroomArea:     { color: PURPLE_MID, fontSize: 12, fontWeight: '700', marginTop: 2 },
-  infoRow:          { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: BG, borderRadius: 10, padding: 10, marginBottom: 8 },
-  infoText:         { color: TEXT_DARK, fontSize: 13, fontWeight: '600' },
-  infoSub:          { color: TEXT_LIGHT, fontSize: 11, marginTop: 2 },
-  showroomActions:  { flexDirection: 'row', gap: 10, marginTop: 4 },
-  dirBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, backgroundColor: PURPLE_MID, borderRadius: 12, paddingVertical: 10,
-  },
-  dirBtnText:  { color: '#fff', fontSize: 13, fontWeight: '700' },
-  waSmallBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, backgroundColor: BG_CARD, borderRadius: 12, paddingVertical: 10,
-    borderWidth: 1.5, borderColor: WHATSAPP,
-  },
-  waSmallText: { color: WHATSAPP, fontSize: 13, fontWeight: '700' },
-
-  formDivider: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 20, marginBottom: 4 },
-  divLine:     { flex: 1, height: 1, backgroundColor: BORDER },
-  divText:     { color: TEXT_LIGHT, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginHorizontal: 10 },
-
-  form:      { marginHorizontal: 16, marginTop: 12, backgroundColor: BG_CARD, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: BORDER, marginBottom: 8 },
-  formTitle: { color: TEXT_DARK, fontSize: 15, fontWeight: '800', marginBottom: 14 },
-  typeRow:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  typeChip: {
-    paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: BG, borderRadius: 99, borderWidth: 1, borderColor: BORDER,
-  },
-  typeActive:     { backgroundColor: PURPLE_DARK, borderColor: PURPLE_DARK },
-  typeText:       { color: TEXT_MID, fontSize: 12, fontWeight: '700' },
-  typeTextActive: { color: '#fff' },
-  inputRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: BG, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderWidth: 1, borderColor: BORDER, marginBottom: 10,
-  },
-  inputField: { flex: 1, fontSize: 14, color: TEXT_DARK },
-  textarea: {
-    backgroundColor: BG, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderWidth: 1, borderColor: BORDER,
-    fontSize: 14, color: TEXT_DARK,
-    minHeight: 90, textAlignVertical: 'top', marginBottom: 14,
-  },
-  sendBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: WHATSAPP, borderRadius: 28, paddingVertical: 14,
-  },
-  sendText:  { color: '#fff', fontSize: 14, fontWeight: '900', letterSpacing: 1 },
-  footNote:  { color: TEXT_LIGHT, fontSize: 11, textAlign: 'center', marginTop: 12, lineHeight: 17 },
-
-
-  showroomImgWrap: {
-    borderRadius: 12, overflow: 'hidden',
-    marginBottom: 12, position: 'relative',
-  },
-  showroomImg: { width: '100%', height: 160 },
-  showroomImgTag: {
-    position: 'absolute', bottom: 8, left: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(45,27,94,0.75)',
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99,
-  },
-  showroomImgTagText: { color: GOLD, fontSize: 10, fontWeight: '700' },
-  flash: {
-    position: 'absolute', bottom: 30, alignSelf: 'center',
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: PURPLE_DARK, paddingVertical: 10, paddingHorizontal: 20,
-    borderRadius: 24, borderWidth: 1, borderColor: GOLD,
-  },
-  flashText: { color: GOLD, fontSize: 13, fontWeight: '700' },
-
-  modal:       { flex: 1, backgroundColor: BG },
-  modalHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: BG_CARD, paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: BORDER,
-  },
-  modalClose:    { width: 36, height: 36, borderRadius: 18, backgroundColor: BG, alignItems: 'center', justifyContent: 'center' },
-  modalTitle:    { color: TEXT_DARK, fontSize: 17, fontWeight: '800' },
-  modalTitleSub: { color: GOLD, fontSize: 11, fontWeight: '700', marginTop: 2 },
-  modalBody:     { padding: 20, paddingBottom: 40 },
-  modalIntroCard:{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: BG_CARD, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: BORDER, marginBottom: 20 },
-  modalIntro:    { flex: 1, color: TEXT_MID, fontSize: 13, lineHeight: 20 },
-  modalLabel:    { color: PURPLE_MID, fontSize: 11, fontWeight: '800', letterSpacing: 2, marginBottom: 8, marginTop: 16 },
-  modalInput: {
-    backgroundColor: BG_CARD, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderWidth: 1, borderColor: BORDER, fontSize: 14, color: TEXT_DARK, marginBottom: 4,
-  },
-  slotRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  slot:           { paddingHorizontal: 14, paddingVertical: 9, backgroundColor: BG_CARD, borderRadius: 99, borderWidth: 1, borderColor: BORDER },
-  slotActive:     { backgroundColor: PURPLE_DARK, borderColor: PURPLE_DARK },
-  slotText:       { color: TEXT_MID, fontSize: 13, fontWeight: '600' },
-  slotTextActive: { color: '#fff', fontWeight: '700' },
-  confirmBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: WHATSAPP, borderRadius: 28, paddingVertical: 15, marginTop: 24,
-  },
-  confirmText: { color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 },
-  modalFine:   { color: TEXT_LIGHT, fontSize: 11, textAlign: 'center', marginTop: 14, lineHeight: 17 },
-});
+  
