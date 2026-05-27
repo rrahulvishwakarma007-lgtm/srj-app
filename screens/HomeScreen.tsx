@@ -45,12 +45,13 @@ const BANNERS = [
     btn:   'View Catalogue',
   },
   {
-    id: '3',
-    image: require('../assets/images/hero3.png'),
-    title: 'Gold\nCollections',
-    sub:   'Crafted for Every Occasion',
-    btn:   'Shop Now',
-  },
+   {
+  id: '3',
+  image: 'https://nxtgenailabs.work/hero3.png',
+  title: 'Gold\nCollections',
+  sub:   'Crafted for Every Occasion',
+  btn:   'Shop Now',
+},
   {
     id: '4',
     image: gd('1PWCiHTyvgTxAcMJ5W_y-cbt5E_C2pUUG'),
