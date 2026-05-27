@@ -44,8 +44,7 @@ const BANNERS = [
     sub:   '22K & 24K Gold · Hallmarked',
     btn:   'View Catalogue',
   },
-  {
-   {
+ {
   id: '3',
   image: 'https://nxtgenailabs.work/hero3.png',
   title: 'Gold\nCollections',
