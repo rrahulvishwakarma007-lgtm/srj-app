@@ -25,7 +25,7 @@ const PHONE  = '+918377911745';
 const WA_NUM = '918377911745';
 const WA_URL = (msg: string) => `https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`;
 
-// ── Static showroom images (Firebase removed) ─────────────────────────────────
+// ── Showroom images ───────────────────────────────────────────────────────────
 const SHOWROOM_IMAGES = [
   'https://nxtgenailabs.work/dixitpura.webp',
   'https://nxtgenailabs.work/napier%20town.webp',
@@ -68,11 +68,11 @@ const TRUST = [
 export default function ContactScreen() {
   const insets = useSafeAreaInsets();
 
-  const [form, setForm]     = useState({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
+  const [form, setForm]         = useState({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
   const [showAppt, setShowAppt] = useState(false);
-  const [apptF, setApptF]   = useState({ name: '', phone: '', date: DATES[0], time: TIMES[0], service: SERVICES[0] });
-  const [flash, setFlash]   = useState('');
-  const [imgIdx, setImgIdx] = useState(0);
+  const [apptF, setApptF]       = useState({ name: '', phone: '', date: DATES[0], time: TIMES[0], service: SERVICES[0] });
+  const [flash, setFlash]       = useState('');
+  const [imgIdx, setImgIdx]     = useState(0);
 
   const upd  = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
   const updA = (k: string, v: string) => setApptF(f => ({ ...f, [k]: v }));
@@ -82,7 +82,6 @@ export default function ContactScreen() {
     setTimeout(() => setFlash(''), 2000);
   };
 
-  // Submit enquiry — opens WhatsApp directly (no Firebase)
   const submit = () => {
     if (!form.name.trim() || !form.phone.trim()) {
       Alert.alert('Required', 'Please enter your name and phone number.');
@@ -94,7 +93,6 @@ export default function ContactScreen() {
     setForm({ name: '', email: '', phone: '', message: '', type: 'Private Viewing' });
   };
 
-  // Confirm appointment — opens WhatsApp directly (no Firebase)
   const confirmAppt = () => {
     if (!apptF.name.trim()) {
       Alert.alert('Name Required', 'Please enter your name.');
@@ -132,9 +130,8 @@ export default function ContactScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
       >
 
-        {/* ── SHOWROOM IMAGES (static, no Firebase) ── */}
+        {/* ── SHOWROOM IMAGES ── */}
         <View style={styles.imgSection}>
-          {/* Thumbnails */}
           <View style={styles.imgRow}>
             {SHOWROOM_IMAGES.map((uri, i) => (
               <TouchableOpacity
@@ -153,7 +150,6 @@ export default function ContactScreen() {
             ))}
           </View>
 
-          {/* Main large image */}
           <View style={styles.imgMainWrap}>
             <Image
               source={{ uri: SHOWROOM_IMAGES[imgIdx] }}
@@ -199,11 +195,7 @@ export default function ContactScreen() {
         </View>
 
         {/* ── BOOK APPOINTMENT ── */}
-        <TouchableOpacity
-          style={styles.apptBtn}
-          onPress={() => setShowAppt(true)}
-          activeOpacity={0.88}
-        >
+        <TouchableOpacity style={styles.apptBtn} onPress={() => setShowAppt(true)} activeOpacity={0.88}>
           <Ionicons name="calendar" size={22} color={GOLD} />
           <View style={{ flex: 1 }}>
             <Text style={styles.apptTitle}>Request Private Appointment</Text>
@@ -460,11 +452,13 @@ export default function ContactScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root:     { flex: 1, backgroundColor: PURPLE_DARK },
   scroll:   { flex: 1, backgroundColor: BG },
   goldLine: { height: 3, backgroundColor: GOLD },
 
+  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: PURPLE_DARK, paddingHorizontal: 16, paddingVertical: 16,
@@ -478,6 +472,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
+  // Showroom images
   imgSection:     { backgroundColor: BG_CARD, padding: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
   imgRow:         { flexDirection: 'row', gap: 10, marginBottom: 10 },
   imgThumb:       { flex: 1, borderRadius: 10, overflow: 'hidden', borderWidth: 2, borderColor: BORDER },
@@ -488,13 +483,231 @@ const styles = StyleSheet.create({
     backgroundColor: GOLD, borderRadius: 9,
     width: 18, height: 18, alignItems: 'center', justifyContent: 'center',
   },
-  imgMainWrap:       { borderRadius: 14, overflow: 'hidden', position: 'relative' },
-  imgMain:           { width: '100%', height: 210 },
+  imgMainWrap:  { borderRadius: 14, overflow: 'hidden', position: 'relative' },
+  imgMain:      { width: '100%', height: 210 },
   imgOverlay: {
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  backgroundColor: 'rgba(45,27,94,0.65)',
-  padding: 12,
-},
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(45,27,94,0.65)', padding: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  imgOverlayLeft:    { flexDirection: 'row', alignItems: 'center' },
+  imgOverlayText:    { color: '#fff', fontSize: 12, fontWeight: '700' },
+  imgOverlaySubText: { color: GOLD, fontSize: 11, fontWeight: '600' },
+  imgCounter: {
+    position: 'absolute', top: 10, right: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  imgCounterText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+
+  // Contact buttons
+  contactBtns: { padding: 16, gap: 10 },
+  waBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: WHATSAPP, borderRadius: 16, padding: 14,
+    shadowColor: WHATSAPP, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+  },
+  waIconWrap: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  waTitle: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  waSub:   { color: 'rgba(255,255,255,0.75)', fontSize: 11, marginTop: 2 },
+
+  callBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: BG_CARD, borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: BORDER,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+  },
+  callIconWrap: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: BG, borderWidth: 1, borderColor: BORDER,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  callTitle: { color: TEXT_DARK, fontSize: 15, fontWeight: '800' },
+  callSub:   { color: TEXT_LIGHT, fontSize: 11, marginTop: 2 },
+
+  // Appointment button
+  apptBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: BG_CARD, borderRadius: 16, padding: 16,
+    marginHorizontal: 16, marginBottom: 16,
+    borderWidth: 1.5, borderColor: GOLD + '60',
+    shadowColor: GOLD, shadowOpacity: 0.1, shadowRadius: 6, elevation: 2,
+  },
+  apptTitle: { color: TEXT_DARK, fontSize: 14, fontWeight: '800' },
+  apptSub:   { color: TEXT_LIGHT, fontSize: 11, marginTop: 2 },
+
+  // Trust badges
+  trustRow: {
+    flexDirection: 'row', gap: 10,
+    paddingHorizontal: 16, marginBottom: 16,
+  },
+  trustCard: {
+    flex: 1, backgroundColor: BG_CARD, borderRadius: 14,
+    borderWidth: 1, borderColor: BORDER,
+    padding: 12, alignItems: 'center', gap: 4,
+  },
+  trustIcon: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: BG, alignItems: 'center', justifyContent: 'center',
+  },
+  trustLabel: { color: TEXT_DARK, fontSize: 10, fontWeight: '800', textAlign: 'center' },
+  trustSub:   { color: TEXT_LIGHT, fontSize: 9, textAlign: 'center', lineHeight: 13 },
+
+  // Section label
+  sectionLabel: {
+    color: TEXT_LIGHT, fontSize: 10, fontWeight: '800', letterSpacing: 2,
+    paddingHorizontal: 16, marginBottom: 10,
+  },
+
+  // Showroom cards
+  showroom: {
+    backgroundColor: BG_CARD, borderRadius: 16,
+    borderWidth: 1, borderColor: BORDER,
+    marginHorizontal: 16, marginBottom: 12, padding: 14,
+    position: 'relative',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+  },
+  showroomTagWrap: {
+    position: 'absolute', top: 14, right: 14,
+    backgroundColor: PURPLE_DARK, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  showroomTag:  { color: GOLD, fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
+  showroomHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  showroomIconWrap: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: BG, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: BORDER,
+  },
+  showroomName: { color: TEXT_DARK, fontSize: 15, fontWeight: '800' },
+  showroomArea: { color: TEXT_LIGHT, fontSize: 12, marginTop: 2 },
+
+  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
+  infoText: { color: TEXT_DARK, fontSize: 13, fontWeight: '600' },
+  infoSub:  { color: TEXT_LIGHT, fontSize: 11, marginTop: 1 },
+
+  showroomActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  dirBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: PURPLE_DARK, borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 8, flex: 1, justifyContent: 'center',
+  },
+  dirBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  waSmallBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: BG, borderRadius: 20, borderWidth: 1, borderColor: BORDER,
+    paddingHorizontal: 14, paddingVertical: 8, flex: 1, justifyContent: 'center',
+  },
+  waSmallText: { color: WHATSAPP, fontSize: 12, fontWeight: '700' },
+
+  // Message form
+  formDivider: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, marginVertical: 16,
+  },
+  divLine: { flex: 1, height: 1, backgroundColor: BORDER },
+  divText: { color: TEXT_LIGHT, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
+
+  form: {
+    backgroundColor: BG_CARD, borderRadius: 20,
+    marginHorizontal: 16, padding: 16,
+    borderWidth: 1, borderColor: BORDER,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+  },
+  formTitle: { color: TEXT_DARK, fontSize: 15, fontWeight: '800', marginBottom: 14 },
+
+  typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  typeChip: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 20, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: BG,
+  },
+  typeActive:     { backgroundColor: PURPLE_DARK, borderColor: PURPLE_DARK },
+  typeText:       { color: TEXT_MID, fontSize: 11, fontWeight: '600' },
+  typeTextActive: { color: GOLD },
+
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: BG, borderRadius: 12,
+    borderWidth: 1, borderColor: BORDER,
+    paddingHorizontal: 12, height: 48, marginBottom: 10,
+  },
+  inputField: { flex: 1, fontSize: 14, color: TEXT_DARK },
+  textarea: {
+    backgroundColor: BG, borderRadius: 12,
+    borderWidth: 1, borderColor: BORDER,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: TEXT_DARK,
+    minHeight: 90, textAlignVertical: 'top', marginBottom: 14,
+  },
+
+  sendBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: WHATSAPP, borderRadius: 28, height: 50,
+    shadowColor: WHATSAPP, shadowOpacity: 0.3, shadowRadius: 8, elevation: 3,
+  },
+  sendText: { color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
+  footNote: { color: TEXT_LIGHT, fontSize: 11, textAlign: 'center', marginTop: 10, lineHeight: 16 },
+
+  // Flash
+  flash: {
+    position: 'absolute', bottom: 30, alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: PURPLE_DARK, borderRadius: 30, borderWidth: 1, borderColor: GOLD + '60',
+    paddingHorizontal: 20, paddingVertical: 12,
+    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 10,
+  },
+  flashText: { color: GOLD, fontSize: 13, fontWeight: '800', letterSpacing: 1 },
+
+  // Modal
+  modal:       { flex: 1, backgroundColor: BG },
+  modalHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14, backgroundColor: BG_CARD,
+    borderBottomWidth: 1, borderBottomColor: BORDER,
+  },
+  modalClose: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: BG, alignItems: 'center', justifyContent: 'center',
+  },
+  modalTitle:    { color: TEXT_DARK, fontSize: 16, fontWeight: '800' },
+  modalTitleSub: { color: TEXT_LIGHT, fontSize: 11, marginTop: 2 },
+  modalBody:     { padding: 20, paddingBottom: 40 },
+
+  modalIntroCard: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    backgroundColor: BG_CARD, borderRadius: 14, borderWidth: 1, borderColor: BORDER,
+    padding: 14, marginBottom: 20,
+  },
+  modalIntro: { flex: 1, color: TEXT_MID, fontSize: 13, lineHeight: 19 },
+
+  modalLabel: {
+    color: TEXT_LIGHT, fontSize: 10, fontWeight: '800', letterSpacing: 2,
+    marginBottom: 8, marginTop: 14,
+  },
+  modalInput: {
+    backgroundColor: BG_CARD, borderRadius: 12, borderWidth: 1, borderColor: BORDER,
+    paddingHorizontal: 14, height: 48, fontSize: 14, color: TEXT_DARK,
+  },
+
+  slotRow:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  slot: {
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: BG_CARD,
+  },
+  slotActive:     { backgroundColor: PURPLE_DARK, borderColor: PURPLE_DARK },
+  slotText:       { color: TEXT_MID, fontSize: 12, fontWeight: '600' },
+  slotTextActive: { color: GOLD },
+
+  confirmBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: WHATSAPP, borderRadius: 28, height: 54, marginTop: 24,
+    shadowColor: WHATSAPP, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
+  },
+  confirmText: { color: '#fff', fontSize: 14, fontWeight: '900', letterSpacing: 1 },
+  modalFine:   { color: TEXT_LIGHT, fontSize: 11, textAlign: 'center', marginTop: 14, lineHeight: 16 },
+});
