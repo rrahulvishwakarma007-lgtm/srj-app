@@ -491,5 +491,10 @@ const styles = StyleSheet.create({
   imgMainWrap:       { borderRadius: 14, overflow: 'hidden', position: 'relative' },
   imgMain:           { width: '100%', height: 210 },
   imgOverlay: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-  
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  backgroundColor: 'rgba(45,27,94,0.65)',
+  padding: 12,
+},
