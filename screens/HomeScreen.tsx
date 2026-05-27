@@ -46,7 +46,7 @@ const BANNERS = [
   },
   {
     id: '3',
-    image: gd('15ABFjbt7LgqeD0zjbNv9tQyuTIHL3z-b'),
+    image: require('../assets/images/hero3.png'),
     title: 'Gold\nCollections',
     sub:   'Crafted for Every Occasion',
     btn:   'Shop Now',
@@ -412,7 +412,7 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
               renderItem={({ item }) => (
                 <View style={styles.bannerSlide}>
                   <Image
-                    source={{ uri: item.image }}
+                    source={typeof item.image === "string" ? { uri: item.image } : item.image}
                     style={styles.bannerImage}
                     resizeMode="cover"
                   />
