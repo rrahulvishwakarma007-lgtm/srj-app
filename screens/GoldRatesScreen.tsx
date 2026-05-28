@@ -254,7 +254,7 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
           </View>
         </View>
         <View style={styles.rateCardRight}>
-          <Text style={styles.ratePerGram}>per gram</Text>
+          <Text style={styles.ratePerGram}>per 10 grams</Text>
           <FluctuatingPrice basePrice={basePrice} offset={offset} color={color} />
           <View style={styles.changeRow}>
             <Ionicons
@@ -393,7 +393,7 @@ export default function GoldRatesScreen() {
   const saveRates = async () => {
     const parsed = parseInt(inputRate.replace(/,/g, ''));
     if (!parsed || parsed < 1000 || parsed > 20000) {
-      Alert.alert('Invalid Rate', 'Please enter a valid 24K rate (₹1,000 – ₹20,000 per gram).');
+      Alert.alert('Invalid Rate', 'Please enter a valid 24K rate per gram (₹1,000 – ₹20,000). Display will show per 10g automatically.');
       return;
     }
     setSaving(true);
@@ -420,7 +420,7 @@ export default function GoldRatesScreen() {
   // ── Base prices + offsets (kept separate so FluctuatingPrice can animate) ─
   const rates = KARATS.map(k => ({
     ...k,
-    basePrice: rate24k > 0 ? Math.round(rate24k * k.mul) : 0,
+    basePrice: rate24k > 0 ? Math.round(rate24k * k.mul * 10) : 0,  // per 10g
     offset:    fluctuation[k.k] || 0,
   }));
 
@@ -444,7 +444,7 @@ export default function GoldRatesScreen() {
           </View>
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.headerTitle}>Gold Rates</Text>
-            <Text style={styles.headerSub}>SHEKHAR RAJA JEWELLERS</Text>
+            <Text style={styles.headerSub}>SHEKHAR RAJA JEWELLERS · PER 10g</Text>
           </View>
         </TouchableOpacity>
         <View style={styles.liveDot}>
@@ -462,10 +462,10 @@ export default function GoldRatesScreen() {
           <View style={styles.tickerViewport}>
             <Animated.View style={[styles.tickerTrack, { transform: [{ translateX: tickerX }] }]}>
               {[...rates, ...rates, ...rates].map((r, i) => (
-                <TickerItem key={i} label={r.k + ' GOLD'} value={`₹${(r.basePrice + r.offset).toLocaleString('en-IN')}/g`} />
+                <TickerItem key={i} label={r.k + ' GOLD'} value={`₹${(r.basePrice + r.offset).toLocaleString('en-IN')}/10g`} />
               ))}
               {silverRate > 0 && [...Array(3)].map((_, i) => (
-                <TickerItem key={`s${i}`} label="SILVER" value={`₹${silverRate.toLocaleString('en-IN')}/g`} />
+                <TickerItem key={`s${i}`} label="SILVER" value={`₹${(silverRate*10).toLocaleString('en-IN')}/10g`} />
               ))}
             </Animated.View>
           </View>
@@ -511,8 +511,8 @@ export default function GoldRatesScreen() {
                   </View>
                 </View>
                 <View style={styles.rateCardRight}>
-                  <Text style={styles.ratePerGram}>per gram</Text>
-                  <Text style={[styles.ratePrice, { color: '#7070b0' }]}>₹{silverRate.toLocaleString('en-IN')}</Text>
+                  <Text style={styles.ratePerGram}>per 10 grams</Text>
+                  <Text style={[styles.ratePrice, { color: '#7070b0' }]}>₹{(silverRate * 10).toLocaleString('en-IN')}</Text>
                   <Text style={styles.rateTax}>incl. taxes</Text>
                 </View>
               </View>
@@ -575,11 +575,11 @@ export default function GoldRatesScreen() {
                 <View style={styles.goldTopBar} />
                 <ScrollView style={{ flex:1 }} contentContainerStyle={styles.adminBody} keyboardShouldPersistTaps="handled">
 
-                  <Text style={styles.fieldLabel}>24K GOLD RATE (₹ per gram) *</Text>
+                  <Text style={styles.fieldLabel}>24K GOLD RATE (₹ per gram) — displays as ×10 *</Text>
                   <View style={styles.fieldRow}>
                     <Text style={styles.rupee}>₹</Text>
                     <TextInput style={styles.fieldInput} placeholder="e.g. 7500" placeholderTextColor={TEXT_LIGHT} keyboardType="numeric" value={inputRate} onChangeText={setInputRate} autoFocus />
-                    <Text style={styles.perGramLabel}>/gram</Text>
+                    <Text style={styles.perGramLabel}>/gram → shows ×10</Text>
                   </View>
 
                   {parseInt(inputRate) > 0 && (
@@ -587,7 +587,7 @@ export default function GoldRatesScreen() {
                       <Text style={styles.previewTitle}>Preview — Auto-calculated</Text>
                       <View style={styles.previewGrid}>
                         {KARATS.map(k => {
-                          const p = Math.round(parseInt(inputRate.replace(/,/g,'')) * k.mul);
+                          const p = Math.round(parseInt(inputRate.replace(/,/g,'')) * k.mul * 10);
                           return (
                             <View key={k.k} style={styles.previewItem}>
                               <Text style={[styles.previewK, { color: k.color }]}>{k.k}</Text>
