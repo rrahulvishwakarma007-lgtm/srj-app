@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Animated, Alert, Platform,
   KeyboardAvoidingView, Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -32,10 +33,10 @@ const GREEN       = '#16a34a';
 const RED         = '#dc2626';
 
 const KARATS = [
-  { k: '24K', purity: '999.9', mul: 1,     featured: false, color: '#b8892a' },
-  { k: '22K', purity: '916',   mul: 22/24, featured: true,  color: GOLD      },
-  { k: '20K', purity: '833',   mul: 20/24, featured: false, color: '#a07820' },
-  { k: '18K', purity: '750',   mul: 18/24, featured: false, color: '#8a6818' },
+  { k: '24K', purity: '999.9', mul: 1,      featured: false, color: '#b8892a' },
+  { k: '22K', purity: '916',   mul: 22/24,  featured: true,  color: GOLD      },
+  { k: '20K', purity: '833',   mul: 20/24,  featured: false, color: '#a07820' },
+  { k: '18K', purity: '750',   mul: 18/24,  featured: false, color: '#8a6818' },
 ];
 
 // ── Ticker item ───────────────────────────────────────────────────────────────
@@ -70,8 +71,8 @@ function PinDots({ length, filled }: { length: number; filled: number }) {
 function PinPad({ onSuccess, onClose, shake }: {
   onSuccess: () => void; onClose: () => void; shake: Animated.Value;
 }) {
-  const [pin, setPin]           = useState('');
-  const [error, setError]       = useState(false);
+  const [pin,      setPin]      = useState('');
+  const [error,    setError]    = useState(false);
   const [attempts, setAttempts] = useState(0);
 
   const press = (digit: string) => {
@@ -88,11 +89,11 @@ function PinPad({ onSuccess, onClose, shake }: {
           setError(true);
           setPin('');
           Animated.sequence([
-            Animated.timing(shake, { toValue: 10,  duration: 60, useNativeDriver: true }),
+            Animated.timing(shake, { toValue:  10, duration: 60, useNativeDriver: true }),
             Animated.timing(shake, { toValue: -10, duration: 60, useNativeDriver: true }),
-            Animated.timing(shake, { toValue: 8,   duration: 50, useNativeDriver: true }),
-            Animated.timing(shake, { toValue: -8,  duration: 50, useNativeDriver: true }),
-            Animated.timing(shake, { toValue: 0,   duration: 40, useNativeDriver: true }),
+            Animated.timing(shake, { toValue:   8, duration: 50, useNativeDriver: true }),
+            Animated.timing(shake, { toValue:  -8, duration: 50, useNativeDriver: true }),
+            Animated.timing(shake, { toValue:   0, duration: 40, useNativeDriver: true }),
           ]).start();
         }
       }, 120);
@@ -111,7 +112,11 @@ function PinPad({ onSuccess, onClose, shake }: {
       <Text style={pinStyles.subtitle}>Enter your 4-digit PIN to continue</Text>
       <Animated.View style={{ transform: [{ translateX: shake }] }}>
         <PinDots length={4} filled={pin.length} />
-        {error && <Text style={pinStyles.errorText}>Incorrect PIN{attempts > 1 ? ` (${attempts} attempts)` : ''}</Text>}
+        {error && (
+          <Text style={pinStyles.errorText}>
+            Incorrect PIN{attempts > 1 ? ` (${attempts} attempts)` : ''}
+          </Text>
+        )}
       </Animated.View>
       <View style={pinStyles.padWrap}>
         {KEYS.map((row, ri) => (
@@ -120,8 +125,16 @@ function PinPad({ onSuccess, onClose, shake }: {
               if (key === '') return <View key={ki} style={pinStyles.keyEmpty} />;
               const isBack = key === '⌫';
               return (
-                <TouchableOpacity key={ki} style={[pinStyles.key, isBack && pinStyles.keyBack]} onPress={() => isBack ? del() : press(key)} activeOpacity={0.65}>
-                  {isBack ? <Ionicons name="backspace-outline" size={22} color={TEXT_MID} /> : <Text style={pinStyles.keyText}>{key}</Text>}
+                <TouchableOpacity
+                  key={ki}
+                  style={[pinStyles.key, isBack && pinStyles.keyBack]}
+                  onPress={() => isBack ? del() : press(key)}
+                  activeOpacity={0.65}
+                >
+                  {isBack
+                    ? <Ionicons name="backspace-outline" size={22} color={TEXT_MID} />
+                    : <Text style={pinStyles.keyText}>{key}</Text>
+                  }
                 </TouchableOpacity>
               );
             })}
@@ -156,13 +169,11 @@ const pinStyles = StyleSheet.create({
 });
 
 // ── Animated last-2-digit price ───────────────────────────────────────────────
-// Splits price into "stable part" + "last 2 digits" that animate on every change
 function FluctuatingPrice({ basePrice, offset, color }: {
   basePrice: number; offset: number; color: string;
 }) {
   const displayPrice = basePrice + offset;
   const priceStr     = displayPrice.toLocaleString('en-IN');
-  // Last 2 chars always fluctuate; rest is stable
   const last2 = priceStr.slice(-2);
   const rest  = priceStr.slice(0, -2);
 
@@ -173,24 +184,17 @@ function FluctuatingPrice({ basePrice, offset, color }: {
   useEffect(() => {
     if (prevLast2.current === last2) return;
     prevLast2.current = last2;
-    // Slide digits up if going up, down if going down
     slideAnim.setValue(offset >= 0 ? 8 : -8);
     fadeAnim.setValue(0.2);
     Animated.parallel([
-      Animated.spring(slideAnim, {
-        toValue: 0, useNativeDriver: true, speed: 40, bounciness: 0,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1, duration: 160, useNativeDriver: true,
-      }),
+      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, speed: 40, bounciness: 0 }),
+      Animated.timing(fadeAnim,  { toValue: 1, duration: 160, useNativeDriver: true }),
     ]).start();
   }, [last2]);
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-      {/* Stable prefix */}
       <Text style={[styles.ratePrice, { color }]}>₹{rest}</Text>
-      {/* Animated last 2 digits */}
       <Animated.Text style={[
         styles.ratePrice,
         { color, opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
@@ -201,7 +205,7 @@ function FluctuatingPrice({ basePrice, offset, color }: {
   );
 }
 
-// ── Rate Card with live fluctuation ──────────────────────────────────────────
+// ── Rate Card ─────────────────────────────────────────────────────────────────
 function RateCard({ k, purity, basePrice, featured, color, offset }: {
   k: string; purity: string; basePrice: number;
   featured: boolean; color: string; offset: number;
@@ -213,10 +217,12 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
   useEffect(() => {
     if (prevOff.current === offset) return;
     prevOff.current = offset;
+    // scale — useNativeDriver: true
     Animated.sequence([
       Animated.timing(scale, { toValue: 1.018, duration: 100, useNativeDriver: true }),
       Animated.spring(scale, { toValue: 1, friction: 6,        useNativeDriver: true }),
     ]).start();
+    // flash — useNativeDriver: false (separate view, no crash)
     Animated.sequence([
       Animated.timing(flashClr, { toValue: 1, duration: 120, useNativeDriver: false }),
       Animated.timing(flashClr, { toValue: 0, duration: 600, useNativeDriver: false }),
@@ -231,8 +237,9 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
   const isUp = offset >= 0;
 
   return (
+    // OUTER: backgroundColor only — useNativeDriver: false
     <Animated.View style={{ backgroundColor: flashBg as any, borderRadius: 16 }}>
-      {/* OUTER: backgroundColor — useNativeDriver: false */}
+      {/* INNER: scale only — useNativeDriver: true ✅ no crash */}
       <Animated.View style={[
         styles.rateCard,
         featured && styles.rateCardFeatured,
@@ -257,11 +264,7 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
           <Text style={styles.ratePerGram}>per 10 grams</Text>
           <FluctuatingPrice basePrice={basePrice} offset={offset} color={color} />
           <View style={styles.changeRow}>
-            <Ionicons
-              name={isUp ? 'caret-up' : 'caret-down'}
-              size={10}
-              color={isUp ? GREEN : RED}
-            />
+            <Ionicons name={isUp ? 'caret-up' : 'caret-down'} size={10} color={isUp ? GREEN : RED} />
             <Text style={[styles.changeText, { color: isUp ? GREEN : RED }]}>
               {isUp ? '+' : ''}{offset}
             </Text>
@@ -271,7 +274,6 @@ function RateCard({ k, purity, basePrice, featured, color, offset }: {
     </Animated.View>
   );
 }
-      
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function GoldRatesScreen() {
@@ -288,11 +290,21 @@ export default function GoldRatesScreen() {
   const [tapCount,    setTapCount]    = useState(0);
   const [saving,      setSaving]      = useState(false);
   const [savedFlash,  setSavedFlash]  = useState(false);
-
-  // ── FLUCTUATION: ±1 or ±2 per karat, updated every 3 seconds ─────────────
   const [fluctuation, setFluctuation] = useState<Record<string, number>>({
     '24K': 0, '22K': 0, '20K': 0, '18K': 0,
   });
+
+  // ── KEY FIX: track whether this screen is focused ─────────────────────────
+  const [isActive, setIsActive] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsActive(true);          // screen in view — start loops
+      return () => {
+        setIsActive(false);       // screen hidden — STOP all loops
+      };
+    }, [])
+  );
 
   const tapTimer  = useRef<any>(null);
   const tickerX   = useRef(new Animated.Value(0)).current;
@@ -300,7 +312,7 @@ export default function GoldRatesScreen() {
   const flashAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  // ── Load rates: website first, AsyncStorage fallback ─────────────────────
+  // ── Load rates from website → AsyncStorage fallback ──────────────────────
   useEffect(() => {
     const loadRates = async () => {
       try {
@@ -319,9 +331,9 @@ export default function GoldRatesScreen() {
         }
       } catch (_) {}
       try {
-        const s24k   = await AsyncStorage.getItem(STORAGE_KEY);
-        const sDate  = await AsyncStorage.getItem(DATE_KEY);
-        const sSilv  = await AsyncStorage.getItem(SILVER_KEY);
+        const s24k  = await AsyncStorage.getItem(STORAGE_KEY);
+        const sDate = await AsyncStorage.getItem(DATE_KEY);
+        const sSilv = await AsyncStorage.getItem(SILVER_KEY);
         if (s24k)  setRate24k(parseInt(s24k));
         if (sDate) setUpdatedDate(sDate);
         if (sSilv) setSilverRate(parseInt(sSilv));
@@ -332,11 +344,9 @@ export default function GoldRatesScreen() {
     return () => clearInterval(refresh);
   }, []);
 
-  // ── LAST-2-DIGIT FLUCTUATION ENGINE ──────────────────────────────────────
-  // Runs every 700ms. Each karat independently random-walks ±5–25 per tick.
-  // Clamped to ±99 so the last two displayed digits ALWAYS change every tick.
+  // ── FLUCTUATION — only runs when screen is active ─────────────────────────
   useEffect(() => {
-    if (rate24k === 0) return;
+    if (rate24k === 0 || !isActive) return;
     const drifts: Record<string, number> = { '24K': 0, '22K': 0, '20K': 0, '18K': 0 };
     const interval = setInterval(() => {
       const next: Record<string, number> = {};
@@ -348,11 +358,13 @@ export default function GoldRatesScreen() {
       setFluctuation({ ...next });
     }, 700);
     return () => clearInterval(interval);
-  }, [rate24k]);
+  }, [rate24k, isActive]);
 
-  // ── Ticker scroll (JS-driven, works on Android APK) ──────────────────────
+  // ── TICKER RAF — only runs when screen is active ──────────────────────────
   useEffect(() => {
-    let pos = 0; let raf: any;
+    if (rate24k === 0 || !isActive) return;
+    let pos = 0;
+    let raf: any;
     const step = () => {
       pos += 0.6;
       if (pos > W * 4) pos = 0;
@@ -361,9 +373,9 @@ export default function GoldRatesScreen() {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [rate24k]);
+  }, [rate24k, isActive]);
 
-  // ── Secret tap unlock ─────────────────────────────────────────────────────
+  // ── Admin helpers ─────────────────────────────────────────────────────────
   const handleLogoTap = () => {
     const next = tapCount + 1;
     setTapCount(next);
@@ -384,7 +396,8 @@ export default function GoldRatesScreen() {
 
   const closeAdmin = () => {
     Animated.timing(adminAnim, { toValue: 0, duration: 250, useNativeDriver: true }).start(() => {
-      setAdminOpen(false); setAdminStep('pin');
+      setAdminOpen(false);
+      setAdminStep('pin');
     });
   };
 
@@ -393,7 +406,7 @@ export default function GoldRatesScreen() {
   const saveRates = async () => {
     const parsed = parseInt(inputRate.replace(/,/g, ''));
     if (!parsed || parsed < 1000 || parsed > 20000) {
-      Alert.alert('Invalid Rate', 'Please enter a valid 24K rate per gram (₹1,000 – ₹20,000). Display will show per 10g automatically.');
+      Alert.alert('Invalid Rate', 'Please enter a valid 24K rate per gram (₹1,000 – ₹20,000).');
       return;
     }
     setSaving(true);
@@ -417,10 +430,9 @@ export default function GoldRatesScreen() {
     } finally { setSaving(false); }
   };
 
-  // ── Base prices + offsets (kept separate so FluctuatingPrice can animate) ─
   const rates = KARATS.map(k => ({
     ...k,
-    basePrice: rate24k > 0 ? Math.round(rate24k * k.mul * 10) : 0,  // per 10g
+    basePrice: rate24k > 0 ? Math.round(rate24k * k.mul * 10) : 0,
     offset:    fluctuation[k.k] || 0,
   }));
 
@@ -465,14 +477,19 @@ export default function GoldRatesScreen() {
                 <TickerItem key={i} label={r.k + ' GOLD'} value={`₹${(r.basePrice + r.offset).toLocaleString('en-IN')}/10g`} />
               ))}
               {silverRate > 0 && [...Array(3)].map((_, i) => (
-                <TickerItem key={`s${i}`} label="SILVER" value={`₹${(silverRate*10).toLocaleString('en-IN')}/10g`} />
+                <TickerItem key={`s${i}`} label="SILVER" value={`₹${(silverRate * 10).toLocaleString('en-IN')}/10g`} />
               ))}
             </Animated.View>
           </View>
         </View>
       )}
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+      >
 
         {/* DATE ROW */}
         <View style={styles.dateRow}>
@@ -497,7 +514,15 @@ export default function GoldRatesScreen() {
         {rate24k > 0 ? (
           <View style={styles.cardsWrap}>
             {rates.map(r => (
-              <RateCard key={r.k} k={r.k} purity={r.purity} basePrice={r.basePrice} featured={r.featured} color={r.color} offset={r.offset} />
+              <RateCard
+                key={r.k}
+                k={r.k}
+                purity={r.purity}
+                basePrice={r.basePrice}
+                featured={r.featured}
+                color={r.color}
+                offset={r.offset}
+              />
             ))}
             {silverRate > 0 && (
               <View style={[styles.rateCard, { borderColor: 'rgba(150,150,180,0.3)' }]}>
@@ -512,8 +537,9 @@ export default function GoldRatesScreen() {
                 </View>
                 <View style={styles.rateCardRight}>
                   <Text style={styles.ratePerGram}>per 10 grams</Text>
-                  <Text style={[styles.ratePrice, { color: '#7070b0' }]}>₹{(silverRate * 10).toLocaleString('en-IN')}</Text>
-                  <Text style={styles.rateTax}>incl. taxes</Text>
+                  <Text style={[styles.ratePrice, { color: '#7070b0' }]}>
+                    ₹{(silverRate * 10).toLocaleString('en-IN')}
+                  </Text>
                 </View>
               </View>
             )}
@@ -523,68 +549,79 @@ export default function GoldRatesScreen() {
             <View style={styles.emptyIcon}>
               <Ionicons name="trending-up" size={36} color={GOLD} />
             </View>
-            <Text style={styles.emptyTitle}>Loading Rates...</Text>
-            <Text style={styles.emptyText}>Fetching live gold rates. Please check your internet connection.</Text>
+            <Text style={styles.emptyTitle}>Loading Rates…</Text>
+            <Text style={styles.emptyText}>
+              Fetching live gold rates. Please check your internet connection.
+            </Text>
           </View>
         )}
 
         {/* PURITY INFO */}
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>◆ About Gold Purity</Text>
-          {[
-            { k:'24K', desc:'99.9% pure — investment grade gold' },
-            { k:'22K', desc:'91.6% pure — BIS 916 hallmark jewellery' },
-            { k:'20K', desc:'83.3% pure — traditional ornaments' },
-            { k:'18K', desc:'75.0% pure — diamond-set jewellery' },
-          ].map(item => (
-            <View key={item.k} style={styles.infoRow}>
-              <Text style={styles.infoK}>{item.k}</Text>
-              <Text style={styles.infoDesc}>{item.desc}</Text>
-            </View>
-          ))}
+          <View style={styles.infoRow}><Text style={styles.infoK}>24K</Text><Text style={styles.infoDesc}>99.9% pure — investment grade gold</Text></View>
+          <View style={styles.infoRow}><Text style={styles.infoK}>22K</Text><Text style={styles.infoDesc}>91.6% pure — BIS 916 hallmark jewellery</Text></View>
+          <View style={styles.infoRow}><Text style={styles.infoK}>20K</Text><Text style={styles.infoDesc}>83.3% pure — traditional ornaments</Text></View>
+          <View style={styles.infoRow}><Text style={styles.infoK}>18K</Text><Text style={styles.infoDesc}>75.0% pure — diamond-set jewellery</Text></View>
         </View>
 
         <Text style={styles.disclaimer}>
-          ⚠️ Rates shown include minor live fluctuations for display. Final price may vary based on making charges, wastage and GST.
+          ⚠️ Rates shown per 10 grams include minor live fluctuations for display. Final price may vary based on making charges, wastage and GST.
         </Text>
 
-        <TouchableOpacity onPress={handleLogoTap} style={styles.adminHint} activeOpacity={1} />
+        {/* Hidden admin trigger */}
+        <TouchableOpacity onPress={handleLogoTap} style={{ paddingVertical: 12 }} activeOpacity={1} />
 
       </ScrollView>
 
-      {/* ADMIN PANEL */}
+      {/* ── ADMIN MODAL ── */}
       {adminOpen && (
-        <KeyboardAvoidingView style={StyleSheet.absoluteFill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView
+          style={StyleSheet.absoluteFill}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <TouchableOpacity style={styles.adminBackdrop} onPress={closeAdmin} activeOpacity={1} />
-          <Animated.View style={[styles.adminSheet, { transform: [{ translateY: adminAnim.interpolate({ inputRange:[0,1], outputRange:[600,0] }) }] }]}>
+          <Animated.View style={[styles.adminSheet, {
+            transform: [{ translateY: adminAnim.interpolate({ inputRange:[0,1], outputRange:[600,0] }) }],
+          }]}>
             <View style={styles.sheetHandle} />
 
-            {adminStep === 'pin' && <PinPad onSuccess={onPinSuccess} onClose={closeAdmin} shake={shakeAnim} />}
+            {adminStep === 'pin' && (
+              <PinPad onSuccess={onPinSuccess} onClose={closeAdmin} shake={shakeAnim} />
+            )}
 
             {adminStep === 'form' && (
               <>
                 <View style={styles.adminHeader}>
                   <View>
                     <Text style={styles.adminTitle}>◆ Update Gold Rates</Text>
-                    <Text style={styles.adminSub}>Saves locally + fetched from nxtgenailabs.work</Text>
+                    <Text style={styles.adminSub}>Enter rate per gram · displayed as per 10g</Text>
                   </View>
                   <TouchableOpacity onPress={closeAdmin} style={styles.adminClose}>
                     <Ionicons name="close" size={20} color={TEXT_DARK} />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.goldTopBar} />
-                <ScrollView style={{ flex:1 }} contentContainerStyle={styles.adminBody} keyboardShouldPersistTaps="handled">
 
-                  <Text style={styles.fieldLabel}>24K GOLD RATE (₹ per gram) — displays as ×10 *</Text>
+                <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.adminBody} keyboardShouldPersistTaps="handled">
+                  <Text style={styles.fieldLabel}>24K GOLD RATE (₹ per gram) *</Text>
                   <View style={styles.fieldRow}>
                     <Text style={styles.rupee}>₹</Text>
-                    <TextInput style={styles.fieldInput} placeholder="e.g. 7500" placeholderTextColor={TEXT_LIGHT} keyboardType="numeric" value={inputRate} onChangeText={setInputRate} autoFocus />
-                    <Text style={styles.perGramLabel}>/gram → shows ×10</Text>
+                    <TextInput
+                      style={styles.fieldInput}
+                      placeholder="e.g. 7850"
+                      placeholderTextColor={TEXT_LIGHT}
+                      keyboardType="numeric"
+                      value={inputRate}
+                      onChangeText={setInputRate}
+                      autoFocus
+                    />
+                    <Text style={styles.perGramLabel}>/gram</Text>
                   </View>
 
                   {parseInt(inputRate) > 0 && (
                     <View style={styles.previewBox}>
-                      <Text style={styles.previewTitle}>Preview — Auto-calculated</Text>
+                      <Text style={styles.previewTitle}>Preview — Per 10g</Text>
                       <View style={styles.previewGrid}>
                         {KARATS.map(k => {
                           const p = Math.round(parseInt(inputRate.replace(/,/g,'')) * k.mul * 10);
@@ -602,23 +639,43 @@ export default function GoldRatesScreen() {
                   <Text style={[styles.fieldLabel, { marginTop: 16 }]}>SILVER RATE (₹ per gram) — Optional</Text>
                   <View style={styles.fieldRow}>
                     <Text style={styles.rupee}>₹</Text>
-                    <TextInput style={styles.fieldInput} placeholder="e.g. 95" placeholderTextColor={TEXT_LIGHT} keyboardType="numeric" value={inputSilver} onChangeText={setInputSilver} />
+                    <TextInput
+                      style={styles.fieldInput}
+                      placeholder="e.g. 95"
+                      placeholderTextColor={TEXT_LIGHT}
+                      keyboardType="numeric"
+                      value={inputSilver}
+                      onChangeText={setInputSilver}
+                    />
                     <Text style={styles.perGramLabel}>/gram</Text>
                   </View>
 
                   <Text style={[styles.fieldLabel, { marginTop: 16 }]}>RATE DATE</Text>
                   <View style={styles.fieldRow}>
                     <Ionicons name="calendar-outline" size={16} color={TEXT_LIGHT} style={{ marginRight: 8 }} />
-                    <TextInput style={[styles.fieldInput, { flex:1 }]} placeholder="DD/MM/YYYY" placeholderTextColor={TEXT_LIGHT} value={inputDate} onChangeText={setInputDate} />
+                    <TextInput
+                      style={[styles.fieldInput, { flex: 1 }]}
+                      placeholder="DD/MM/YYYY"
+                      placeholderTextColor={TEXT_LIGHT}
+                      value={inputDate}
+                      onChangeText={setInputDate}
+                    />
                   </View>
 
-                  <TouchableOpacity style={[styles.saveBtn, saving && { opacity:0.6 }]} onPress={saveRates} disabled={saving} activeOpacity={0.85}>
+                  <TouchableOpacity
+                    style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                    onPress={saveRates}
+                    disabled={saving}
+                    activeOpacity={0.85}
+                  >
                     <Ionicons name="checkmark-circle" size={20} color={PURPLE_DARK} />
-                    <Text style={styles.saveBtnText}>{saving ? 'SAVING...' : 'SAVE & PUBLISH RATES'}</Text>
+                    <Text style={styles.saveBtnText}>
+                      {saving ? 'SAVING…' : 'SAVE & PUBLISH RATES'}
+                    </Text>
                   </TouchableOpacity>
 
                   <Text style={styles.adminNote}>
-                    🌐 Live rates fetched from nxtgenailabs.work/gold-rates.json — edit on GitHub to update all users instantly without rebuilding the APK.
+                    🌐 Live rates fetched from nxtgenailabs.work/gold-rates.json — edit on GitHub to update all users instantly.
                   </Text>
                 </ScrollView>
               </>
@@ -627,7 +684,7 @@ export default function GoldRatesScreen() {
         </KeyboardAvoidingView>
       )}
 
-      {/* SUCCESS FLASH */}
+      {/* ── SUCCESS FLASH ── */}
       {savedFlash && (
         <Animated.View style={[styles.flash, { opacity: flashAnim }]}>
           <Ionicons name="checkmark-circle" size={18} color={GOLD} />
@@ -638,93 +695,97 @@ export default function GoldRatesScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex:1, backgroundColor:BG },
+  root:   { flex: 1, backgroundColor: BG },
+  scroll: { flex: 1 },
 
-  header:         { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:18, paddingVertical:12, backgroundColor:PURPLE_DARK, borderBottomWidth:1, borderBottomColor:PURPLE_MID },
-  headerLeft:     { flexDirection:'row', alignItems:'center' },
-  headerIconWrap: { position:'relative', width:36, height:36, borderRadius:18, backgroundColor:'rgba(201,168,76,0.15)', alignItems:'center', justifyContent:'center' },
-  headerTitle:    { fontSize:17, fontWeight:'800', color:'#fff', letterSpacing:0.3 },
-  headerSub:      { fontSize:9, color:GOLD, letterSpacing:2, fontWeight:'700', marginTop:1 },
-  tapHint:        { position:'absolute', top:-4, right:-4, backgroundColor:RED, borderRadius:8, width:16, height:16, alignItems:'center', justifyContent:'center' },
-  tapHintText:    { color:'#fff', fontSize:9, fontWeight:'800' },
-  liveDot:        { flexDirection:'row', alignItems:'center', gap:5, backgroundColor:'rgba(22,163,74,0.12)', borderRadius:99, paddingHorizontal:10, paddingVertical:4 },
-  livePulse:      { width:7, height:7, borderRadius:4, backgroundColor:GREEN },
-  liveText:       { color:GREEN, fontSize:10, fontWeight:'800', letterSpacing:1.5 },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 18, paddingVertical: 12,
+    backgroundColor: PURPLE_DARK,
+    borderBottomWidth: 1, borderBottomColor: PURPLE_MID,
+  },
+  headerLeft:     { flexDirection: 'row', alignItems: 'center' },
+  headerIconWrap: { position: 'relative' },
+  headerTitle:    { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
+  headerSub:      { fontSize: 9, color: GOLD, letterSpacing: 2, fontWeight: '700', marginTop: 1 },
+  tapHint: {
+    position: 'absolute', top: -6, right: -6,
+    backgroundColor: RED, borderRadius: 8,
+    width: 16, height: 16, alignItems: 'center', justifyContent: 'center',
+  },
+  tapHintText: { color: '#fff', fontSize: 9, fontWeight: '800' },
+  liveDot:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  livePulse:   { width: 7, height: 7, borderRadius: 4, backgroundColor: GREEN },
+  liveText:    { color: GREEN, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
 
-  tickerWrap:      { flexDirection:'row', alignItems:'center', backgroundColor:'#1A0A00', height:36, overflow:'hidden' },
-  tickerBadge:     { backgroundColor:GOLD, paddingHorizontal:10, height:'100%', alignItems:'center', justifyContent:'center' },
-  tickerBadgeText: { color:'#1A0A00', fontSize:9, fontWeight:'900', letterSpacing:1.5 },
-  tickerViewport:  { flex:1, overflow:'hidden' },
-  tickerTrack:     { flexDirection:'row', alignItems:'center', height:36 },
+  tickerWrap:      { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1A0A00', height: 36, overflow: 'hidden' },
+  tickerBadge:     { backgroundColor: GOLD, paddingHorizontal: 10, height: '100%', alignItems: 'center', justifyContent: 'center' },
+  tickerBadgeText: { color: '#1A0A00', fontSize: 9, fontWeight: '900', letterSpacing: 1.5 },
+  tickerViewport:  { flex: 1, overflow: 'hidden' },
+  tickerTrack:     { flexDirection: 'row', alignItems: 'center', height: 36 },
 
-  scroll: { flex:1 },
+  dateRow:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 },
+  dateLeft:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  dateText:     { fontSize: 12, color: TEXT_MID, fontWeight: '500' },
+  updatedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  updatedText:  { fontSize: 11, color: GREEN, fontWeight: '600' },
 
-  dateRow:      { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:16, paddingVertical:10 },
-  dateLeft:     { flexDirection:'row', alignItems:'center', gap:5 },
-  dateText:     { fontSize:12, color:TEXT_MID, fontWeight:'500' },
-  updatedBadge: { flexDirection:'row', alignItems:'center', gap:4, backgroundColor:'#f0fdf4', borderWidth:1, borderColor:'#bbf7d0', borderRadius:20, paddingHorizontal:8, paddingVertical:3 },
-  updatedText:  { fontSize:11, color:GREEN, fontWeight:'600' },
+  cardsWrap:        { paddingHorizontal: 14, gap: 10, marginTop: 4 },
+  rateCard:         { backgroundColor: BG_CARD, borderRadius: 16, borderWidth: 1, borderColor: BORDER, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  rateCardFeatured: { borderColor: GOLD + '80', backgroundColor: '#FFFDF5', shadowColor: GOLD, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 },
+  popularTag:       { position: 'absolute', top: -1, right: 12, backgroundColor: GOLD, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
+  popularText:      { color: '#fff', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
+  rateCardLeft:     { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rateCardRight:    { alignItems: 'flex-end' },
+  karatBadge:       { width: 44, height: 44, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+  karatNum:         { fontSize: 18, fontWeight: '900' },
+  karatK:           { fontSize: 10, fontWeight: '700', marginTop: 4 },
+  rateCardTitle:    { fontSize: 15, fontWeight: '700', color: TEXT_DARK },
+  rateCardPurity:   { fontSize: 11, color: TEXT_LIGHT, marginTop: 1 },
+  ratePerGram:      { fontSize: 10, color: TEXT_LIGHT },
+  ratePrice:        { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+  changeRow:        { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
+  changeText:       { fontSize: 11, fontWeight: '800' },
 
-  cardsWrap:        { paddingHorizontal:14, gap:10, marginTop:4 },
-  rateCard:         { borderRadius:16, borderWidth:1, borderColor:BORDER, padding:14, flexDirection:'row', alignItems:'center', justifyContent:'space-between', backgroundColor:BG_CARD },
-  rateCardFeatured: { borderColor:GOLD+'80', backgroundColor:'#FFFDF5', shadowColor:GOLD, shadowOffset:{width:0,height:2}, shadowOpacity:0.15, shadowRadius:8, elevation:3 },
-  popularTag:       { position:'absolute', top:-1, right:12, backgroundColor:GOLD, borderRadius:4, paddingHorizontal:6, paddingVertical:2 },
-  popularText:      { color:'#fff', fontSize:8, fontWeight:'900', letterSpacing:1 },
-  rateCardLeft:     { flexDirection:'row', alignItems:'center', gap:10 },
-  rateCardRight:    { alignItems:'flex-end' },
-  karatBadge:       { width:44, height:44, borderRadius:12, borderWidth:1.5, alignItems:'center', justifyContent:'center', flexDirection:'row' },
-  karatNum:         { fontSize:18, fontWeight:'900' },
-  karatK:           { fontSize:10, fontWeight:'700', marginTop:4 },
-  rateCardTitle:    { fontSize:15, fontWeight:'700', color:TEXT_DARK },
-  rateCardPurity:   { fontSize:11, color:TEXT_LIGHT, marginTop:1 },
-  ratePerGram:      { fontSize:10, color:TEXT_LIGHT },
-  ratePrice:        { fontSize:22, fontWeight:'900', letterSpacing:-0.5 },
-  rateTax:          { fontSize:10, color:TEXT_LIGHT },
-  changeRow:        { flexDirection:'row', alignItems:'center', gap:2, marginTop:2 },
-  changeText:       { fontSize:11, fontWeight:'800' },
+  emptyWrap:  { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 32 },
+  emptyIcon:  { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(201,168,76,0.25)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: TEXT_DARK, marginBottom: 8 },
+  emptyText:  { fontSize: 13, color: TEXT_LIGHT, textAlign: 'center', lineHeight: 20 },
 
-  emptyWrap:  { alignItems:'center', paddingVertical:48, paddingHorizontal:32 },
-  emptyIcon:  { width:72, height:72, borderRadius:36, backgroundColor:GOLD_DIM, alignItems:'center', justifyContent:'center', marginBottom:16 },
-  emptyTitle: { fontSize:18, fontWeight:'800', color:TEXT_DARK, marginBottom:8 },
-  emptyText:  { fontSize:13, color:TEXT_LIGHT, textAlign:'center', lineHeight:20 },
+  infoCard:  { margin: 14, marginTop: 10, backgroundColor: BG_CARD, borderRadius: 16, borderWidth: 1, borderColor: BORDER, padding: 16 },
+  infoTitle: { fontSize: 13, fontWeight: '800', color: TEXT_DARK, letterSpacing: 0.5, marginBottom: 12 },
+  infoRow:   { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderTopWidth: 1, borderTopColor: BG },
+  infoK:     { width: 36, fontSize: 13, fontWeight: '800', color: GOLD },
+  infoDesc:  { fontSize: 12, color: TEXT_MID, flex: 1 },
 
-  infoCard:  { margin:14, marginTop:10, backgroundColor:BG_CARD, borderRadius:16, borderWidth:1, borderColor:BORDER, padding:16 },
-  infoTitle: { fontSize:13, fontWeight:'800', color:TEXT_DARK, letterSpacing:0.5, marginBottom:12 },
-  infoRow:   { flexDirection:'row', alignItems:'center', paddingVertical:6, borderTopWidth:1, borderTopColor:BG },
-  infoK:     { width:36, fontSize:13, fontWeight:'800', color:GOLD },
-  infoDesc:  { fontSize:12, color:TEXT_MID, flex:1 },
+  disclaimer: { fontSize: 11, color: TEXT_LIGHT, paddingHorizontal: 16, paddingBottom: 8, lineHeight: 16 },
 
-  disclaimer: { fontSize:11, color:TEXT_LIGHT, paddingHorizontal:16, paddingBottom:8, lineHeight:16 },
-  adminHint:  { paddingVertical:14 },
+  adminBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,5,40,0.55)' },
+  adminSheet:    { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: BG_CARD, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '88%', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 16, elevation: 20 },
+  sheetHandle:   { width: 40, height: 4, borderRadius: 2, backgroundColor: BORDER, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
+  adminHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 10 },
+  adminTitle:    { fontSize: 16, fontWeight: '800', color: TEXT_DARK, letterSpacing: 0.3 },
+  adminSub:      { fontSize: 12, color: TEXT_LIGHT, marginTop: 2 },
+  adminClose:    { width: 32, height: 32, borderRadius: 16, backgroundColor: BG, alignItems: 'center', justifyContent: 'center' },
+  goldTopBar:    { height: 3, backgroundColor: GOLD, marginHorizontal: 20, borderRadius: 2, marginBottom: 4 },
+  adminBody:     { padding: 20, paddingBottom: 40 },
+  fieldLabel:    { fontSize: 10, fontWeight: '800', color: TEXT_LIGHT, letterSpacing: 1.5, marginBottom: 6 },
+  fieldRow:      { flexDirection: 'row', alignItems: 'center', backgroundColor: BG, borderRadius: 12, borderWidth: 1, borderColor: BORDER, paddingHorizontal: 12, height: 50 },
+  rupee:         { fontSize: 18, color: TEXT_MID, fontWeight: '700', marginRight: 6 },
+  fieldInput:    { flex: 1, fontSize: 20, fontWeight: '700', color: TEXT_DARK },
+  perGramLabel:  { fontSize: 12, color: TEXT_LIGHT, fontWeight: '600' },
+  previewBox:    { backgroundColor: 'rgba(201,168,76,0.25)', borderRadius: 12, padding: 12, marginTop: 10 },
+  previewTitle:  { fontSize: 10, fontWeight: '700', color: '#6a4a00', letterSpacing: 1, marginBottom: 8 },
+  previewGrid:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  previewItem:   { flex: 1, minWidth: '45%', backgroundColor: '#fff9ee', borderRadius: 8, padding: 8, alignItems: 'center' },
+  previewK:      { fontSize: 13, fontWeight: '800' },
+  previewPrice:  { fontSize: 14, fontWeight: '700', color: TEXT_DARK, marginTop: 2 },
+  saveBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: GOLD, borderRadius: 14, height: 52, marginTop: 24 },
+  saveBtnText:   { fontSize: 14, fontWeight: '900', color: PURPLE_DARK, letterSpacing: 1 },
+  adminNote:     { fontSize: 11, color: TEXT_LIGHT, textAlign: 'center', marginTop: 14, lineHeight: 17 },
 
-  adminBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor:'rgba(20,5,40,0.55)' },
-  adminSheet:    { position:'absolute', bottom:0, left:0, right:0, backgroundColor:BG_CARD, borderTopLeftRadius:24, borderTopRightRadius:24, maxHeight:'88%', shadowColor:'#000', shadowOffset:{width:0,height:-4}, shadowOpacity:0.15, shadowRadius:16, elevation:20 },
-  sheetHandle:   { width:40, height:4, borderRadius:2, backgroundColor:BORDER, alignSelf:'center', marginTop:10, marginBottom:4 },
-  adminHeader:   { flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingHorizontal:20, paddingTop:12, paddingBottom:10 },
-  adminTitle:    { fontSize:16, fontWeight:'800', color:TEXT_DARK, letterSpacing:0.3 },
-  adminSub:      { fontSize:12, color:TEXT_LIGHT, marginTop:2 },
-  adminClose:    { width:32, height:32, borderRadius:16, backgroundColor:BG, alignItems:'center', justifyContent:'center' },
-  goldTopBar:    { height:3, backgroundColor:GOLD, marginHorizontal:20, borderRadius:2, marginBottom:4 },
-  adminBody:     { padding:20, paddingBottom:40 },
-
-  fieldLabel:   { fontSize:10, fontWeight:'800', color:TEXT_LIGHT, letterSpacing:1.5, marginBottom:6 },
-  fieldRow:     { flexDirection:'row', alignItems:'center', backgroundColor:BG, borderRadius:12, borderWidth:1, borderColor:BORDER, paddingHorizontal:12, height:50 },
-  rupee:        { fontSize:18, color:TEXT_MID, fontWeight:'700', marginRight:6 },
-  fieldInput:   { flex:1, fontSize:20, fontWeight:'700', color:TEXT_DARK },
-  perGramLabel: { fontSize:12, color:TEXT_LIGHT, fontWeight:'600' },
-
-  previewBox:   { backgroundColor:GOLD_DIM, borderRadius:12, padding:12, marginTop:10 },
-  previewTitle: { fontSize:10, fontWeight:'700', color:'#6a4a00', letterSpacing:1, marginBottom:8 },
-  previewGrid:  { flexDirection:'row', flexWrap:'wrap', gap:8 },
-  previewItem:  { flex:1, minWidth:'45%', backgroundColor:'#fff9ee', borderRadius:8, padding:8, alignItems:'center' },
-  previewK:     { fontSize:13, fontWeight:'800' },
-  previewPrice: { fontSize:14, fontWeight:'700', color:TEXT_DARK, marginTop:2 },
-
-  saveBtn:     { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:GOLD, borderRadius:14, height:52, marginTop:24 },
-  saveBtnText: { fontSize:14, fontWeight:'900', color:PURPLE_DARK, letterSpacing:1 },
-  adminNote:   { fontSize:11, color:TEXT_LIGHT, textAlign:'center', marginTop:14, lineHeight:17 },
-
-  flash:     { position:'absolute', bottom:40, alignSelf:'center', flexDirection:'row', alignItems:'center', gap:8, backgroundColor:PURPLE_DARK, paddingHorizontal:20, paddingVertical:12, borderRadius:30, borderWidth:1, borderColor:GOLD+'60', shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.2, shadowRadius:10, elevation:10 },
-  flashText: { color:GOLD, fontSize:13, fontWeight:'800', letterSpacing:1 },
+  flash:     { position: 'absolute', bottom: 40, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: PURPLE_DARK, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, borderWidth: 1, borderColor: GOLD + '60', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 10 },
+  flashText: { color: GOLD, fontSize: 13, fontWeight: '800', letterSpacing: 1 },
 });
