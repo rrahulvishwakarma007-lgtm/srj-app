@@ -478,8 +478,13 @@ export default function GoldRatesScreen() {
           }]}>
             <View style={styles.sheetHandle} />
 
-            {adminStep === 'pin' && (
-              <PinPad onSuccess={o  { k: '22K', purity: '916',   mul: 22/24,  featured: true,  color: GOLD      },
+           {adminStep === 'pin' && (
+  <PinPad
+    onSuccess={onPinSuccess}
+    onClose={closeAdmin}
+    shake={shakeAnim}
+  />
+)}  { k: '22K', purity: '916',   mul: 22/24,  featured: true,  color: GOLD      },
   { k: '20K', purity: '833',   mul: 20/24,  featured: false, color: '#a07820' },
   { k: '18K', purity: '750',   mul: 18/24,  featured: false, color: '#8a6818' },
 ];
@@ -877,7 +882,7 @@ export default function GoldRatesScreen() {
 
   const rates = KARATS.map(k => ({
     ...k,
-    basePrice: rate24k > 0 ? Math.round(rate24k * k.mul * 10) : 0,
+   basePrice: rate24k > 0 ? Math.round(rate24k * k.mul) : 0,
     offset:    fluctuation[k.k] || 0,
   }));
 
