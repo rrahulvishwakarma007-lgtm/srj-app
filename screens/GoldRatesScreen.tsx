@@ -182,41 +182,45 @@ function RateCard({ k, purity, price, featured, color, change }: {
   });
 
   return (
-    <Animated.View style={[
-      styles.rateCard,
-      featured && styles.rateCardFeatured,
-      { transform: [{ scale }], backgroundColor: flashBg as any },
-    ]}>
-      {featured && (
-        <View style={styles.popularTag}>
-          <Text style={styles.popularText}>MOST POPULAR</Text>
+    // Outer view: backgroundColor only (useNativeDriver: false)
+    <Animated.View style={{ backgroundColor: flashBg as any, borderRadius: 16 }}>
+      {/* Inner view: transform only (useNativeDriver: true) */}
+      <Animated.View style={[
+        styles.rateCard,
+        featured && styles.rateCardFeatured,
+        { transform: [{ scale }] },
+      ]}>
+        {featured && (
+          <View style={styles.popularTag}>
+            <Text style={styles.popularText}>MOST POPULAR</Text>
+          </View>
+        )}
+        <View style={styles.rateCardLeft}>
+          <View style={[styles.karatBadge, { borderColor: color + '60', backgroundColor: color + '15' }]}>
+            <Text style={[styles.karatNum, { color }]}>{k.replace('K','')}</Text>
+            <Text style={[styles.karatK,  { color }]}>K</Text>
+          </View>
+          <View>
+            <Text style={styles.rateCardTitle}>{k} Gold</Text>
+            <Text style={styles.rateCardPurity}>{purity} Fineness</Text>
+          </View>
         </View>
-      )}
-      <View style={styles.rateCardLeft}>
-        <View style={[styles.karatBadge, { borderColor: color + '60', backgroundColor: color + '15' }]}>
-          <Text style={[styles.karatNum, { color }]}>{k.replace('K','')}</Text>
-          <Text style={[styles.karatK,  { color }]}>K</Text>
+        <View style={styles.rateCardRight}>
+          <Text style={styles.ratePerGram}>per gram</Text>
+          <Text style={[styles.ratePrice, { color }]}>₹{price.toLocaleString('en-IN')}</Text>
+          {/* ── Live change indicator ── */}
+          <View style={styles.changeRow}>
+            <Ionicons
+              name={change >= 0 ? 'caret-up' : 'caret-down'}
+              size={10}
+              color={change >= 0 ? GREEN : RED}
+            />
+            <Text style={[styles.changeText, { color: change >= 0 ? GREEN : RED }]}>
+              {change >= 0 ? '+' : ''}{change}
+            </Text>
+          </View>
         </View>
-        <View>
-          <Text style={styles.rateCardTitle}>{k} Gold</Text>
-          <Text style={styles.rateCardPurity}>{purity} Fineness</Text>
-        </View>
-      </View>
-      <View style={styles.rateCardRight}>
-        <Text style={styles.ratePerGram}>per gram</Text>
-        <Text style={[styles.ratePrice, { color }]}>₹{price.toLocaleString('en-IN')}</Text>
-        {/* ── Live change indicator ── */}
-        <View style={styles.changeRow}>
-          <Ionicons
-            name={change >= 0 ? 'caret-up' : 'caret-down'}
-            size={10}
-            color={change >= 0 ? GREEN : RED}
-          />
-          <Text style={[styles.changeText, { color: change >= 0 ? GREEN : RED }]}>
-            {change >= 0 ? '+' : ''}{change}
-          </Text>
-        </View>
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 }
