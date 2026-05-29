@@ -339,11 +339,17 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
     const matchCat = activeCategory === 'All' ? true : p.category === activeCategory;
     return matchSearch && matchCat;
   });
+const ratesSet = !!goldData && goldData.rate24k > 0;
 
-  const ratesSet    = !!goldData && goldData.rate24k > 0;
-  const k22Display  = ratesSet ? goldData!.rate22k.toLocaleString('en-IN') : '---';
-  const k24Display  = ratesSet ? goldData!.rate24k.toLocaleString('en-IN') : '---';
-  const dateDisplay = goldData?.updatedDate || null;
+const k24Display = ratesSet
+  ? Math.round(goldData!.rate24k * 10).toLocaleString('en-IN')
+  : '---';
+
+const k22Display = ratesSet
+  ? Math.round(goldData!.rate24k * (22 / 24) * 10).toLocaleString('en-IN')
+  : '---';
+
+const dateDisplay = goldData?.updatedDate || null;
 
   const catTabs = ['All', 'Rings', 'Necklaces', 'Earrings', 'Bangles', 'Chains', 'Bridal'];
 
@@ -571,13 +577,13 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
                 <View style={styles.goldItem}>
                   <Text style={styles.goldKarat}>22K</Text>
                   <Text style={styles.goldPrice}>₹{k22Display}</Text>
-                  <Text style={styles.goldSubLabel}>per gram</Text>
+                  <Text style={styles.goldSubLabel}>per 10 grams</Text>
                 </View>
                 <View style={styles.goldDivider} />
                 <View style={styles.goldItem}>
                   <Text style={styles.goldKarat}>24K</Text>
                   <Text style={styles.goldPrice}>₹{k24Display}</Text>
-                  <Text style={styles.goldSubLabel}>per gram</Text>
+                  <Text style={styles.goldSubLabel}>per 10 grams</Text>
                 </View>
               </View>
               <View style={styles.goldStatusRow}>
