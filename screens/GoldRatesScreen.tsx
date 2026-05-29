@@ -206,7 +206,7 @@ function RateCard({ k, purity, price, featured, color, change }: {
           </View>
         </View>
         <View style={styles.rateCardRight}>
-          <Text style={styles.ratePerGram}>per gram</Text>
+          <Text style={styles.ratePerGram}>per 10 grams</Text>
           <Text style={[styles.ratePrice, { color }]}>₹{price.toLocaleString('en-IN')}</Text>
           {/* ── Live change indicator ── */}
           <View style={styles.changeRow}>
@@ -371,7 +371,7 @@ export default function GoldRatesScreen() {
   // ── Rates with fluctuation applied ───────────────────────────────────────
   const rates = KARATS.map(k => ({
     ...k,
-    price:  rate24k > 0 ? Math.round(rate24k * k.mul) + (fluctuation[k.k] || 0) : 0,
+    price:  rate24k > 0 ? Math.round(rate24k * k.mul * 10) + (fluctuation[k.k] || 0) : 0,
     change: fluctuation[k.k] || 0,
   }));
 
@@ -413,11 +413,9 @@ export default function GoldRatesScreen() {
           <View style={styles.tickerViewport}>
             <Animated.View style={[styles.tickerTrack, { transform: [{ translateX: tickerX }] }]}>
               {[...rates, ...rates, ...rates].map((r, i) => (
-                <TickerItem key={i} label={r.k + ' GOLD'} value={`₹${r.price.toLocaleString('en-IN')}/g`} />
+                <TickerItem key={i} label={r.k + ' GOLD'} value={`₹${r.price.toLocaleString('en-IN')}/10g`} />
               ))}
-              {silverRate > 0 && [...Array(3)].map((_, i) => (
-                <TickerItem key={`s${i}`} label="SILVER" value={`₹${silverRate.toLocaleString('en-IN')}/g`} />
-              ))}
+
             </Animated.View>
           </View>
         </View>
@@ -450,24 +448,7 @@ export default function GoldRatesScreen() {
             {rates.map(r => (
               <RateCard key={r.k} k={r.k} purity={r.purity} price={r.price} featured={r.featured} color={r.color} change={r.change} />
             ))}
-            {silverRate > 0 && (
-              <View style={[styles.rateCard, { borderColor: 'rgba(150,150,180,0.3)' }]}>
-                <View style={styles.rateCardLeft}>
-                  <View style={[styles.karatBadge, { borderColor: '#9090b060', backgroundColor: '#9090b015' }]}>
-                    <Text style={[styles.karatNum, { color: '#6060a0', fontSize: 14 }]}>Ag</Text>
-                  </View>
-                  <View>
-                    <Text style={styles.rateCardTitle}>Silver</Text>
-                    <Text style={styles.rateCardPurity}>999 Fine</Text>
-                  </View>
-                </View>
-                <View style={styles.rateCardRight}>
-                  <Text style={styles.ratePerGram}>per gram</Text>
-                  <Text style={[styles.ratePrice, { color: '#7070b0' }]}>₹{silverRate.toLocaleString('en-IN')}</Text>
-                  <Text style={styles.rateTax}>incl. taxes</Text>
-                </View>
-              </View>
-            )}
+
           </View>
         ) : (
           <View style={styles.emptyWrap}>
