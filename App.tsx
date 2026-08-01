@@ -12,6 +12,7 @@ import IntroScreen     from './screens/IntroScreen';
 import HomeScreen      from './screens/HomeScreen';
 import CatalogueScreen from './screens/CatalogueScreen';
 import GoldRatesScreen from './screens/GoldRatesScreen';
+import SwarnaSamriddhiScreen from './screens/SwarnaSamriddhiScreen';
 import ContactScreen   from './screens/ContactScreen';
 import ProfileScreen   from './screens/ProfileScreen';
 import ScanScreen      from './screens/ScanScreen';
