@@ -29,6 +29,7 @@ const ICONS: Record<string, { active: any; inactive: any }> = {
   Catalogue: { active: 'grid',         inactive: 'grid-outline'        },
   Scan:      { active: 'scan-circle',  inactive: 'scan-circle-outline' },
   Gold:      { active: 'trending-up',  inactive: 'trending-up-outline' },
+Swarna: { active:'diamond', inactive:'diamond-outline' },
   Contact:   { active: 'call',         inactive: 'call-outline'        },
   Profile:   { active: 'person',       inactive: 'person-outline'      },
 };
@@ -79,6 +80,7 @@ function AppTabs({ user, onLoginPress, onLogout, openProduct, wishlist, selected
           <Tab.Screen name="Catalogue" component={CatalogueScreen} />
           <Tab.Screen name="Scan" component={ScanScreen} options={{ tabBarLabel: 'Scan' }} />
           <Tab.Screen name="Gold" component={GoldRatesScreen} />
+<Tab.Screen name="Swarna" component={SwarnaSamriddhiScreen} options={{ tabBarLabel:'Swarna' }}/>
           <Tab.Screen name="Contact" component={ContactScreen} />
           <Tab.Screen name="Profile">
             {() => <ProfileScreen user={user} onLoginPress={onLoginPress} onLogout={onLogout} />}
