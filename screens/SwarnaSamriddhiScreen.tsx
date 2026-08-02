@@ -1,499 +1,480 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions, Animated, Linking, TextInput,
+  TextInput, Alert, Linking, Dimensions, Modal,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: W } = Dimensions.get('window');
 
 const GOLD        = '#C9A84C';
 const GOLD_LIGHT  = '#F0D080';
+const GOLD_DIM    = 'rgba(201,168,76,0.25)';
 const PURPLE_DARK = '#2D1B5E';
 const PURPLE_MID  = '#4A2080';
-const PURPLE_HERO = '#3D1A6E';
 const BG          = '#F0EBFF';
 const BG_CARD     = '#FFFFFF';
 const BORDER      = '#DDD5F0';
 const TEXT_DARK   = '#1A0A3E';
 const TEXT_MID    = '#4A3570';
 const TEXT_LIGHT  = '#8B7BAF';
-const WHATSAPP    = '#25D366';
 const GREEN       = '#16a34a';
 
-const FEATURES = [
-  { icon: '💰', title: '10 किस्तें आप भरें',  desc: 'केवल 10 मासिक किस्तें जमा करें' },
-  { icon: '🎁', title: '2 किस्तें हम भरेंगे', desc: 'अंतिम 2 किस्तें हम देंगे — निःशुल्क!' },
-  { icon: '✨', title: '100% पारदर्शी',        desc: 'पूरी तरह विश्वसनीय योजना' },
-  { icon: '💍', title: 'पसंद के आभूषण',       desc: 'अपनी पसंद के गहने खरीदें' },
-];
+const UPI_ID      = 'shekharraja@upi';
+const WHATSAPP_NO = '918377911745';
+const PHONE_NO    = '+918377911745';
 
-const TERMS = [
-  'योजना की अवधि 12 माह होगी।',
-  'ग्राहक को लगातार 10 मासिक किस्तें समय पर जमा करनी होंगी।',
-  'अंतिम 2 किस्तों का लाभ केवल योजना की सभी शर्तें पूरी करने पर मिलेगा।',
-  'यह योजना केवल सोने के आभूषणों की खरीद पर लागू होगी।',
-  'योजना का लाभ नकद भुगतान के रूप में देय नहीं होगा।',
-  'नियम एवं शर्तें समय-समय पर परिवर्तित की जा सकती हैं।',
-];
+const EMI_OPTIONS = [2000, 3000, 5000, 7000, 10000, 15000, 20000];
 
-// ── Animated Section Entry ────────────────────────────────────────────────────
-function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(24)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(anim, { toValue: 1, duration: 600, delay, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 600, delay, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
+function Bullet({ text }: { text: string }) {
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY }] }}>
-      {children}
-    </Animated.View>
+    <View style={styles.bulletRow}>
+      <View style={styles.bulletDot} />
+      <Text style={styles.bulletText}>{text}</Text>
+    </View>
   );
 }
 
-// ── EMI Calculator ────────────────────────────────────────────────────────────
-function EmiCalculator() {
-  const [emi, setEmi] = useState('5000');
-
-  const parsed       = parseInt(emi.replace(/,/g, '')) || 0;
-  const customerTotal= parsed * 10;
-  const ourTotal     = parsed * 2;
-  const grandTotal   = parsed * 12;
-
-  const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+function Calculator() {
+  const [monthly, setMonthly] = useState(5000);
+  const customerTotal = monthly * 10;
+  const srjBonus      = monthly * 2;
+  const grandTotal    = customerTotal + srjBonus;
 
   return (
-    <View style={calc.wrap}>
-      <View style={calc.header}>
-        <Ionicons name="calculator" size={18} color={GOLD}/>
-        <Text style={calc.headerText}>EMI Calculator — उदाहरण</Text>
-      </View>
-
-      {/* Input */}
-      <Text style={calc.label}>मासिक किस्त राशि</Text>
-      <View style={calc.inputRow}>
-        <Text style={calc.rupee}>₹</Text>
-        <TextInput
-          style={calc.input}
-          keyboardType="numeric"
-          value={emi}
-          onChangeText={setEmi}
-          placeholder="5000"
-          placeholderTextColor={TEXT_LIGHT}
-        />
-        <Text style={calc.perMonth}>/माह</Text>
-      </View>
-
-      {/* Quick amounts */}
-      <View style={calc.quickRow}>
-        {[2000, 5000, 10000, 20000].map(amt => (
-          <TouchableOpacity
-            key={amt}
-            style={[calc.quickBtn, emi === String(amt) && calc.quickBtnActive]}
-            onPress={() => setEmi(String(amt))}
-          >
-            <Text style={[calc.quickBtnText, emi === String(amt) && calc.quickBtnTextActive]}>
-              ₹{(amt/1000).toFixed(0)}K
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Results */}
-      <View style={calc.resultsRow}>
-        <View style={calc.resultCard}>
-          <Text style={calc.resultLabel}>आपकी 10 किस्तें</Text>
-          <Text style={calc.resultValue}>{fmt(customerTotal)}</Text>
-          <Text style={calc.resultSub}>10 × {fmt(parsed)}</Text>
+    <View style={styles.calcCard}>
+      <Text style={styles.calcTitle}>💡 अपना लाभ जानें</Text>
+      <Text style={styles.calcSub}>मासिक किस्त चुनें</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 10 }}>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {EMI_OPTIONS.map(amt => (
+            <TouchableOpacity
+              key={amt}
+              style={[styles.emiChip, monthly === amt && styles.emiChipActive]}
+              onPress={() => setMonthly(amt)}
+            >
+              <Text style={[styles.emiChipTxt, monthly === amt && styles.emiChipTxtActive]}>
+                ₹{amt.toLocaleString('en-IN')}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-        <View style={[calc.resultCard, calc.resultCardGift]}>
-          <Text style={[calc.resultLabel, { color: GREEN }]}>हमारी 2 किस्तें 🎁</Text>
-          <Text style={[calc.resultValue, { color: GREEN }]}>{fmt(ourTotal)}</Text>
-          <Text style={calc.resultSub}>निःशुल्क लाभ</Text>
+      </ScrollView>
+      <View style={styles.calcRow}>
+        <View style={styles.calcItem}>
+          <Text style={styles.calcLabel}>आपकी 10 किस्तें</Text>
+          <Text style={styles.calcValue}>₹{customerTotal.toLocaleString('en-IN')}</Text>
         </View>
-        <View style={[calc.resultCard, calc.resultCardTotal]}>
-          <Text style={[calc.resultLabel, { color: GOLD }]}>कुल खरीद मूल्य</Text>
-          <Text style={[calc.resultValue, { color: GOLD }]}>{fmt(grandTotal)}</Text>
-          <Text style={calc.resultSub}>12 किस्तों का</Text>
+        <View style={styles.calcPlus}>
+          <Text style={{ color: GOLD, fontSize: 22, fontWeight: '900' }}>+</Text>
         </View>
+        <View style={styles.calcItem}>
+          <Text style={styles.calcLabel}>हमारी 2 किस्तें (FREE)</Text>
+          <Text style={[styles.calcValue, { color: GREEN }]}>₹{srjBonus.toLocaleString('en-IN')}</Text>
+        </View>
+      </View>
+      <View style={styles.calcTotal}>
+        <Text style={styles.calcTotalLabel}>कुल आभूषण मूल्य</Text>
+        <Text style={styles.calcTotalValue}>₹{grandTotal.toLocaleString('en-IN')}</Text>
       </View>
     </View>
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
-export default function SwarnaSamriddhiScreen() {
-  const insets = useSafeAreaInsets();
-  const [termsOpen, setTermsOpen] = useState(false);
-  const termsAnim = useRef(new Animated.Value(0)).current;
+function PaymentModal({ visible, onClose, monthly }: {
+  visible: boolean; onClose: () => void; monthly: number;
+}) {
+  const [step, setStep]     = useState<'amount' | 'upi' | 'screenshot'>('amount');
+  const [custAmt, setCustAmt] = useState(String(monthly));
+  const [name, setName]     = useState('');
 
-  // Pulsing glow for header
-  const glow = useRef(new Animated.Value(0.4)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 1800, useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 0.4, duration: 1800, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  const toggleTerms = () => {
-    const toValue = termsOpen ? 0 : 1;
-    Animated.timing(termsAnim, { toValue, duration: 300, useNativeDriver: false }).start();
-    setTermsOpen(!termsOpen);
+  const openUPI = () => {
+    const amt    = parseInt(custAmt) || monthly;
+    const upiUrl = `upi://pay?pa=${UPI_ID}&pn=Shekhar%20Raja%20Jewellers&am=${amt}&cu=INR&tn=Swarna%20Samriddhi%20Yojana%20EMI`;
+    Linking.openURL(upiUrl).catch(() => {
+      Alert.alert('UPI App नहीं मिला', 'कृपया PhonePe, Google Pay या Paytm से भुगतान करें।\nUPI ID: ' + UPI_ID);
+    });
+    setStep('screenshot');
   };
 
-  const wa = (msg = '') => Linking.openURL(
-    `https://wa.me/918377911745?text=${encodeURIComponent(msg || 'नमस्ते! मुझे स्वर्ण समृद्धि योजना के बारे में जानकारी चाहिए।')}`
-  );
+  const shareScreenshot = () => {
+    const msg =
+      `नमस्ते Shekhar Raja Jewellers 🙏\n\n` +
+      `मैं *स्वर्ण समृद्धि योजना* में शामिल होना चाहता/चाहती हूँ।\n\n` +
+      `👤 नाम: ${name || '(कृपया भरें)'}\n` +
+      `💰 मासिक किस्त: ₹${custAmt}\n\n` +
+      `मैंने भुगतान का स्क्रीनशॉट संलग्न कर रहा/रही हूँ।\n` +
+      `कृपया मेरी योजना सक्रिय करें। धन्यवाद!`;
+    Linking.openURL(`https://wa.me/${WHATSAPP_NO}?text=${encodeURIComponent(msg)}`).catch(() =>
+      Alert.alert('WhatsApp', PHONE_NO)
+    );
+    onClose();
+    setStep('amount');
+  };
+
+  const reset = () => { setStep('amount'); onClose(); };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={reset}>
+      <View style={styles.modalBackdrop}>
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHandle} />
 
-      {/* ── HEADER ── */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Animated.View style={[styles.headerIconWrap, { opacity: glow }]}>
-            <Ionicons name="diamond" size={20} color={GOLD}/>
-          </Animated.View>
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.headerTitle}>स्वर्ण समृद्धि</Text>
-            <Text style={styles.headerSub}>SHEKHAR RAJA JEWELLERS</Text>
-          </View>
-        </View>
-        <View style={styles.liveBadge}>
-          <View style={styles.liveDot}/>
-          <Text style={styles.liveText}>NEW</Text>
+          {step === 'amount' && (
+            <>
+              <Text style={styles.modalTitle}>किस्त भुगतान</Text>
+              <Text style={styles.modalSub}>स्वर्ण समृद्धि योजना</Text>
+              <View style={styles.goldTopBar} />
+              <View style={styles.fieldWrap}>
+                <Text style={styles.fieldLabel}>आपका नाम</Text>
+                <View style={styles.fieldRow}>
+                  <Ionicons name="person-outline" size={16} color={TEXT_LIGHT} />
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="पूरा नाम दर्ज करें"
+                    placeholderTextColor={TEXT_LIGHT}
+                    value={name}
+                    onChangeText={setName}
+                  />
+                </View>
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>किस्त राशि (₹)</Text>
+                <View style={styles.fieldRow}>
+                  <Text style={styles.rupee}>₹</Text>
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="जैसे 5000"
+                    placeholderTextColor={TEXT_LIGHT}
+                    keyboardType="numeric"
+                    value={custAmt}
+                    onChangeText={setCustAmt}
+                  />
+                </View>
+              </View>
+              <TouchableOpacity style={styles.payBtn} onPress={() => setStep('upi')}>
+                <Ionicons name="card-outline" size={20} color="#fff" />
+                <Text style={styles.payBtnTxt}>UPI से भुगतान करें</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelLink} onPress={reset}>
+                <Text style={styles.cancelLinkTxt}>रद्द करें</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {step === 'upi' && (
+            <>
+              <Text style={styles.modalTitle}>UPI भुगतान</Text>
+              <Text style={styles.modalSub}>नीचे UPI ऐप से ₹{custAmt} भेजें</Text>
+              <View style={styles.goldTopBar} />
+              <View style={styles.upiBox}>
+                <Ionicons name="qr-code-outline" size={48} color={GOLD} />
+                <Text style={styles.upiIdLabel}>UPI ID</Text>
+                <Text style={styles.upiId}>{UPI_ID}</Text>
+                <Text style={styles.upiNote}>PhonePe · GPay · Paytm · BHIM</Text>
+              </View>
+              <View style={styles.upiApps}>
+                {[
+                  { name: 'PhonePe', icon: 'phone-portrait-outline' },
+                  { name: 'GPay',    icon: 'logo-google'            },
+                  { name: 'Paytm',   icon: 'wallet-outline'         },
+                ].map(app => (
+                  <TouchableOpacity key={app.name} style={styles.upiAppBtn} onPress={openUPI}>
+                    <Ionicons name={app.icon as any} size={22} color={PURPLE_MID} />
+                    <Text style={styles.upiAppName}>{app.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity style={styles.payBtn} onPress={openUPI}>
+                <Ionicons name="open-outline" size={20} color="#fff" />
+                <Text style={styles.payBtnTxt}>UPI ऐप खोलें</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelLink} onPress={() => setStep('amount')}>
+                <Text style={styles.cancelLinkTxt}>← वापस जाएं</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {step === 'screenshot' && (
+            <>
+              <Text style={styles.modalTitle}>भुगतान हो गया? 🎉</Text>
+              <Text style={styles.modalSub}>स्क्रीनशॉट WhatsApp पर भेजें</Text>
+              <View style={styles.goldTopBar} />
+              <View style={styles.screenshotBox}>
+                <Ionicons name="checkmark-circle" size={52} color={GREEN} />
+                <Text style={styles.screenshotText}>
+                  भुगतान का स्क्रीनशॉट हमें{'\n'}WhatsApp पर भेजें।{'\n'}
+                  हम आपकी किस्त 24 घंटे में{'\n'}दर्ज कर देंगे।
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.payBtn, { backgroundColor: '#25D366' }]}
+                onPress={shareScreenshot}
+              >
+                <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+                <Text style={styles.payBtnTxt}>WhatsApp पर स्क्रीनशॉट भेजें</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelLink} onPress={reset}>
+                <Text style={styles.cancelLinkTxt}>बाद में भेजूँगा / भेजूँगी</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
-      <View style={styles.goldLine}/>
+    </Modal>
+  );
+}
+
+export default function SwarnaSamriddhiScreen() {
+  const [showPayment, setShowPayment] = useState(false);
+
+  const callShowroom = () => Linking.openURL(`tel:${PHONE_NO}`);
+  const openWA = () => {
+    const msg = 'नमस्ते! मुझे स्वर्ण समृद्धि योजना के बारे में जानकारी चाहिए।';
+    Linking.openURL(`https://wa.me/${WHATSAPP_NO}?text=${encodeURIComponent(msg)}`);
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+
+      <View style={styles.header}>
+        <View style={styles.headerBadge}>
+          <Text style={styles.headerBadgeTxt}>SR</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerEyebrow}>शेखर राजा ज्वेलर्स प्रस्तुत करता है</Text>
+          <Text style={styles.headerTitle}>स्वर्ण समृद्धि योजना</Text>
+          <Text style={styles.headerTagline}>✦ विश्वास  ·  शुद्धता  ·  गुणवत्ता ✦</Text>
+        </View>
+      </View>
+      <View style={styles.goldLine} />
 
       <ScrollView
-        style={styles.scroll}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
+        {/* HERO */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroMain}>10 किस्तें आपकी</Text>
+          <View style={styles.heroDivider} />
+          <Text style={styles.heroBonus}>2 किस्तें हमारी 🎁</Text>
+          <Text style={styles.heroSub}>
+            अपने सपनों के सोने के आभूषण{'\n'}अब आसान किस्तों में खरीदें!
+          </Text>
+        </View>
 
-        {/* ── HERO BANNER ── */}
-        <FadeIn delay={0}>
-          <View style={styles.heroBanner}>
-            {/* Background decoration */}
-            <View style={styles.heroCornerTL}/>
-            <View style={styles.heroCornerBR}/>
-
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>◆ शेखर राजा ज्वेलर्स प्रस्तुत करता है ◆</Text>
-            </View>
-
-            <Text style={styles.heroTitle}>स्वर्ण{'\n'}समृद्धि{'\n'}योजना</Text>
-
-            <View style={styles.heroDivider}>
-              <View style={styles.heroDivLine}/>
-              <Text style={styles.heroDivDiamond}>◆</Text>
-              <View style={styles.heroDivLine}/>
-            </View>
-
-            <Text style={styles.heroTagline}>
-              अपने सपनों के सोने के आभूषण अब{' '}
-              <Text style={{ color: GOLD_LIGHT, fontWeight: '700' }}>आसान किस्तों</Text>
-              {' '}में खरीदें!
-            </Text>
-          </View>
-        </FadeIn>
-
-        {/* ── OFFER HIGHLIGHT ── */}
-        <FadeIn delay={100}>
-          <View style={styles.offerWrap}>
-            {/* Customer side */}
-            <View style={styles.offerCard}>
-              <Text style={styles.offerEmoji}>👤</Text>
-              <Text style={styles.offerWhoLabel}>आप भरें</Text>
-              <Text style={styles.offerNumber}>10</Text>
-              <Text style={styles.offerDesc}>मासिक किस्तें</Text>
-            </View>
-
-            {/* Plus */}
-            <View style={styles.offerPlus}>
-              <Text style={styles.offerPlusText}>+</Text>
-            </View>
-
-            {/* Our side */}
-            <View style={[styles.offerCard, styles.offerCardGold]}>
-              <Text style={styles.offerEmoji}>🏆</Text>
-              <Text style={[styles.offerWhoLabel, { color: GOLD }]}>हम भरेंगे</Text>
-              <Text style={[styles.offerNumber, { color: GOLD }]}>2</Text>
-              <Text style={[styles.offerDesc, { color: GOLD_LIGHT }]}>किस्तें — निःशुल्क!</Text>
-            </View>
-          </View>
-
-          {/* Total bar */}
-          <View style={styles.totalBar}>
-            <Text style={styles.totalBarLabel}>= कुल 12 किस्तों के मूल्य का सोना खरीदें</Text>
-          </View>
-        </FadeIn>
-
-        {/* ── FEATURES ── */}
-        <FadeIn delay={200}>
+        {/* FEATURES */}
+        <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionLine}/>
-            <Text style={styles.sectionTitle}>◆ योजना की विशेषताएँ ◆</Text>
-            <View style={styles.sectionLine}/>
+            <Ionicons name="diamond-outline" size={16} color={GOLD} />
+            <Text style={styles.sectionTitle}>योजना की विशेषताएँ</Text>
           </View>
-          <View style={styles.featuresGrid}>
-            {FEATURES.map((f, i) => (
-              <View key={i} style={styles.featureCard}>
-                <Text style={styles.featureIcon}>{f.icon}</Text>
-                <Text style={styles.featureTitle}>{f.title}</Text>
-                <Text style={styles.featureDesc}>{f.desc}</Text>
-              </View>
-            ))}
-          </View>
-        </FadeIn>
-
-        {/* ── EMI CALCULATOR ── */}
-        <FadeIn delay={300}>
-          <EmiCalculator/>
-        </FadeIn>
-
-        {/* ── HOW IT WORKS ── */}
-        <FadeIn delay={350}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionLine}/>
-            <Text style={styles.sectionTitle}>◆ कैसे काम करती है ◆</Text>
-            <View style={styles.sectionLine}/>
-          </View>
-          <View style={styles.stepsWrap}>
+          <View style={styles.featCard}>
             {[
-              { step:'01', title:'राशि चुनें',     desc:'अपनी सुविधानुसार मासिक किस्त राशि तय करें।' },
-              { step:'02', title:'10 किस्तें भरें', desc:'हर महीने समय पर किस्त जमा करें।' },
-              { step:'03', title:'योजना पूरी करें', desc:'10 किस्तें पूरी होने पर आप योग्य हो जाते हैं।' },
-              { step:'04', title:'गहने खरीदें',     desc:'12 किस्त मूल्य के गहने अपनी पसंद से खरीदें।' },
-            ].map((s, i) => (
-              <View key={i} style={styles.stepRow}>
-                <View style={styles.stepNumWrap}>
-                  <Text style={styles.stepNum}>{s.step}</Text>
-                </View>
-                {i < 3 && <View style={styles.stepLine}/>}
-                <View style={styles.stepContent}>
-                  <Text style={styles.stepTitle}>{s.title}</Text>
-                  <Text style={styles.stepDesc}>{s.desc}</Text>
-                </View>
-              </View>
-            ))}
+              'ग्राहक केवल 10 मासिक किस्तें जमा करेगा।',
+              'अंतिम 2 किस्तों का भुगतान शेखर राजा ज्वेलर्स द्वारा किया जाएगा।',
+              'कुल 12 किस्तों के मूल्य का सोने का आभूषण खरीदने का अवसर।',
+              'अपनी सुविधानुसार मासिक किस्त राशि चुनें।',
+              'योजना पूरी होने पर अपनी पसंद के सोने के आभूषण खरीदें।',
+              '100% पारदर्शी एवं विश्वसनीय योजना।',
+            ].map((t, i) => <Bullet key={i} text={t} />)}
           </View>
-        </FadeIn>
+        </View>
 
-        {/* ── TERMS ── */}
-        <FadeIn delay={400}>
-          <TouchableOpacity style={styles.termsHeader} onPress={toggleTerms} activeOpacity={0.8}>
-            <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
-              <Ionicons name="shield-checkmark-outline" size={16} color={GOLD}/>
-              <Text style={styles.termsHeaderText}>नियम एवं शर्तें</Text>
+        {/* CALCULATOR */}
+        <Calculator />
+
+        {/* PAY NOW */}
+        <View style={styles.paySection}>
+          <TouchableOpacity
+            style={styles.payNowBtn}
+            onPress={() => setShowPayment(true)}
+            activeOpacity={0.88}
+          >
+            <Ionicons name="card" size={22} color={PURPLE_DARK} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.payNowTitle}>किस्त जमा करें</Text>
+              <Text style={styles.payNowSub}>UPI · PhonePe · GPay · Paytm</Text>
             </View>
-            <Ionicons
-              name={termsOpen ? 'chevron-up' : 'chevron-down'}
-              size={16} color={GOLD}
-            />
+            <Ionicons name="arrow-forward" size={18} color={PURPLE_DARK} />
           </TouchableOpacity>
-          {termsOpen && (
-            <View style={styles.termsBody}>
-              {TERMS.map((t, i) => (
-                <View key={i} style={styles.termRow}>
-                  <Text style={styles.termDot}>◆</Text>
-                  <Text style={styles.termText}>{t}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </FadeIn>
+        </View>
 
-        {/* ── CTA ── */}
-        <FadeIn delay={450}>
-          <View style={styles.ctaCard}>
-            {/* SR watermark */}
-            <Text style={styles.ctaWatermark}>SR</Text>
-
-            <View style={styles.ctaStars}>
-              {[...Array(5)].map((_,i) => (
-                <Ionicons key={i} name="star" size={14} color={GOLD}/>
-              ))}
-            </View>
-
-            <Text style={styles.ctaTitle}>आज ही जुड़ें!</Text>
-            <Text style={styles.ctaTagline}>अपने सपनों के गहनों की शुरुआत करें</Text>
-            <Text style={styles.ctaTrust}>विश्वास • शुद्धता • गुणवत्ता</Text>
-            <Text style={styles.ctaQuote}>
-              सोना सिर्फ आभूषण नहीं, आपके सपनों का निवेश है
-            </Text>
-
-            <TouchableOpacity
-              style={styles.waBtn}
-              onPress={() => wa()}
-              activeOpacity={0.88}
-            >
-              <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }}/>
-              <Text style={styles.waBtnText}>योजना में जुड़ें — WhatsApp</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.callBtn}
-              onPress={() => Linking.openURL('tel:+918377911745')}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="call-outline" size={16} color={GOLD} style={{ marginRight:8 }}/>
-              <Text style={styles.callBtnText}>+91 83779 11745</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.ctaWebsite}>www.shekharrajajewellers.com</Text>
+        {/* TERMS */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="document-text-outline" size={16} color={GOLD} />
+            <Text style={styles.sectionTitle}>नियम एवं शर्तें</Text>
           </View>
-        </FadeIn>
+          <View style={styles.featCard}>
+            {[
+              'योजना की अवधि 12 माह होगी।',
+              'ग्राहक को लगातार 10 मासिक किस्तें समय पर जमा करनी होगी।',
+              'अंतिम 2 किस्तों का लाभ केवल योजना की सभी शर्तें पूरी करने पर मिलेगा।',
+              'यह योजना केवल सोने के आभूषणों की खरीद पर लागू होगी।',
+              'योजना का लाभ नकद भुगतान के रूप में देय नहीं होगा।',
+              'नियम एवं शर्तें समय-समय पर परिवर्तित की जा सकती हैं।',
+            ].map((t, i) => <Bullet key={i} text={t} />)}
+          </View>
+        </View>
 
+        {/* CTA */}
+        <View style={styles.ctaCard}>
+          <Text style={styles.ctaTitle}>आज ही जुड़ें! 🌟</Text>
+          <Text style={styles.ctaSub}>
+            अपने सपनों के गहनों की शुरुआत करें।{'\n'}
+            ज्वेलरी बुकिंग एवं अधिक जानकारी के लिए{'\n'}
+            हमारे शोरूम से संपर्क करें।
+          </Text>
+          <TouchableOpacity style={styles.waBtn} onPress={openWA} activeOpacity={0.88}>
+            <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+            <Text style={styles.waBtnTxt}>WhatsApp पर संपर्क करें</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.callBtn} onPress={callShowroom} activeOpacity={0.88}>
+            <Ionicons name="call-outline" size={18} color={PURPLE_MID} />
+            <Text style={styles.callBtnTxt}>+91 83779 11745</Text>
+          </TouchableOpacity>
+          <Text style={styles.websiteLink}>www.shekharrajajewellers.com</Text>
+        </View>
       </ScrollView>
-    </View>
+
+      <PaymentModal
+        visible={showPayment}
+        onClose={() => setShowPayment(false)}
+        monthly={5000}
+      />
+    </SafeAreaView>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:   { flex:1, backgroundColor:PURPLE_DARK },
-  scroll: { flex:1, backgroundColor:BG },
-  goldLine: { height:3, backgroundColor:GOLD },
+  container: { flex: 1, backgroundColor: BG },
 
-  // Header
-  header:         { flexDirection:'row', alignItems:'center', justifyContent:'space-between', backgroundColor:PURPLE_DARK, paddingHorizontal:16, paddingVertical:13 },
-  headerLeft:     { flexDirection:'row', alignItems:'center' },
-  headerIconWrap: { width:38, height:38, borderRadius:19, backgroundColor:'rgba(201,168,76,0.15)', alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:'rgba(201,168,76,0.35)' },
-  headerTitle:    { color:GOLD, fontSize:17, fontWeight:'900' },
-  headerSub:      { color:'rgba(240,208,128,0.55)', fontSize:8, letterSpacing:2, marginTop:1 },
-  liveBadge:      { flexDirection:'row', alignItems:'center', gap:5, backgroundColor:'rgba(201,168,76,0.12)', borderRadius:99, paddingHorizontal:10, paddingVertical:4 },
-  liveDot:        { width:7, height:7, borderRadius:4, backgroundColor:GOLD },
-  liveText:       { color:GOLD, fontSize:10, fontWeight:'800', letterSpacing:1.5 },
+  header: {
+    backgroundColor: PURPLE_DARK,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  headerBadge:    { width: 52, height: 52, borderRadius: 26, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: GOLD_LIGHT },
+  headerBadgeTxt: { color: PURPLE_DARK, fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  headerEyebrow:  { color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  headerTitle:    { color: '#FFFFFF', fontSize: 22, fontWeight: '900', lineHeight: 28, marginTop: 2 },
+  headerTagline:  { color: GOLD, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginTop: 4 },
+  goldLine:       { height: 3, backgroundColor: GOLD },
 
-  // Hero banner
-  heroBanner: {
-    backgroundColor:PURPLE_DARK, margin:16, borderRadius:20,
-    padding:28, alignItems:'center',
-    borderWidth:1, borderColor:'rgba(201,168,76,0.3)',
-    overflow:'hidden', position:'relative',
-    shadowColor:PURPLE_MID, shadowOpacity:0.4, shadowRadius:20, elevation:8,
+  heroCard: {
+    backgroundColor: PURPLE_DARK,
+    margin: 16,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(201,168,76,0.6)',
+    shadowColor: GOLD,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  heroCornerTL: {
-    position:'absolute', top:-30, left:-30,
-    width:100, height:100, borderRadius:50,
-    backgroundColor:'rgba(201,168,76,0.06)',
-    borderWidth:1, borderColor:'rgba(201,168,76,0.15)',
-  },
-  heroCornerBR: {
-    position:'absolute', bottom:-30, right:-30,
-    width:120, height:120, borderRadius:60,
-    backgroundColor:'rgba(74,32,128,0.4)',
-    borderWidth:1, borderColor:'rgba(201,168,76,0.1)',
-  },
-  heroBadge: {
-    backgroundColor:'rgba(201,168,76,0.12)', borderRadius:99,
-    paddingHorizontal:14, paddingVertical:5,
-    borderWidth:1, borderColor:'rgba(201,168,76,0.25)',
-    marginBottom:20,
-  },
-  heroBadgeText: { color:GOLD_LIGHT, fontSize:10, fontWeight:'700', letterSpacing:0.5 },
-  heroTitle: {
-    color:GOLD, fontSize:48, fontWeight:'900', textAlign:'center',
-    lineHeight:52, letterSpacing:1, marginBottom:16,
-  },
-  heroDivider:   { flexDirection:'row', alignItems:'center', gap:8, marginBottom:16, width:'60%' },
-  heroDivLine:   { flex:1, height:1, backgroundColor:'rgba(201,168,76,0.4)' },
-  heroDivDiamond:{ color:GOLD, fontSize:12 },
-  heroTagline:   { color:'rgba(240,235,255,0.8)', fontSize:14, textAlign:'center', lineHeight:22 },
+  heroMain:    { color: GOLD_LIGHT, fontSize: 28, fontWeight: '900', letterSpacing: 0.5, textAlign: 'center' },
+  heroDivider: { width: 60, height: 2, backgroundColor: GOLD, marginVertical: 12, borderRadius: 1 },
+  heroBonus:   { color: '#FFFFFF', fontSize: 24, fontWeight: '900', textAlign: 'center' },
+  heroSub:     { color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22 },
 
-  // Offer section
-  offerWrap: {
-    flexDirection:'row', alignItems:'center', justifyContent:'center',
-    marginHorizontal:16, marginBottom:0, gap:8,
-  },
-  offerCard: {
-    flex:1, backgroundColor:BG_CARD, borderRadius:16, padding:16,
-    alignItems:'center', borderWidth:1, borderColor:BORDER,
-    elevation:3,
-  },
-  offerCardGold: {
-    backgroundColor:PURPLE_DARK,
-    borderColor:'rgba(201,168,76,0.4)',
-  },
-  offerEmoji:   { fontSize:28, marginBottom:6 },
-  offerWhoLabel:{ color:TEXT_LIGHT, fontSize:10, fontWeight:'700', letterSpacing:1, marginBottom:4 },
-  offerNumber:  { color:TEXT_DARK, fontSize:40, fontWeight:'900', lineHeight:44 },
-  offerDesc:    { color:TEXT_MID, fontSize:11, fontWeight:'600', textAlign:'center', marginTop:4 },
-  offerPlus:    {
-    width:36, height:36, borderRadius:18,
-    backgroundColor:PURPLE_MID, alignItems:'center', justifyContent:'center',
-    borderWidth:1, borderColor:'rgba(201,168,76,0.3)',
-  },
-  offerPlusText:{ color:GOLD, fontSize:20, fontWeight:'900' },
-  totalBar: {
-    marginHorizontal:16, marginTop:8, marginBottom:16,
-    backgroundColor:PURPLE_HERO, borderRadius:12, padding:12,
-    borderWidth:1, borderColor:'rgba(201,168,76,0.25)',
-    alignItems:'center',
-  },
-  totalBarLabel: { color:GOLD_LIGHT, fontSize:12, fontWeight:'700', textAlign:'center' },
+  section:       { marginHorizontal: 16, marginBottom: 16 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  sectionTitle:  { color: TEXT_DARK, fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
+  featCard:      { backgroundColor: BG_CARD, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: BORDER },
 
-  // Section header
-  sectionHeader: { flexDirection:'row', alignItems:'center', marginHorizontal:16, marginTop:20, marginBottom:12, gap:8 },
-  sectionLine:   { flex:1, height:1, backgroundColor:BORDER },
-  sectionTitle:  { color:TEXT_DARK, fontSize:12, fontWeight:'800', letterSpacing:0.5 },
+  bulletRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
+  bulletDot:  { width: 7, height: 7, borderRadius: 4, backgroundColor: GOLD, marginTop: 6, flexShrink: 0 },
+  bulletText: { flex: 1, color: TEXT_MID, fontSize: 13, lineHeight: 20 },
 
-  // Features grid
-  featuresGrid: { flexDirection:'row', flexWrap:'wrap', marginHorizontal:10, gap:8, marginBottom:8 },
-  featureCard: {
-    width:(W-40)/2, backgroundColor:BG_CARD, borderRadius:14,
-    padding:14, borderWidth:1, borderColor:BORDER,
-    alignItems:'center', elevation:2,
+  calcCard: {
+    backgroundColor: PURPLE_DARK,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.4)',
   },
-  featureIcon:  { fontSize:28, marginBottom:8 },
-  featureTitle: { color:TEXT_DARK, fontSize:12, fontWeight:'800', textAlign:'center', marginBottom:4 },
-  featureDesc:  { color:TEXT_LIGHT, fontSize:11, textAlign:'center', lineHeight:16 },
+  calcTitle:       { color: '#FFFFFF', fontSize: 16, fontWeight: '900', marginBottom: 4 },
+  calcSub:         { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 4 },
+  emiChip:         { paddingHorizontal: 14, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  emiChipActive:   { backgroundColor: GOLD, borderColor: GOLD },
+  emiChipTxt:      { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '700' },
+  emiChipTxtActive:{ color: PURPLE_DARK },
+  calcRow:         { flexDirection: 'row', alignItems: 'center', marginTop: 16, gap: 8 },
+  calcItem:        { flex: 1, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: 12, alignItems: 'center' },
+  calcLabel:       { color: 'rgba(255,255,255,0.6)', fontSize: 11, textAlign: 'center', marginBottom: 4 },
+  calcValue:       { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },
+  calcPlus:        { alignItems: 'center' },
+  calcTotal:       { backgroundColor: GOLD, borderRadius: 12, padding: 14, marginTop: 14, alignItems: 'center' },
+  calcTotalLabel:  { color: PURPLE_DARK, fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  calcTotalValue:  { color: PURPLE_DARK, fontSize: 26, fontWeight: '900', marginTop: 4 },
 
-  // Steps
-  stepsWrap: { marginHorizontal:16, marginBottom:8 },
-  stepRow:   { flexDirection:'row', alignItems:'flex-start', marginBottom:16 },
-  stepNumWrap: {
-    width:44, height:44, borderRadius:22, backgroundColor:PURPLE_DARK,
-    alignItems:'center', justifyContent:'center',
-    borderWidth:1.5, borderColor:GOLD, flexShrink:0,
+  paySection: { marginHorizontal: 16, marginBottom: 16 },
+  payNowBtn:  {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: GOLD,
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: GOLD,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  stepNum:     { color:GOLD, fontSize:13, fontWeight:'900' },
-  stepLine:    { display:'none' },
-  stepContent: { flex:1, marginLeft:14, paddingTop:4 },
-  stepTitle:   { color:TEXT_DARK, fontSize:14, fontWeight:'800', marginBottom:3 },
-  stepDesc:    { color:TEXT_MID, fontSize:12, lineHeight:18 },
+  payNowTitle: { color: PURPLE_DARK, fontSize: 16, fontWeight: '900' },
+  payNowSub:   { color: 'rgba(45,27,94,0.7)', fontSize: 11, marginTop: 2 },
 
-  // Terms
-  termsHeader: {
-    flexDirection:'row', alignItems:'center', justifyContent:'space-between',
-    marginHorizontal:16, marginTop:8, marginBottom:0,
-    backgroundColor:BG_CARD, borderRadius:12, padding:14,
-    borderWidth:1, borderColor:BORDER,
-  },
-  termsHeaderText: { color:TEXT_DARK, fontSize:13, fontWeight:'800' },
-  termsBody: {
-    marginHorizontal:16, backgroundColor:BG_CARD,
-    borderRadius:12, padding:16, marginTop:4,
-    borderWidth:1, borderColor:BORDER, marginBottom:8,
-  },
-  termRow:  { flexDirection:'row', gap:10, marginBottom:10 },
-  termDot:  { color:GOLD, fontSize:10, marginTop:3, flexShrink:0 },
-  termText: { color:TEXT_MID, fontSize:12, lineHeight:19, flex:1 },
-
-  // CTA card
   ctaCard: {
-    margin:16, backgroundColor:PURPLE_DARK, borderRadius:20,
-    padding:24, alignItems:'center',
-    borderWidth:1, borderColor:'rgba(201,168,76,0.35)',
-    shadowColor:PURPLE_MID, shadowOpacity:0.4, shadowRadius:20, elevation:8,
+    backgroundColor: PURPLE_DARK,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.4)',
+  },
+  ctaTitle:   { color: GOLD, fontSize: 22, fontWeight: '900', marginBottom: 10 },
+  ctaSub:     { color: 'rgba(255,255,255,0.7)', fontSize: 13, textAlign: 'center', lineHeight: 22, marginBottom: 20 },
+  waBtn:      { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#25D366', borderRadius: 28, paddingVertical: 13, paddingHorizontal: 28, marginBottom: 12, width: '100%', justifyContent: 'center' },
+  waBtnTxt:   { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  callBtn:    { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 28, paddingVertical: 12, paddingHorizontal: 28, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', marginBottom: 14, width: '100%', justifyContent: 'center' },
+  callBtnTxt: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  websiteLink:{ color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: 1 },
+
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalSheet:    { backgroundColor: BG_CARD, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  modalHandle:   { width: 40, height: 4, borderRadius: 2, backgroundColor: BORDER, alignSelf: 'center', marginBottom: 16 },
+  modalTitle:    { color: TEXT_DARK, fontSize: 20, fontWeight: '900', textAlign: 'center' },
+  modalSub:      { color: TEXT_LIGHT, fontSize: 13, textAlign: 'center', marginTop: 4, marginBottom: 12 },
+  goldTopBar:    { height: 2, backgroundColor: GOLD, borderRadius: 1, marginBottom: 20 },
+
+  fieldWrap:  { marginBottom: 8 },
+  fieldLabel: { color: TEXT_LIGHT, fontSize: 10, fontWeight: '800', letterSpacing: 2, marginBottom: 6 },
+  fieldRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: BG, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: BORDER, marginBottom: 4 },
+  fieldInput: { flex: 1, color: TEXT_DARK, fontSize: 16, fontWeight: '700' },
+  rupee:      { color: GOLD, fontSize: 18, fontWeight: '900' },
+
+  payBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: PURPLE_DARK, borderRadius: 28, paddingVertical: 15, marginTop: 16 },
+  payBtnTxt:     { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  cancelLink:    { alignItems: 'center', marginTop: 14 },
+  cancelLinkTxt: { color: TEXT_LIGHT, fontSize: 13 },
+
+  upiBox:    { alignItems: 'center', backgroundColor: BG, borderRadius: 16, padding: 24, borderWidth: 1, borderColor: BORDER, marginBottom: 16 },
+  upiIdLabel:{ color: TEXT_LIGHT, fontSize: 11, fontWeight: '700', letterSpacing: 2, marginTop: 12, marginBottom: 4 },
+  upiId:     { color: TEXT_DARK, fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
+  upiNote:   { color: TEXT_LIGHT, fontSize: 11, marginTop: 6 },
+  upiApps:   { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 8 },
+  upiAppBtn: { alignItems: 'center', gap: 6, backgroundColor: BG, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 18, borderWidth: 1, borderColor: BORDER },
+  upiAppName:{ color: TEXT_DARK, fontSize: 11, fontWeight: '700' },
+
+  screenshotBox:  { alignItems: 'center', backgroundColor: '#f0fdf4', borderRadius: 16, padding: 24, marginVertical: 16, borderWidth: 1, borderColor: '#bbf7d0' },
+  screenshotText: { color: TEXT_MID, fontSize: 14, textAlign: 'center', lineHeight: 24, marginTop: 12 },
+});
