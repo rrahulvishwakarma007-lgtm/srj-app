@@ -283,9 +283,143 @@ interface Props {
   wishlist?: Product[];
 }
 
+// ── Skeleton Components ────────────────────────────────────────────────────────
+function useShimmer() {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [anim]);
+  const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.75] });
+  return opacity;
+}
+
+function SkeletonBlock({
+  width = '100%', height = 16, radius = 8, style = {},
+}: {
+  width?: string | number; height?: number; radius?: number; style?: object;
+}) {
+  const opacity = useShimmer();
+  return (
+    <Animated.View
+      style={[
+        {
+          width,
+          height,
+          borderRadius: radius,
+          backgroundColor: '#DDD5F0', // Light grey for the skeleton
+          opacity,
+        },
+        style,
+      ]}
+    />
+  );
+}
+
+function SkeletonScreen({ insets }: { insets: any }) {
+  return (
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      {/* Header Skeleton */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <SkeletonBlock width={22} height={22} radius={11} />
+          <View style={{ marginLeft: 8, gap: 4 }}>
+            <SkeletonBlock width={100} height={16} radius={4} />
+            <SkeletonBlock width={80} height={10} radius={4} />
+          </View>
+        </View>
+        <View style={styles.headerRight}>
+          <SkeletonBlock width={36} height={36} radius={18} />
+          <SkeletonBlock width={36} height={36} radius={18} />
+        </View>
+      </View>
+
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
+        {/* Search Skeleton */}
+        <View style={styles.searchWrap}>
+           <SkeletonBlock width={'100%'} height={40} radius={24} />
+        </View>
+
+        {/* Banner Skeleton */}
+        <View style={styles.bannerWrap}>
+          <SkeletonBlock width={W} height={220} radius={0} />
+          <View style={styles.dots}>
+            {[...Array(4)].map((_, i) => (
+               <SkeletonBlock key={i} width={6} height={6} radius={3} />
+            ))}
+          </View>
+        </View>
+
+        {/* Categories Skeleton */}
+        <View style={styles.section}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}>
+            {[...Array(7)].map((_, i) => (
+              <View key={i} style={styles.catItem}>
+                <SkeletonBlock width={58} height={58} radius={29} />
+                <SkeletonBlock width={40} height={10} radius={4} style={{ marginTop: 8 }} />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+         {/* Category Tabs Skeleton */}
+         <View style={{marginTop: 18}}>
+           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsWrap}>
+              {[...Array(5)].map((_, i) => (
+                  <SkeletonBlock key={i} width={70} height={30} radius={20} />
+              ))}
+           </ScrollView>
+         </View>
+
+        {/* Featured Products Skeleton */}
+        <View style={styles.section}>
+           <View style={styles.sectionHeader}>
+             <SkeletonBlock width={120} height={20} radius={4} />
+             <View style={styles.sectionLine} />
+           </View>
+           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
+              {[...Array(3)].map((_, i) => (
+                 <View key={i} style={styles.productCard}>
+                   <SkeletonBlock width={'100%'} height={150} radius={0} />
+                   <View style={styles.productInfo}>
+                      <SkeletonBlock width={'80%'} height={12} radius={4} />
+                      <SkeletonBlock width={'100%'} height={10} radius={4} style={{ marginTop: 4 }} />
+                      <View style={[styles.productBottom, {marginTop: 12}]}>
+                         <SkeletonBlock width={50} height={12} radius={4} />
+                         <SkeletonBlock width={24} height={24} radius={12} />
+                      </View>
+                   </View>
+                 </View>
+              ))}
+           </ScrollView>
+        </View>
+
+        {/* Gold Rates Skeleton */}
+        <View style={styles.section}>
+          <View style={[styles.sectionHeader, { justifyContent: 'center' }]}>
+              <View style={styles.sectionLine} />
+              <SkeletonBlock width={100} height={20} radius={4} style={{ marginHorizontal: 10 }} />
+              <View style={styles.sectionLine} />
+          </View>
+          <View style={[styles.goldCard, {height: 120, borderColor: 'transparent'}]}>
+             <SkeletonBlock width={'100%'} height={'100%'} radius={16} />
+          </View>
+        </View>
+
+      </ScrollView>
+    </View>
+  );
+}
+
+
 export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   const insets = useSafeAreaInsets();
 
+  const [loading,      setLoading]      = useState(true); // Loading state for the entire screen
   const [search,       setSearch]       = useState('');
   const [bannerIdx,    setBannerIdx]    = useState(0);
   const [goldData,     setGoldData]     = useState<GoldRateData | null>(null);
@@ -295,15 +429,25 @@ export default function HomeScreen({ onOpenProduct, wishlist = [] }: Props) {
   const bannerRef = useRef<FlatList>(null);
   const scrollX   = useRef(new Animated.Value(0)).current;
 
+  // ── Simulate Initial Loading ──────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // Show skeleton for 1.5 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // ── Auto-scroll banner ────────────────────────────────────────────────────
   useEffect(() => {
+    if (loading) return; // Don't start auto-scroll while loading
     const t = setInterval(() => {
       const next = (bannerIdx + 1) % BANNERS.length;
       bannerRef.current?.scrollToIndex({ index: next, animated: true });
       setBannerIdx(next);
     }, 4000);
     return () => clearInterval(t);
-  }, [bannerIdx]);
+  }, [bannerIdx, loading]);
 
   // ── Load gold rates ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -352,6 +496,11 @@ const k22Display = ratesSet
 const dateDisplay = goldData?.updatedDate || null;
 
   const catTabs = ['All', 'Rings', 'Necklaces', 'Earrings', 'Bangles', 'Chains', 'Bridal'];
+
+  // Render skeleton if loading
+  if (loading) {
+    return <SkeletonScreen insets={insets} />;
+  }
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
