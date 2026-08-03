@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, Linking, Dimensions, Modal, Animated,
+  TextInput, Alert, Linking, Dimensions, Modal, Animated, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,8 +46,6 @@ function useShimmer() {
 
 function SkeletonBlock({
   width = '100%', height = 16, radius = 8, style = {},
-}: {
-  width?: string | number; height?: number; radius?: number; style?: object;
 }) {
   const opacity = useShimmer();
   return (
@@ -142,7 +140,7 @@ function SkeletonScreen() {
 }
 
 // ── Bullet ────────────────────────────────────────────────────────────────────
-function Bullet({ text, index }: { text: string; index: number }) {
+function Bullet({ text, index }) {
   return (
     <View style={styles.bulletRow}>
       <View style={styles.bulletNumberBadge}>
@@ -154,7 +152,7 @@ function Bullet({ text, index }: { text: string; index: number }) {
 }
 
 // ── Step indicator for hero ───────────────────────────────────────────────────
-function StepPill({ label, sub, accent }: { label: string; sub: string; accent?: boolean }) {
+function StepPill({ label, sub, accent }) {
   return (
     <View style={[styles.stepPill, accent && styles.stepPillAccent]}>
       <Text style={[styles.stepLabel, accent && styles.stepLabelAccent]}>{label}</Text>
@@ -172,7 +170,7 @@ function Calculator() {
   const srjBonus      = monthly * 2;
   const grandTotal    = customerTotal + srjBonus;
 
-  const selectAmount = (amt: number) => {
+  const selectAmount = (amt) => {
     setMonthly(amt);
     Animated.sequence([
       Animated.timing(valueAnim, { toValue: 0.85, duration: 100, useNativeDriver: true }),
@@ -246,13 +244,17 @@ function Calculator() {
 }
 
 // ── Payment Modal ─────────────────────────────────────────────────────────────
-function PaymentModal({ visible, onClose, monthly }: {
-  visible: boolean; onClose: () => void; monthly: number;
-}) {
-  const [step, setStep]       = useState<'amount' | 'upi' | 'screenshot'>('amount');
+function PaymentModal({ visible, onClose, monthly }) {
+  const [step, setStep]       = useState('amount');
   const [custAmt, setCustAmt] = useState(String(monthly));
   const [name, setName]       = useState('');
+  const [phone, setPhone]     = useState('');
+  const [address, setAddress] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const slideAnim             = useRef(new Animated.Value(0)).current;
+
+  // Webhook URL provided[cite: 1]
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyM6bnBK_ndiWcuUIu9VMacz93T85q0OSrLFXSU06boG8tfGQJbyV6pDPaEmrabfuSHUg/exec';
 
   useEffect(() => {
     if (visible) {
@@ -261,6 +263,41 @@ function PaymentModal({ visible, onClose, monthly }: {
       slideAnim.setValue(0);
     }
   }, [visible]);
+
+  const handleFormSubmit = async () => {
+    // Form Validation
+    if (!name.trim() || !phone.trim() || !address.trim() || !custAmt.trim()) {
+      Alert.alert('ध्यान दें', 'कृपया भुगतान से पहले सभी जानकारी (नाम, नंबर, पता और राशि) भरें।');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Send form data to Google Sheet[cite: 1]
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          phone: phone,
+          address: address,
+          amount: custAmt,
+          date: new Date().toISOString()
+        }),
+      });
+
+      // Assuming the submission is successful, move to UPI step
+      setStep('upi');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('त्रुटि', 'डेटा सबमिट करने में विफल। कृपया अपना इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें।');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const openUPI = () => {
     const amt    = parseInt(custAmt) || monthly;
@@ -276,6 +313,8 @@ function PaymentModal({ visible, onClose, monthly }: {
       `नमस्ते Shekhar Raja Jewellers 🙏\n\n` +
       `मैं *स्वर्ण समृद्धि योजना* में शामिल होना चाहता/चाहती हूँ।\n\n` +
       `👤 नाम: ${name || '(कृपया भरें)'}\n` +
+      `📞 नंबर: ${phone}\n` +
+      `🏠 पता: ${address}\n` +
       `💰 मासिक किस्त: ₹${custAmt}\n\n` +
       `मैंने भुगतान का स्क्रीनशॉट संलग्न कर रहा/रही हूँ।\n` +
       `कृपया मेरी योजना सक्रिय करें। धन्यवाद!`;
@@ -285,32 +324,39 @@ function PaymentModal({ visible, onClose, monthly }: {
     onClose(); setStep('amount');
   };
 
-  const reset = () => { setStep('amount'); onClose(); };
+  const reset = () => { 
+    setStep('amount'); 
+    setName('');
+    setPhone('');
+    setAddress('');
+    onClose(); 
+  };
 
   const translateY = slideAnim.interpolate({
-    inputRange: [0, 1], outputRange: [400, 0],
+    inputRange: [0, 1], outputRange: [600, 0], // Increased to 600 for taller sheet
   });
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={reset}>
       <View style={styles.modalBackdrop}>
-        <Animated.View style={[styles.modalSheet, { transform: [{ translateY }] }]}>
+        <Animated.View style={[styles.modalSheet, { transform: [{ translateY }], maxHeight: '90%' }]}>
           <View style={styles.modalHandle} />
 
           {step === 'amount' && (
-            <>
+            <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.modalTitleRow}>
                 <View style={styles.modalIconWrap}>
                   <Ionicons name="card" size={20} color={GOLD} />
                 </View>
                 <View>
-                  <Text style={styles.modalTitle}>किस्त भुगतान</Text>
+                  <Text style={styles.modalTitle}>योजना पंजीकरण</Text>
                   <Text style={styles.modalSub}>स्वर्ण समृद्धि योजना</Text>
                 </View>
               </View>
               <View style={styles.goldTopBar} />
 
               <View style={styles.fieldWrap}>
+                {/* Name Field */}
                 <Text style={styles.fieldLabel}>आपका नाम</Text>
                 <View style={styles.fieldRow}>
                   <Ionicons name="person-outline" size={16} color={TEXT_LIGHT} />
@@ -322,6 +368,36 @@ function PaymentModal({ visible, onClose, monthly }: {
                     onChangeText={setName}
                   />
                 </View>
+
+                {/* Phone Field */}
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>मोबाइल नंबर</Text>
+                <View style={styles.fieldRow}>
+                  <Ionicons name="call-outline" size={16} color={TEXT_LIGHT} />
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="10 अंकों का मोबाइल नंबर"
+                    placeholderTextColor={TEXT_LIGHT}
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                    value={phone}
+                    onChangeText={setPhone}
+                  />
+                </View>
+
+                {/* Address Field */}
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>आपका पता</Text>
+                <View style={styles.fieldRow}>
+                  <Ionicons name="home-outline" size={16} color={TEXT_LIGHT} />
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="शहर / पूरा पता"
+                    placeholderTextColor={TEXT_LIGHT}
+                    value={address}
+                    onChangeText={setAddress}
+                  />
+                </View>
+
+                {/* Amount Field */}
                 <Text style={[styles.fieldLabel, { marginTop: 14 }]}>किस्त राशि (₹)</Text>
                 <View style={styles.fieldRow}>
                   <Text style={styles.rupee}>₹</Text>
@@ -336,18 +412,29 @@ function PaymentModal({ visible, onClose, monthly }: {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.payBtn} onPress={() => setStep('upi')} activeOpacity={0.88}>
-                <Ionicons name="card-outline" size={20} color="#fff" />
-                <Text style={styles.payBtnTxt}>UPI से भुगतान करें</Text>
+              <TouchableOpacity 
+                style={[styles.payBtn, isSubmitting && { opacity: 0.7 }]} 
+                onPress={handleFormSubmit} 
+                activeOpacity={0.88}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="card-outline" size={20} color="#fff" />
+                    <Text style={styles.payBtnTxt}>UPI से भुगतान करें</Text>
+                  </>
+                )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.cancelLink} onPress={reset}>
                 <Text style={styles.cancelLinkTxt}>रद्द करें</Text>
               </TouchableOpacity>
-            </>
+            </ScrollView>
           )}
 
           {step === 'upi' && (
-            <>
+            <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.modalTitleRow}>
                 <View style={styles.modalIconWrap}>
                   <Ionicons name="qr-code-outline" size={20} color={GOLD} />
@@ -372,9 +459,9 @@ function PaymentModal({ visible, onClose, monthly }: {
 
               <View style={styles.upiApps}>
                 {[
-                  { name: 'PhonePe', icon: 'phone-portrait-outline' as const },
-                  { name: 'GPay',    icon: 'logo-google'             as const },
-                  { name: 'Paytm',   icon: 'wallet-outline'          as const },
+                  { name: 'PhonePe', icon: 'phone-portrait-outline' },
+                  { name: 'GPay',    icon: 'logo-google'            },
+                  { name: 'Paytm',   icon: 'wallet-outline'         },
                 ].map(app => (
                   <TouchableOpacity key={app.name} style={styles.upiAppBtn} onPress={openUPI} activeOpacity={0.8}>
                     <Ionicons name={app.icon} size={22} color={PURPLE_MID} />
@@ -390,11 +477,11 @@ function PaymentModal({ visible, onClose, monthly }: {
               <TouchableOpacity style={styles.cancelLink} onPress={() => setStep('amount')}>
                 <Text style={styles.cancelLinkTxt}>← वापस जाएं</Text>
               </TouchableOpacity>
-            </>
+            </ScrollView>
           )}
 
           {step === 'screenshot' && (
-            <>
+            <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: 4 }]}>भुगतान हो गया! 🎉</Text>
               <Text style={[styles.modalSub, { textAlign: 'center', marginBottom: 14 }]}>स्क्रीनशॉट WhatsApp पर भेजें</Text>
               <View style={styles.goldTopBar} />
@@ -418,7 +505,7 @@ function PaymentModal({ visible, onClose, monthly }: {
               <TouchableOpacity style={styles.cancelLink} onPress={reset}>
                 <Text style={styles.cancelLinkTxt}>बाद में भेजूँगा / भेजूँगी</Text>
               </TouchableOpacity>
-            </>
+            </ScrollView>
           )}
         </Animated.View>
       </View>
@@ -427,11 +514,11 @@ function PaymentModal({ visible, onClose, monthly }: {
 }
 
 // ── SectionHeader ─────────────────────────────────────────────────────────────
-function SectionHeader({ icon, title }: { icon: string; title: string }) {
+function SectionHeader({ icon, title }) {
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionIconBadge}>
-        <Ionicons name={icon as any} size={14} color={GOLD} />
+        <Ionicons name={icon} size={14} color={GOLD} />
       </View>
       <Text style={styles.sectionTitle}>{title}</Text>
     </View>
@@ -485,7 +572,6 @@ export default function SwarnaSamriddhiScreen() {
 
           {/* ── HERO ─────────────────────────────────────────────────────── */}
           <View style={styles.heroCard}>
-            {/* Video background */}
             <Video
               source={{ uri: 'https://shekharrajajewellers.com/goldoffer.mp4' }}
               style={styles.heroVideo}
@@ -495,10 +581,7 @@ export default function SwarnaSamriddhiScreen() {
               isMuted
               useNativeControls={false}
             />
-            {/* Dark + purple gradient overlay */}
             <View style={styles.heroOverlay} />
-
-            {/* decorative corner marks */}
             <View style={styles.cornerTL} /><View style={styles.cornerTR} />
             <View style={styles.cornerBL} /><View style={styles.cornerBR} />
 
@@ -507,7 +590,6 @@ export default function SwarnaSamriddhiScreen() {
             <View style={styles.heroDivider} />
             <Text style={styles.heroBonus}>2 किस्तें हमारी 🎁</Text>
 
-            {/* pill row */}
             <View style={styles.heroPillRow}>
               <StepPill label="आप देते हैं" sub="10 किस्त" />
               <View style={styles.plusCircle}>
@@ -577,7 +659,7 @@ export default function SwarnaSamriddhiScreen() {
                     {i < arr.length - 1 && <View style={styles.howStepLine} />}
                   </View>
                   <View style={styles.howStepContent}>
-                    <Ionicons name={item.icon as any} size={16} color={GOLD} />
+                    <Ionicons name={item.icon} size={16} color={GOLD} />
                     <Text style={styles.howStepText}>{item.text}</Text>
                   </View>
                 </View>
@@ -608,7 +690,6 @@ export default function SwarnaSamriddhiScreen() {
 
           {/* ── CTA ──────────────────────────────────────────────────────── */}
           <View style={styles.ctaCard}>
-            {/* decorative bar */}
             <View style={styles.ctaTopAccent} />
             <Text style={styles.ctaTitle}>आज ही जुड़ें! 🌟</Text>
             <Text style={styles.ctaSub}>
@@ -627,7 +708,6 @@ export default function SwarnaSamriddhiScreen() {
               <Text style={styles.callBtnTxt}>+91 83779 11745</Text>
             </TouchableOpacity>
 
-            {/* divider */}
             <View style={styles.ctaDivider}>
               <View style={styles.ctaDividerLine} />
               <Text style={styles.ctaDividerTxt}>या</Text>
