@@ -28,7 +28,7 @@ const BADGES   = ['NEW ARRIVE', 'STAFF PICK', 'TRENDING', 'BESTSELLER'];
 const PURITIES = ['22K PURE', '24K PURE', '18K GOLD', '916 BIS'];
 
 // ── 360° Rotating Image ───────────────────────────────────────────────────────
-function RotatingImage({ uri, icon }: { uri?: string; icon?: string }) {
+function RotatingImage({ image, icon }: { image?: any; icon?: string }) {
   const rotation      = useRef(new Animated.Value(0)).current;
   const lastX         = useRef(0);
   const autoSpin      = useRef<Animated.CompositeAnimation | null>(null);
@@ -96,8 +96,8 @@ function RotatingImage({ uri, icon }: { uri?: string; icon?: string }) {
         style={[rot.imageWrap, { transform: [{ rotateY: spin }] }]}
         {...panResponder.panHandlers}
       >
-        {uri ? (
-          <Image source={{ uri }} style={rot.image} resizeMode="contain"/>
+        {image ? (
+          <Image source={image} style={rot.image} resizeMode="contain"/>
         ) : (
           <View style={rot.iconWrap}>
             <Ionicons name={icon as any || 'diamond'} size={100} color={Theme.gold}/>
@@ -165,7 +165,7 @@ function ProductDetail({ product, onClose, isWishlisted, onToggleWishlist, onSel
         </TouchableOpacity>
 
         {/* ── 360° Rotating Image ── */}
-        <RotatingImage uri={product.image} icon={product.icon}/>
+        <RotatingImage image={product.image} icon={product.icon}/>
 
         {/* Purity badge over image */}
         <View style={det.purityBadge}>
@@ -221,7 +221,7 @@ function ProductDetail({ product, onClose, isWishlisted, onToggleWishlist, onSel
                     >
                       <View style={det.alsoImg}>
                         {p.image
-                          ? <Image source={{ uri:p.image }} style={{ width:'100%', height:'100%', borderRadius:Radius.md }} resizeMode="cover"/>
+                          ? <Image source={p.image} style={{ width:'100%', height:'100%', borderRadius:Radius.md }} resizeMode="cover"/>
                           : <Ionicons name={p.icon as any} size={28} color={Theme.gold}/>
                         }
                         {/* Tap hint overlay */}
@@ -230,7 +230,7 @@ function ProductDetail({ product, onClose, isWishlisted, onToggleWishlist, onSel
                         </View>
                       </View>
                       <Text style={det.alsoName} numberOfLines={2}>{p.name}</Text>
-                      <Text style={det.alsoPurity}>{p.purity} GOLD</Text>
+                      <Text style={det.alsoPurity}>{PURITIES[p.id % PURITIES.length]}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -275,7 +275,7 @@ function ProductCard({ item, onPress, isWishlisted, onToggleWish, onEnquire }: {
     <TouchableOpacity style={[styles.card, { width: CARD_W }]} onPress={onPress} activeOpacity={0.9}>
       <View style={styles.imgWrap}>
         {item.image
-          ? <Image source={{ uri: item.image }} style={styles.img} resizeMode="cover"/>
+          ? <Image source={item.image} style={styles.img} resizeMode="cover"/>
           : <View style={styles.imgPlaceholder}><Ionicons name={item.icon as any} size={52} color={Theme.gold}/></View>
         }
         <View style={styles.badge}><Text style={styles.badgeTxt}>{badge}</Text></View>
