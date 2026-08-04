@@ -273,19 +273,21 @@ function PaymentModal({ visible, onClose, monthly }) {
 
     setIsSubmitting(true);
 
+    // Format date as DD/MM/YYYY HH:MM
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const readableDate = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
     try {
-      // Send form data to Google Sheet[cite: 1]
-      const response = await fetch(WEBHOOK_URL, {
+      await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name,
-          phone: phone,
-          address: address,
-          amount: custAmt,
-          date: new Date().toISOString()
+          date:    readableDate,
+          name:    name.trim(),
+          phone:   phone.trim(),
+          address: address.trim(),
+          amount:  custAmt.trim(),
         }),
       });
 
@@ -570,18 +572,24 @@ export default function SwarnaSamriddhiScreen() {
           contentContainerStyle={{ paddingBottom: 48 }}
         >
 
-          {/* ── HERO ─────────────────────────────────────────────────────── */}
-          <View style={styles.heroCard}>
+          {/* ── HERO VIDEO (clean, full-width, no overlay) ────────────────── */}
+          <View style={styles.heroVideoWrap}>
             <Video
               source={{ uri: 'https://shekharrajajewellers.com/goldoffer.mp4' }}
               style={styles.heroVideo}
-              resizeMode={ResizeMode.COVER}
+              resizeMode={ResizeMode.CONTAIN}
               shouldPlay
               isLooping
               isMuted
               useNativeControls={false}
             />
-            <View style={styles.heroOverlay} />
+            {/* thin gold border bottom accent */}
+            <View style={styles.heroVideoBorder} />
+          </View>
+
+          {/* ── HERO CONTENT (below video) ───────────────────────────────── */}
+          <View style={styles.heroCard}>
+            {/* decorative corner marks */}
             <View style={styles.cornerTL} /><View style={styles.cornerTR} />
             <View style={styles.cornerBL} /><View style={styles.cornerBR} />
 
@@ -755,32 +763,39 @@ const styles = StyleSheet.create({
   headerTagline:  { color: GOLD, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginTop: 4 },
   goldLine:       { height: 3, backgroundColor: GOLD },
 
-  // Hero
+  // Hero video — full width standalone block
+  heroVideoWrap: {
+    width: '100%',
+    backgroundColor: '#000',
+  },
+  heroVideo: {
+    width: '100%',
+    aspectRatio: 9 / 16,
+  },
+  heroVideoBorder: {
+    height: 3,
+    backgroundColor: GOLD,
+  },
+
+  // Hero content card — below the video
   heroCard: {
     backgroundColor: PURPLE_DARK,
-    margin: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 4,
     borderRadius: 22,
     padding: 26,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(201,168,76,0.55)',
     shadowColor: GOLD, shadowOpacity: 0.18, shadowRadius: 16, elevation: 8,
-    overflow: 'hidden',
   },
-  heroVideo: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 22,
-  },
-  heroOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 22,
-    backgroundColor: 'rgba(20,8,50,0.62)',
-  },
+  heroOverlay: {},
   cornerTL: { position: 'absolute', top: 10, left: 10, width: 14, height: 14, borderTopWidth: 2, borderLeftWidth: 2, borderColor: GOLD, borderRadius: 2 },
   cornerTR: { position: 'absolute', top: 10, right: 10, width: 14, height: 14, borderTopWidth: 2, borderRightWidth: 2, borderColor: GOLD, borderRadius: 2 },
   cornerBL: { position: 'absolute', bottom: 10, left: 10, width: 14, height: 14, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: GOLD, borderRadius: 2 },
   cornerBR: { position: 'absolute', bottom: 10, right: 10, width: 14, height: 14, borderBottomWidth: 2, borderRightWidth: 2, borderColor: GOLD, borderRadius: 2 },
-  heroEyebrow:  { color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: '700', letterSpacing: 2, marginBottom: 10, zIndex: 2 },
+  heroEyebrow:  { color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: '700', letterSpacing: 2, marginBottom: 10 },
   heroMain:    { color: GOLD_LIGHT, fontSize: 28, fontWeight: '900', letterSpacing: 0.5, textAlign: 'center' },
   heroDivider: { width: 70, height: 2.5, backgroundColor: GOLD, marginVertical: 12, borderRadius: 2 },
   heroBonus:   { color: '#FFFFFF', fontSize: 24, fontWeight: '900', textAlign: 'center' },
