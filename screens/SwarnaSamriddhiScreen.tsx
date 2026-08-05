@@ -279,15 +279,23 @@ function PaymentModal({ visible, onClose, monthly }) {
     const readableDate = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
     try {
+      const emiAmount   = parseInt(custAmt.trim()) || 0;
+      const userPays    = emiAmount * 10;           // 10 instalments by customer
+      const srjBonus    = emiAmount * 2;            // 2 instalments by SRJ
+      const totalValue  = userPays + srjBonus;      // 12 instalments total
+
       await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
-          date:    readableDate,
-          name:    name.trim(),
-          phone:   phone.trim(),
-          address: address.trim(),
-          amount:  custAmt.trim(),
+          date:       readableDate,
+          fullName:   name.trim(),
+          phone:      phone.trim(),
+          city:       address.trim(),
+          emi:        emiAmount,
+          userPays:   userPays,
+          srjBonus:   srjBonus,
+          totalValue: totalValue,
         }),
       });
 
@@ -577,7 +585,7 @@ export default function SwarnaSamriddhiScreen() {
             <Video
               source={{ uri: 'https://shekharrajajewellers.com/goldoffer.mp4' }}
               style={styles.heroVideo}
-              resizeMode={ResizeMode.CONTAIN}
+              resizeMode={ResizeMode.COVER}
               shouldPlay
               isLooping
               isMuted
@@ -770,7 +778,7 @@ const styles = StyleSheet.create({
   },
   heroVideo: {
     width: '100%',
-    aspectRatio: 9 / 16,
+    aspectRatio: 16 / 9,
   },
   heroVideoBorder: {
     height: 3,
