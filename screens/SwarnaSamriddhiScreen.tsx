@@ -284,20 +284,25 @@ function PaymentModal({ visible, onClose, monthly }) {
       const srjBonus    = emiAmount * 2;            // 2 instalments by SRJ
       const totalValue  = userPays + srjBonus;      // 12 instalments total
 
-      await fetch(WEBHOOK_URL, {
+      const response = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
-          date:       readableDate,
-          fullName:   name.trim(),
-          phone:      phone.trim(),
-          city:       address.trim(),
-          emi:        emiAmount,
-          userPays:   userPays,
-          srjBonus:   srjBonus,
-          totalValue: totalValue,
+          date:               readableDate,
+          fullName:           name.trim(),
+          phone:              phone.trim(),
+          city:               address.trim(),
+          emiChosen:          emiAmount,
+          amountUserPays:     userPays,
+          amountSrjPays:      srjBonus,
+          totalJewelryValue:  totalValue,
         }),
       });
+
+      const result = await response.json().catch(() => ({ status: 'success' }));
+      if (result.status === 'error') {
+        throw new Error(result.message || 'Server error');
+      }
 
       // Assuming the submission is successful, move to UPI step
       setStep('upi');
