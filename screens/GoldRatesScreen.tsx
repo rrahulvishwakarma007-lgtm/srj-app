@@ -550,7 +550,7 @@ export default function GoldRatesScreen() {
                   </TouchableOpacity>
 
                   <Text style={styles.adminNote}>
-                    🌐 Live rates fetched from nxtgenailabs.work/gold-rates.json — edit on GitHub to update all users instantly without rebuilding the APK.
+                    🌐 Live rates fetched from shekharrajajewellers.com/gold-rates.json — edit on GitHub to update all users instantly without rebuilding the APK.
                   </Text>
                 </ScrollView>
               </>
