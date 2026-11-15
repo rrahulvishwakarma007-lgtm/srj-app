@@ -498,7 +498,7 @@ export default function GoldRatesScreen() {
                 <View style={styles.adminHeader}>
                   <View>
                     <Text style={styles.adminTitle}>◆ Update Gold Rates</Text>
-                    <Text style={styles.adminSub}>Saves locally + fetched from nxtgenailabs.work</Text>
+                    <Text style={styles.adminSub}>Saves locally + fetched from shekharrajajewellers.com/gold-rates.json</Text>
                   </View>
                   <TouchableOpacity onPress={closeAdmin} style={styles.adminClose}>
                     <Ionicons name="close" size={20} color={TEXT_DARK} />
