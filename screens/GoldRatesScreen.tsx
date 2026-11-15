@@ -15,7 +15,7 @@ const DATE_KEY     = '@srj_gold_rate_date';
 const SILVER_KEY   = '@srj_silver_rate';
 const ADMIN_SECRET = 5;
 const ADMIN_PIN    = '1234';
-const RATES_URL    = 'https://nxt-gen-ai-labs.vercel.app/gold-rates.json';
+const RATES_URL = 'https://shekharrajajewellers.com/gold-rates.json';
 
 const GOLD        = '#C9A84C';
 const GOLD_LIGHT  = '#F0D080';
