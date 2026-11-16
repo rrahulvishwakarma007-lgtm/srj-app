@@ -13,6 +13,7 @@ const { width: W } = Dimensions.get('window');
 const STORAGE_KEY  = '@srj_gold_rate_24k';
 const DATE_KEY     = '@srj_gold_rate_date';
 const SILVER_KEY   = '@srj_silver_rate';
+const MANUAL_KEY   = '@srj_manual_override'; // prevents website fetch from overwriting manual rates
 const ADMIN_SECRET = 5;
 const ADMIN_PIN    = '1234';
 const RATES_URL = 'https://shekharrajajewellers.com/gold-rates.json';
@@ -229,17 +230,18 @@ function RateCard({ k, purity, price, featured, color, change }: {
 export default function GoldRatesScreen() {
   const insets = useSafeAreaInsets();
 
-  const [rate24k,     setRate24k]     = useState(0);
-  const [silverRate,  setSilverRate]  = useState(0);
-  const [updatedDate, setUpdatedDate] = useState('');
-  const [adminOpen,   setAdminOpen]   = useState(false);
-  const [adminStep,   setAdminStep]   = useState<'pin' | 'form'>('pin');
-  const [inputRate,   setInputRate]   = useState('');
-  const [inputSilver, setInputSilver] = useState('');
-  const [inputDate,   setInputDate]   = useState('');
-  const [tapCount,    setTapCount]    = useState(0);
-  const [saving,      setSaving]      = useState(false);
-  const [savedFlash,  setSavedFlash]  = useState(false);
+  const [rate24k,       setRate24k]       = useState(0);
+  const [silverRate,    setSilverRate]    = useState(0);
+  const [updatedDate,   setUpdatedDate]   = useState('');
+  const [adminOpen,     setAdminOpen]     = useState(false);
+  const [adminStep,     setAdminStep]     = useState<'pin' | 'form'>('pin');
+  const [inputRate,     setInputRate]     = useState('');
+  const [inputSilver,   setInputSilver]   = useState('');
+  const [inputDate,     setInputDate]     = useState('');
+  const [tapCount,      setTapCount]      = useState(0);
+  const [saving,        setSaving]        = useState(false);
+  const [savedFlash,    setSavedFlash]    = useState(false);
+  const [isManual,      setIsManual]      = useState(false); // tracks whether manual override is active
 
   // ── FLUCTUATION: ±1 or ±2 per karat, updated every 3 seconds ─────────────
   const [fluctuation, setFluctuation] = useState<Record<string, number>>({
@@ -252,33 +254,47 @@ export default function GoldRatesScreen() {
   const flashAnim = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  // ── Load rates: website first, AsyncStorage fallback ─────────────────────
+  // ── Load rates: manual override wins; website is fallback ────────────────
   useEffect(() => {
     const loadRates = async () => {
       try {
-        const res = await fetch(RATES_URL, { headers: { 'Cache-Control': 'no-cache' } });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.rate24k) {
-            setRate24k(data.rate24k);
-            setSilverRate(data.silverRate || 0);
-            setUpdatedDate(data.updatedDate || '');
-            await AsyncStorage.setItem(STORAGE_KEY, String(data.rate24k));
-            await AsyncStorage.setItem(DATE_KEY,    data.updatedDate || '');
-            await AsyncStorage.setItem(SILVER_KEY,  String(data.silverRate || 0));
-            return;
-          }
+        // Check if admin has manually set rates — if so, skip website fetch
+        const manualFlag = await AsyncStorage.getItem(MANUAL_KEY);
+
+        if (!manualFlag) {
+          // No manual override — try fetching from website
+          try {
+            const res = await fetch(RATES_URL, { headers: { 'Cache-Control': 'no-cache' } });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.rate24k) {
+                setRate24k(data.rate24k);
+                setSilverRate(data.silverRate || 0);
+                setUpdatedDate(data.updatedDate || '');
+                await AsyncStorage.setItem(STORAGE_KEY, String(data.rate24k));
+                await AsyncStorage.setItem(DATE_KEY,    data.updatedDate || '');
+                await AsyncStorage.setItem(SILVER_KEY,  String(data.silverRate || 0));
+                setIsManual(false);
+                return;
+              }
+            }
+          } catch (_) {}
+        } else {
+          setIsManual(true);
         }
       } catch (_) {}
+
+      // Fallback: load from AsyncStorage (also the path when manual override is active)
       try {
-        const s24k   = await AsyncStorage.getItem(STORAGE_KEY);
-        const sDate  = await AsyncStorage.getItem(DATE_KEY);
-        const sSilv  = await AsyncStorage.getItem(SILVER_KEY);
+        const s24k  = await AsyncStorage.getItem(STORAGE_KEY);
+        const sDate = await AsyncStorage.getItem(DATE_KEY);
+        const sSilv = await AsyncStorage.getItem(SILVER_KEY);
         if (s24k)  setRate24k(parseInt(s24k));
         if (sDate) setUpdatedDate(sDate);
         if (sSilv) setSilverRate(parseInt(sSilv));
       } catch (e) { console.warn('GoldRates load error', e); }
     };
+
     loadRates();
     const refresh = setInterval(loadRates, 5 * 60 * 1000);
     return () => clearInterval(refresh);
@@ -341,6 +357,18 @@ export default function GoldRatesScreen() {
 
   const onPinSuccess = () => setAdminStep('form');
 
+  // ── Reset manual override — go back to fetching from website ─────────────
+  const resetToAutoFetch = async () => {
+    try {
+      await AsyncStorage.removeItem(MANUAL_KEY);
+      setIsManual(false);
+      Alert.alert('Reset Done', 'Rates will now be fetched from the website automatically.');
+      closeAdmin();
+    } catch {
+      Alert.alert('Error', 'Could not reset. Please try again.');
+    }
+  };
+
   const saveRates = async () => {
     const parsed = parseInt(inputRate.replace(/,/g, ''));
     if (!parsed || parsed < 1000 || parsed > 20000) {
@@ -351,10 +379,12 @@ export default function GoldRatesScreen() {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, String(parsed));
       await AsyncStorage.setItem(DATE_KEY, inputDate || new Date().toLocaleDateString('en-IN'));
+      await AsyncStorage.setItem(MANUAL_KEY, 'true'); // lock: prevents website fetch from overwriting
       const parsedSilver = parseInt(inputSilver.replace(/,/g, ''));
       if (parsedSilver > 0) await AsyncStorage.setItem(SILVER_KEY, String(parsedSilver));
       setRate24k(parsed);
       setUpdatedDate(inputDate);
+      setIsManual(true);
       if (parsedSilver > 0) setSilverRate(parsedSilver);
       setSavedFlash(true);
       Animated.sequence([
@@ -415,7 +445,6 @@ export default function GoldRatesScreen() {
               {[...rates, ...rates, ...rates].map((r, i) => (
                 <TickerItem key={i} label={r.k + ' GOLD'} value={`₹${r.price.toLocaleString('en-IN')}/10g`} />
               ))}
-
             </Animated.View>
           </View>
         </View>
@@ -448,7 +477,6 @@ export default function GoldRatesScreen() {
             {rates.map(r => (
               <RateCard key={r.k} k={r.k} purity={r.purity} price={r.price} featured={r.featured} color={r.color} change={r.change} />
             ))}
-
           </View>
         ) : (
           <View style={styles.emptyWrap}>
@@ -498,7 +526,9 @@ export default function GoldRatesScreen() {
                 <View style={styles.adminHeader}>
                   <View>
                     <Text style={styles.adminTitle}>◆ Update Gold Rates</Text>
-                    <Text style={styles.adminSub}>Saves locally + fetched from shekharrajajewellers.com/gold-rates.json</Text>
+                    <Text style={styles.adminSub}>
+                      {isManual ? '📌 Manual override active' : '🌐 Auto-fetching from website'}
+                    </Text>
                   </View>
                   <TouchableOpacity onPress={closeAdmin} style={styles.adminClose}>
                     <Ionicons name="close" size={20} color={TEXT_DARK} />
@@ -549,8 +579,17 @@ export default function GoldRatesScreen() {
                     <Text style={styles.saveBtnText}>{saving ? 'SAVING...' : 'SAVE & PUBLISH RATES'}</Text>
                   </TouchableOpacity>
 
+                  {/* Reset to auto-fetch button — only shown when manual override is active */}
+                  {isManual && (
+                    <TouchableOpacity onPress={resetToAutoFetch} style={styles.resetBtn} activeOpacity={0.7}>
+                      <Ionicons name="refresh-outline" size={14} color={TEXT_LIGHT} />
+                      <Text style={styles.resetBtnText}>Reset — fetch from website instead</Text>
+                    </TouchableOpacity>
+                  )}
+
                   <Text style={styles.adminNote}>
-                    🌐 Live rates fetched from shekharrajajewellers.com/gold-rates.json — edit on GitHub to update all users instantly without rebuilding the APK.
+                    🌐 Auto-fetch from shekharrajajewellers.com/gold-rates.json — edit on GitHub to update all users instantly.{'\n'}
+                    📌 Saving here activates manual override and disables auto-fetch until reset.
                   </Text>
                 </ScrollView>
               </>
@@ -653,10 +692,12 @@ const styles = StyleSheet.create({
   previewK:     { fontSize:13, fontWeight:'800' },
   previewPrice: { fontSize:14, fontWeight:'700', color:TEXT_DARK, marginTop:2 },
 
-  saveBtn:     { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:GOLD, borderRadius:14, height:52, marginTop:24 },
-  saveBtnText: { fontSize:14, fontWeight:'900', color:PURPLE_DARK, letterSpacing:1 },
-  adminNote:   { fontSize:11, color:TEXT_LIGHT, textAlign:'center', marginTop:14, lineHeight:17 },
+  saveBtn:      { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, backgroundColor:GOLD, borderRadius:14, height:52, marginTop:24 },
+  saveBtnText:  { fontSize:14, fontWeight:'900', color:PURPLE_DARK, letterSpacing:1 },
+  resetBtn:     { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:6, marginTop:12, paddingVertical:8 },
+  resetBtnText: { fontSize:12, color:TEXT_LIGHT, fontWeight:'600' },
+  adminNote:    { fontSize:11, color:TEXT_LIGHT, textAlign:'center', marginTop:14, lineHeight:17 },
 
   flash:     { position:'absolute', bottom:40, alignSelf:'center', flexDirection:'row', alignItems:'center', gap:8, backgroundColor:PURPLE_DARK, paddingHorizontal:20, paddingVertical:12, borderRadius:30, borderWidth:1, borderColor:GOLD+'60', shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.2, shadowRadius:10, elevation:10 },
   flashText: { color:GOLD, fontSize:13, fontWeight:'800', letterSpacing:1 },
-}); 
+});
