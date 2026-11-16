@@ -46,7 +46,7 @@ const BANNERS = [
   },
  {
   id: '3',
-  image: 'https://nxtgenailabs.work/hero3.png',
+  image: 'https://shekharrajajewellers.com/hero3.png',
   title: 'Gold\nCollections',
   sub:   'Crafted for Every Occasion',
   btn:   'Shop Now',
