@@ -33,10 +33,11 @@ const GREEN       = '#16a34a';
 const RED         = '#dc2626';
 
 const KARATS = [
-  { k: '24K', purity: '999.9', mul: 1,     featured: false, color: '#b8892a' },
-  { k: '22K', purity: '916',   mul: 22/24, featured: true,  color: GOLD      },
-  { k: '20K', purity: '833',   mul: 20/24, featured: false, color: '#a07820' },
-  { k: '18K', purity: '750',   mul: 18/24, featured: false, color: '#8a6818' },
+  { k: '24K', purity: '999.9', mul: 1,    featured: false, color: '#b8892a' },
+  { k: '22K', purity: '916',   mul: 0.92, featured: true,  color: GOLD      },
+  { k: '20K', purity: '833',   mul: 0.86, featured: false, color: '#a07820' },
+  { k: '18K', purity: '750',   mul: 0.78, featured: false, color: '#8a6818' },
+  { k: '14K', purity: '585',   mul: 0.60, featured: false, color: '#7a5810' },
 ];
 
 // ── Ticker item ───────────────────────────────────────────────────────────────
@@ -245,7 +246,7 @@ export default function GoldRatesScreen() {
 
   // ── FLUCTUATION: ±1 or ±2 per karat, updated every 3 seconds ─────────────
   const [fluctuation, setFluctuation] = useState<Record<string, number>>({
-    '24K': 0, '22K': 0, '20K': 0, '18K': 0,
+    '24K': 0, '22K': 0, '20K': 0, '18K': 0, '14K': 0,
   });
 
   const tapTimer  = useRef<any>(null);
