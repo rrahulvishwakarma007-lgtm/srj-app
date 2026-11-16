@@ -27,8 +27,8 @@ const WA_URL = (msg: string) => `https://wa.me/${WA_NUM}?text=${encodeURICompone
 
 // ── Showroom images ───────────────────────────────────────────────────────────
 const SHOWROOM_IMAGES = [
-  'https://nxtgenailabs.work/dixitpura.webp',
-  'https://nxtgenailabs.work/napier%20town.webp',
+  'https://shekharrajajewellers.com/dixitpura.webp',
+  'https://shekharrajajewellers.com/napier%20town.webp',
 ];
 
 const LOCATIONS = [
