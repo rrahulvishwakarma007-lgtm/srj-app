@@ -659,4 +659,4 @@ const styles = StyleSheet.create({
 
   flash:     { position:'absolute', bottom:40, alignSelf:'center', flexDirection:'row', alignItems:'center', gap:8, backgroundColor:PURPLE_DARK, paddingHorizontal:20, paddingVertical:12, borderRadius:30, borderWidth:1, borderColor:GOLD+'60', shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.2, shadowRadius:10, elevation:10 },
   flashText: { color:GOLD, fontSize:13, fontWeight:'800', letterSpacing:1 },
-});
+}); 
